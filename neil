@@ -143,14 +143,12 @@ Subcommands:
 
 add
 
-  - dep: adds :lib (fully qualified symbol) to :deps. Example:
-
-    neil add dep :lib cheshire/cheshire
+  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
 
     Options:
 
     :lib - fully qualified symbol like cheshire/cheshire
-    :version - optional version. When not provided, picks newest version from Clojars.
+    :version - optional version. When not provided, picks newest version from Clojars or Maven Central.
 
   - test: adds cognitect test runner to :test alias.
 

@@ -25,20 +25,18 @@ A scoop package for Windows is coming soon.
 Type `neil` to see the help:
 
 ```
-Usage: neil <subcommand>
+Usage: neil &lt;subcommand&gt;
 
 Subcommands:
 
 add
 
-  - dep: adds :lib (fully qualified symbol) to :deps. Example:
-
-    neil add dep :lib cheshire/cheshire
+  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
 
     Options:
 
     :lib - fully qualified symbol like cheshire/cheshire
-    :version - optional version. When not provided, picks newest version from Clojars.
+    :version - optional version. When not provided, picks newest version from Clojars or Maven Central.
 
   - test: adds cognitect test runner to :test alias.
 
@@ -55,7 +53,13 @@ Override alias names with :alias option:
 neil add test :alias test2
 ```
 
-Example:
+Examples:
+
+```
+$ neil add dep :lib clj-kondo/clj-kondo
+```
+
+This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`
 
 ``` clojure
 $ neil add test
