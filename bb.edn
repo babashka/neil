@@ -6,8 +6,7 @@
                         (spit "version.txt" version)
                         version)
          publish {:doc "Bumps version, pushes tag and lets CI publish to npm."
-                  :depends [bump-version]
                   :task
                   (do (run 'bump-version)
                       (shell "git push --atomic origin main"
-                             (str "v" (slurp "version.txt") true)))}}}
+                             (str "v" (slurp "version.txt"))))}}}
