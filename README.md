@@ -72,7 +72,7 @@ To change the alias you can provide an option like:
 $ neil add kaocha :alias kaocha2
 ```
 
-To add [tools.build](https://clojure.org/guides/tools_build) related feature, use:
+To add [tools.build](https://clojure.org/guides/tools_build) related features, use:
 
 ```
 $ neil add build :deps-deploy true
