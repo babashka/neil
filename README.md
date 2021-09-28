@@ -10,14 +10,15 @@ A CLI to add common aliases and features to `deps.edn`-based projects.
 $ brew install babashka/brew/neil
 ```
 
-### Manual
-
-- Install [babashka](https://github.com/babashka/babashka#installation)
-- Download the `neil` script to somewhere on your `PATH`.
-
 ### Scoop (Windows)
 
 A scoop package for Windows is coming soon.
+
+### Manual
+
+- Install [babashka](https://github.com/babashka/babashka#installation)
+- Download the `neil` script to somewhere on your `PATH`. In Windows, also
+  download the `neil.bat` script and place it in the `PATH`.
 
 ## Usage
 
