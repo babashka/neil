@@ -1,6 +1,6 @@
 # neil
 
-A CLI to add common aliases and features to `deps.edn`-based projects. 
+A CLI to add common aliases and features to `deps.edn`-based projects.
 
 ## Installation
 
@@ -87,7 +87,6 @@ $ clojure -T:build deploy
 
 ## Roapmap
 
-- Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
 - Consider `neil test :only foo.bar` which invokes `clojure -M:test -n foo.bar`
 - Option to add `cljs-test-runner`
