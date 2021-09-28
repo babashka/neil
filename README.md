@@ -30,6 +30,10 @@ Subcommands:
 
 add
 
+  - dep: adds :lib (fully qualified symbol) to :deps. Example:
+
+    neil add dep :lib cheshire/cheshire
+
   - test: adds cognitect test runner to :test alias.
 
   - build: adds tools.build build.clj file and :build alias.

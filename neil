@@ -5,14 +5,16 @@
 
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.0.2"}}})
 
-(require '[babashka.fs :as fs]
+(require '[babashka.curl :as curl]
+         '[babashka.fs :as fs]
          '[borkdude.rewrite-edn :as r]
+         '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
          '[clojure.string :as str])
 
 (defn ensure-deps-edn []
   (when-not (fs/exists? "deps.edn")
-    (spit "deps.edn" "{}")))
+    (spit "deps.edn" "{:deps {}}")))
 
 (defn edn-string [] (slurp "deps.edn"))
 
@@ -141,6 +143,10 @@ Subcommands:
 
 add
 
+  - dep: adds :lib (fully qualified symbol) to :deps. Example:
+
+    neil add dep :lib cheshire/cheshire
+
   - test: adds cognitect test runner to :test alias.
 
   - build: adds tools.build build.clj file and :build alias.
@@ -156,9 +162,28 @@ Override alias names with :alias option:
 neil add test :alias test2
 ")))
 
+(defn latest-clojars-version [qlib]
+  (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
+                        qlib))
+      :body (cheshire/parse-string true)
+      :latest_release))
+
+(defn add-lib [opts]
+  (ensure-deps-edn)
+  (let [edn-string (edn-string)
+        edn-nodes (edn-nodes edn-string)
+        lib (:lib opts)
+        lib (symbol lib)
+        version (or (:version opts)
+                    (latest-clojars-version lib))
+        s (str (r/assoc-in edn-nodes [:deps lib] {:mvn/version version}))
+        s (str s "\n")]
+    (spit "deps.edn" s)))
+
 (defn add [[subcommand & opts]]
   (let [opts (parse-opts opts)]
     (case subcommand
+      "dep" (add-lib opts)
       "test" (add-cognitect-test-runner opts)
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
