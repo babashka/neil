@@ -167,10 +167,16 @@ Override alias names with :alias option:
 neil add test :alias test2
 ")))
 
+(def windows? (str/includes? (System/getProperty "os.name") "Windows"))
+
+(def curl-opts
+  {:throw false
+   :compressed (not windows?)})
+
 (defn latest-clojars-version [qlib]
   (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
                         qlib)
-                {:throw false})
+                curl-opts)
       :body (cheshire/parse-string true)
       :latest_release))
 
@@ -178,7 +184,7 @@ neil add test :alias test2
   (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
                         (namespace qlib)
                         (name qlib))
-                {:throw false})
+                curl-opts)
       :body (cheshire/parse-string true)
       :response
       :docs
