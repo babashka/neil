@@ -92,7 +92,9 @@
           :jar-file jar-file}))")
 
 (defn add-build [opts]
-  (spit "build.clj" build-file)
+  (if-not (fs/exists? "build.clj")
+    (spit "build.clj" build-file)
+    (println "build.clj already exists!"))
   (ensure-deps-edn)
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
