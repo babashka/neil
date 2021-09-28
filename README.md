@@ -1,6 +1,6 @@
 # neil
 
-A CLI to add common aliases and features to `deps.edn`-based projects.
+A CLI to add common aliases and features to `deps.edn`-based projects. 
 
 ## Installation
 
@@ -55,6 +55,11 @@ $ neil add kaocha :alias kaocha2
 - Add `build` feature which adds `:build` alias and vanilla `build.clj`
 - Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
+
+## Contributing
+
+If this project shows potential to you, I'd be happy to discuss and receive
+contributions.
 
 ## Dev
 
