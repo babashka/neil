@@ -47,6 +47,12 @@ To change the alias you can provide an option like:
 $ neil add kaocha :alias kaocha2
 ```
 
+## Roapmap
+
+- Add `build` feature which adds `:build` alias and vanilla `build.clj`
+- Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
+- Add `bb.edn`-related features for invoking `test` and `build` tasks
+
 ## License
 
 TBD

@@ -4,9 +4,14 @@
 
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.0.2"}}})
 
-(require '[borkdude.rewrite-edn :as r]
+(require '[babashka.fs :as fs]
+         '[borkdude.rewrite-edn :as r]
          '[clojure.edn :as edn]
          '[clojure.string :as str])
+
+(defn ensure-deps-edn []
+  (when-not (fs/exists? "deps.edn")
+    (spit "deps.edn" "{}")))
 
 (defn edn-string [] (slurp "deps.edn"))
 
@@ -30,6 +35,7 @@
    ":extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}"))
 
 (defn add-cognitect-test-runner [opts]
+  (ensure-deps-edn)
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
@@ -43,6 +49,7 @@
       (println (format "deps.edn already contains %s alias!" alias)))))
 
 (defn add-kaocha [opts]
+  (ensure-deps-edn)
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
