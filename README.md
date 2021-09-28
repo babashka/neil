@@ -34,6 +34,11 @@ add
 
     neil add dep :lib cheshire/cheshire
 
+    Options:
+
+    :lib - fully qualified symbol like cheshire/cheshire
+    :version - optional version. When not provided, picks newest version from Clojars.
+
   - test: adds cognitect test runner to :test alias.
 
   - build: adds tools.build build.clj file and :build alias.
