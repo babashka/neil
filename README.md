@@ -37,7 +37,8 @@ so you can execute:
 $ clojure -X:test
 ```
 
-A similar option is support for [kaocha](https://github.com/lambdaisland/kaocha):
+A similar option is supported for
+[kaocha](https://github.com/lambdaisland/kaocha):
 
 ```
 $ neil add kaocha
