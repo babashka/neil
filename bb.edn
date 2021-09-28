@@ -8,5 +8,8 @@
          publish {:doc "Bumps version, pushes tag and lets CI publish to npm."
                   :task
                   (do (run 'bump-version)
+                      (shell "git add version.txt")
+                      (shell "git commit -m 'Bump version'")
+                      (shell (str "git tag v" (slurp "version.txt")))
                       (shell "git push --atomic origin main"
                              (str "v" (slurp "version.txt"))))}}}
