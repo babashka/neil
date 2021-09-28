@@ -67,9 +67,32 @@
   "{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}}
           :ns-default build}")
 
+(def build-file
+  "(ns build
+  (:require [clojure.tools.build.api :as b]))
+
+(def lib 'my/lib1)
+  (def version (format \"1.2.%s\" (b/git-count-revs nil)))
+  (def class-dir \"target/classes\")
+  (def basis (b/create-basis {:project \"deps.edn\"}))
+  (def jar-file (format \"target/%s-%s.jar\" (name lib) version))
+
+(defn clean [_]
+  (b/delete {:path \"target\"}))
+
+(defn jar [_]
+  (b/write-pom {:class-dir class-dir
+                :lib lib
+                :version version
+                :basis basis
+                :src-dirs [\"src\"]})
+  (b/copy-dir {:src-dirs [\"src\" \"resources\"]
+               :target-dir class-dir})
+  (b/jar {:class-dir class-dir
+          :jar-file jar-file}))")
+
 (defn add-build [opts]
-  (fs/copy (fs/file (-> (fs/parent (fs/real-path *file*))) "templates" "build.clj")
-           "build.clj")
+  (spit "build.clj" build-file)
   (ensure-deps-edn)
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
