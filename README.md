@@ -1,19 +1,21 @@
 # neil
 
-A handy script to add common aliases and features to `deps.edn`-based project.
+A CLI to add common aliases and features to `deps.edn`-based projects.
 
 ## Installation
 
-This script requires
-[babashka](https://github.com/babashka/babashka#installation) to be
-installed. Then you can download the `neil` script to somewhere on your `PATH`
-and invoke it from anywhere on your system.
-
-To automate this process, you can install `neil` using homebrew:
+### Homebrew (Linux and macOS)
 
 ```
 $ brew install babashka/brew/neil
 ```
+
+### Manual
+
+- Install [babashka](https://github.com/babashka/babashka#installation)
+- Download the `neil` script to somewhere on your `PATH`.
+
+### Scoop (Windows)
 
 A scoop package for Windows is coming soon.
 
