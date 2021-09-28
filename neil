@@ -24,16 +24,11 @@
           [(keyword (subs arg-name 1)) arg-val])))
 
 (def cognitect-test-runner-alias
-  (r/parse-string
-   "{:extra-paths [\"test\"]
+  "{:extra-paths [\"test\"]
      :extra-deps {io.github.cognitect-labs/test-runner
                 {:git/tag \"v0.5.0\" :git/sha \"b3fd0d2\"}}
      :main-opts [\"-m\" \"cognitect.test-runner\"]
-     :exec-fn cognitect.test-runner.api/test}"))
-
-(def kaocha-alias
-  (r/parse-string
-   ":extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}"))
+     :exec-fn cognitect.test-runner.api/test}")
 
 (defn add-cognitect-test-runner [opts]
   (ensure-deps-edn)
@@ -41,13 +36,17 @@
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
         alias (or (some-> (opts :alias) keyword)
-                  :test)]
+                  :test)
+        alias-nodes (r/parse-string cognitect-test-runner-alias)]
     (if-not (get-in edn [:aliases alias])
       (->> (r/assoc-in edn-nodes [:aliases alias]
-                       cognitect-test-runner-alias)
+                       alias-nodes)
            str
            (spit "deps.edn"))
       (println (format "deps.edn already contains %s alias!" alias)))))
+
+(def kaocha-alias
+  "{:extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}}")
 
 (defn add-kaocha [opts]
   (ensure-deps-edn)
@@ -55,10 +54,32 @@
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
         alias (or (some-> (opts :alias) keyword)
-                  :kaocha)]
+                  :kaocha)
+        alias-nodes (r/parse-string kaocha-alias)]
     (if-not (get-in edn [:aliases alias])
       (->> (r/assoc-in edn-nodes [:aliases alias]
-                       kaocha-alias)
+                       alias-nodes)
+           str
+           (spit "deps.edn"))
+      (println (format "deps.edn already contains %s alias!" alias)))))
+
+(def build-alias
+  "{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}}
+          :ns-default build}")
+
+(defn add-build [opts]
+  (fs/copy (fs/file (fs/parent *file*) "templates" "build.clj")
+           "build.clj")
+  (ensure-deps-edn)
+  (let [edn-string (edn-string)
+        edn-nodes (edn-nodes edn-string)
+        edn (edn/read-string edn-string)
+        alias (or (some-> (opts :alias) keyword)
+                  :build)
+        alias-nodes (r/parse-string build-alias)]
+    (if-not (get-in edn [:aliases alias])
+      (->> (r/assoc-in edn-nodes [:aliases alias]
+                       alias-nodes)
            str
            (spit "deps.edn"))
       (println (format "deps.edn already contains %s alias!" alias)))))
@@ -72,6 +93,7 @@ Subcommands:
 add
 
   test: adds cognitect test runner to :test alias.
+  build: adds tools.build build.clj file and :build alias.
   kaocha: adds kaocha test runner to :koacha alias.
 
 Override alias names with :alias option:
@@ -83,6 +105,7 @@ neil add test :alias test2
   (let [opts (parse-opts opts)]
     (case subcommand
       "test" (add-cognitect-test-runner opts)
+      "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
 (let [[subcommand & args] *command-line-args*]

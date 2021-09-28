@@ -21,7 +21,23 @@ A scoop package for Windows is coming soon.
 
 ## Usage
 
-Type `neil` to see the help.
+Type `neil` to see the help:
+
+```
+Usage: neil <subcommand>
+
+Subcommands:
+
+add
+
+  test: adds cognitect test runner to :test alias.
+  build: adds tools.build build.clj file and :build alias.
+  kaocha: adds kaocha test runner to :koacha alias.
+
+Override alias names with :alias option:
+
+neil add test :alias test2
+```
 
 Example:
 
@@ -52,7 +68,6 @@ $ neil add kaocha :alias kaocha2
 
 ## Roapmap
 
-- Add `build` feature which adds `:build` alias and vanilla `build.clj`
 - Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
 
