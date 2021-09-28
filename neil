@@ -1,0 +1,84 @@
+#!/usr/bin/env bb
+
+(require '[babashka.deps :as deps])
+
+(deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.0.2"}}})
+
+(require '[borkdude.rewrite-edn :as r]
+         '[clojure.edn :as edn]
+         '[clojure.string :as str])
+
+(defn edn-string [] (slurp "deps.edn"))
+
+(defn edn-nodes [edn-string] (r/parse-string edn-string))
+
+(defn parse-opts [opts]
+  (into {}
+        (for [[arg-name arg-val] (partition 2 opts)]
+          [(keyword (subs arg-name 1)) arg-val])))
+
+(def cognitect-test-runner-alias
+  (r/parse-string
+   "{:extra-paths [\"test\"]
+     :extra-deps {io.github.cognitect-labs/test-runner
+                {:git/tag \"v0.5.0\" :git/sha \"b3fd0d2\"}}
+     :main-opts [\"-m\" \"cognitect.test-runner\"]
+     :exec-fn cognitect.test-runner.api/test}"))
+
+(def kaocha-alias
+  (r/parse-string
+   ":extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}"))
+
+(defn add-cognitect-test-runner [opts]
+  (let [edn-string (edn-string)
+        edn-nodes (edn-nodes edn-string)
+        edn (edn/read-string edn-string)
+        alias (or (some-> (opts :alias) keyword)
+                  :test)]
+    (if-not (get-in edn [:aliases alias])
+      (->> (r/assoc-in edn-nodes [:aliases alias]
+                       cognitect-test-runner-alias)
+           str
+           (spit "deps.edn"))
+      (println (format "deps.edn already contains %s alias!" alias)))))
+
+(defn add-kaocha [opts]
+  (let [edn-string (edn-string)
+        edn-nodes (edn-nodes edn-string)
+        edn (edn/read-string edn-string)
+        alias (or (some-> (opts :alias) keyword)
+                  :kaocha)]
+    (if-not (get-in edn [:aliases alias])
+      (->> (r/assoc-in edn-nodes [:aliases alias]
+                       kaocha-alias)
+           str
+           (spit "deps.edn"))
+      (println (format "deps.edn already contains %s alias!" alias)))))
+
+(defn print-help []
+  (println (str/trim "
+Usage: neil <subcommand>
+
+Subcommands:
+
+add
+
+  test: adds cognitect test runner to :test alias.
+  kaocha: adds kaocha test runner to :koacha alias.
+
+Override alias names with :alias option:
+
+neil add test :alias test2
+")))
+
+(defn add [[subcommand & opts]]
+  (let [opts (parse-opts opts)]
+    (case subcommand
+      "test" (add-cognitect-test-runner opts)
+      "kaocha" (add-kaocha opts))))
+
+(let [[subcommand & args] *command-line-args*]
+  (case subcommand
+    "add" (add args)
+    ("help" "--help") (print-help)
+    (print-help)))
