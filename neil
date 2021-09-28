@@ -24,48 +24,56 @@
           [(keyword (subs arg-name 1)) arg-val])))
 
 (def cognitect-test-runner-alias
-  "{:extra-paths [\"test\"]
-     :extra-deps {io.github.cognitect-labs/test-runner
-                {:git/tag \"v0.5.0\" :git/sha \"b3fd0d2\"}}
-     :main-opts [\"-m\" \"cognitect.test-runner\"]
-     :exec-fn cognitect.test-runner.api/test}")
+  "
+{:extra-paths [\"test\"]
+ :extra-deps {io.github.cognitect-labs/test-runner
+               {:git/tag \"v0.5.0\" :git/sha \"b3fd0d2\"}}
+ :main-opts [\"-m\" \"cognitect.test-runner\"]
+ :exec-fn cognitect.test-runner.api/test}")
+
+(defn indent [s n]
+  (let [spaces (apply str (repeat n " "))
+        lines (str/split-lines s)]
+    (str/join "\n" (map #(str spaces %) lines))))
+
+(defn add-alias [opts alias-kw alias-contents]
+  (ensure-deps-edn)
+  (let [edn-string (edn-string)
+        edn-nodes (edn-nodes edn-string)
+        edn (edn/read-string edn-string)
+        alias (or (some-> (opts :alias) keyword)
+                  alias-kw)
+        alias-node (r/parse-string (str "\n " alias " ;; added by neil"))]
+    (if-not (get-in edn [:aliases alias])
+      (let [s (->> (r/update edn-nodes :aliases
+                             (fn [aliases]
+                               (let [s (indent alias-contents 1)
+                                     alias-nodes (r/parse-string s)]
+                                 (r/assoc aliases alias-node alias-nodes))))
+                   str
+                   str/trim)
+            s (str s "\n")]
+        (spit "deps.edn" s))
+      (println (format "deps.edn already contains %s alias!" alias)))))
 
 (defn add-cognitect-test-runner [opts]
-  (ensure-deps-edn)
-  (let [edn-string (edn-string)
-        edn-nodes (edn-nodes edn-string)
-        edn (edn/read-string edn-string)
-        alias (or (some-> (opts :alias) keyword)
-                  :test)
-        alias-nodes (r/parse-string cognitect-test-runner-alias)]
-    (if-not (get-in edn [:aliases alias])
-      (->> (r/assoc-in edn-nodes [:aliases alias]
-                       alias-nodes)
-           str
-           (spit "deps.edn"))
-      (println (format "deps.edn already contains %s alias!" alias)))))
+  (add-alias opts :test cognitect-test-runner-alias))
 
 (def kaocha-alias
-  "{:extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}}")
+  "
+{:extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}}")
 
 (defn add-kaocha [opts]
-  (ensure-deps-edn)
-  (let [edn-string (edn-string)
-        edn-nodes (edn-nodes edn-string)
-        edn (edn/read-string edn-string)
-        alias (or (some-> (opts :alias) keyword)
-                  :kaocha)
-        alias-nodes (r/parse-string kaocha-alias)]
-    (if-not (get-in edn [:aliases alias])
-      (->> (r/assoc-in edn-nodes [:aliases alias]
-                       alias-nodes)
-           str
-           (spit "deps.edn"))
-      (println (format "deps.edn already contains %s alias!" alias)))))
+  (add-alias opts :kaocha kaocha-alias))
 
-(def build-alias
-  "{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}}
-          :ns-default build}")
+(defn build-alias [opts]
+  (let [s "
+{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}{{deps-deploy}}}
+ :ns-default build}"]
+    (str/replace s "{{deps-deploy}}"
+                 (if (:deps-deploy opts)
+                   "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
+                   ""))))
 
 (defn build-file
   [opts]
@@ -123,24 +131,7 @@
     (spit "build.clj" (build-file opts))
     (println "build.clj already exists!"))
   (ensure-deps-edn)
-  (let [edn-string (edn-string)
-        edn-nodes (edn-nodes edn-string)
-        edn (edn/read-string edn-string)
-        alias (or (some-> (opts :alias) keyword)
-                  :build)
-        alias-nodes (r/parse-string build-alias)]
-    (if-not (get-in edn [:aliases alias])
-      (let [nodes (r/assoc-in edn-nodes [:aliases alias]
-                              alias-nodes)
-            nodes (if (:deps-deploy opts)
-                    (r/assoc-in nodes [:aliases alias :deps 'slipset/deps-deploy]
-                                '{:mvn/version "0.2.0"})
-                    nodes)]
-        (->>
-         nodes
-         str
-         (spit "deps.edn")))
-      (println (format "deps.edn already contains %s alias!" alias)))))
+  (add-alias opts :build (build-alias opts)))
 
 (defn print-help []
   (println (str/trim "
