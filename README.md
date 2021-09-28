@@ -25,7 +25,7 @@ A scoop package for Windows is coming soon.
 Type `neil` to see the help:
 
 ```
-Usage: neil &lt;subcommand&gt;
+Usage: neil <subcommand>
 
 Subcommands:
 

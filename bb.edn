@@ -1,9 +1,11 @@
 {:tasks {:requires ([clojure.string :as str]
-                    [selmer.parser :as p])
+                    [selmer.parser :as p]
+                    [selmer.util :refer [without-escaping]])
          update-readme (let [help (:out (shell {:out :string} "./neil"))]
-                         (->> (p/render (slurp "README.template.md")
-                                        {:help (str/trim help)})
-                              (spit "README.md")))
+                         (without-escaping
+                          (->> (p/render (slurp "README.template.md")
+                                         {:help (str/trim help)})
+                               (spit "README.md"))))
          bump-version (let [version (-> (slurp "version.txt")
                                         str/trim)
                             [major minor patch] (str/split version (re-pattern "\\."))
