@@ -169,9 +169,21 @@ neil add test :alias test2
 
 (defn latest-clojars-version [qlib]
   (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                        qlib))
+                        qlib)
+                {:throw false})
       :body (cheshire/parse-string true)
       :latest_release))
+
+(defn latest-mvn-version [qlib]
+  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
+                        (namespace qlib)
+                        (name qlib))
+                {:throw false})
+      :body (cheshire/parse-string true)
+      :response
+      :docs
+      first
+      :latestVersion))
 
 (defn add-lib [opts]
   (ensure-deps-edn)
@@ -180,7 +192,8 @@ neil add test :alias test2
         lib (:lib opts)
         lib (symbol lib)
         version (or (:version opts)
-                    (latest-clojars-version lib))
+                    (latest-clojars-version lib)
+                    (latest-mvn-version lib))
         s (str (r/assoc-in edn-nodes [:deps lib] {:mvn/version version}))
         s (str s "\n")]
     (spit "deps.edn" s)))
