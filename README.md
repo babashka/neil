@@ -55,6 +55,16 @@ $ neil add kaocha :alias kaocha2
 - Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
 
+## Dev
+
+See
+[neil.rb](https://github.com/babashka/homebrew-brew/blob/main/Formula/neil.rb)
+for the brew Formula. You can install this formula locally with:
+
+```
+$ brew reinstall --build-from-source ./neil.rb`
+```
+
 ## License
 
 TBD
