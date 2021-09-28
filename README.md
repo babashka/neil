@@ -72,6 +72,19 @@ To change the alias you can provide an option like:
 $ neil add kaocha :alias kaocha2
 ```
 
+To add [tools.build](https://clojure.org/guides/tools_build) related feature, use:
+
+```
+$ neil add build :deps-deploy true
+```
+
+After that you can run tasks like:
+
+```
+$ clojure -T:build uber
+$ clojure -T:build deploy
+```
+
 ## Roapmap
 
 - Better formatting of `deps.edn`, possibly using a formatter like `cljfmt`
