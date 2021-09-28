@@ -68,7 +68,8 @@
           :ns-default build}")
 
 (defn add-build [opts]
-  (fs/copy (fs/file (fs/parent *file*) "templates" "build.clj")
+  (fs/copy (fs/file (-> (fs/parent *file*)
+                        fs/real-path) "templates" "build.clj")
            "build.clj")
   (ensure-deps-edn)
   (let [edn-string (edn-string)
