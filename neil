@@ -201,7 +201,7 @@ neil add test :alias test2
                     (latest-clojars-version lib)
                     (latest-mvn-version lib))
         s (str (r/assoc-in edn-nodes [:deps lib] {:mvn/version version}))
-        s (str s "\n")]
+        s (str (str/trim s) "\n")]
     (spit "deps.edn" s)))
 
 (defn add [[subcommand & opts]]
