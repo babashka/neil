@@ -30,9 +30,15 @@ Subcommands:
 
 add
 
-  test: adds cognitect test runner to :test alias.
-  build: adds tools.build build.clj file and :build alias.
-  kaocha: adds kaocha test runner to :koacha alias.
+  - test: adds cognitect test runner to :test alias.
+
+  - build: adds tools.build build.clj file and :build alias.
+
+    Options:
+
+    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
+
+  - kaocha: adds kaocha test runner to :koacha alias.
 
 Override alias names with :alias option:
 

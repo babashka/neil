@@ -67,15 +67,17 @@
   "{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}}
           :ns-default build}")
 
-(def build-file
-  "(ns build
+(defn build-file
+  [opts]
+  (let [base "(ns build
   (:require [clojure.tools.build.api :as b]))
 
 (def lib 'my/lib1)
-  (def version (format \"1.2.%s\" (b/git-count-revs nil)))
-  (def class-dir \"target/classes\")
-  (def basis (b/create-basis {:project \"deps.edn\"}))
-  (def jar-file (format \"target/%s-%s.jar\" (name lib) version))
+(def version (format \"1.2.%s\" (b/git-count-revs nil)))
+(def class-dir \"target/classes\")
+(def basis (b/create-basis {:project \"deps.edn\"}))
+(def uber-file (format \"target/%s-%s-standalone.jar\" (name lib) version))
+(def jar-file (format \"target/%s-%s.jar\" (name lib) version))
 
 (defn clean [_]
   (b/delete {:path \"target\"}))
@@ -89,11 +91,36 @@
   (b/copy-dir {:src-dirs [\"src\" \"resources\"]
                :target-dir class-dir})
   (b/jar {:class-dir class-dir
-          :jar-file jar-file}))")
+          :jar-file jar-file}))
+
+(defn uber [_]
+  (clean nil)
+  (b/copy-dir {:src-dirs [\"src\" \"resources\"]
+               :target-dir class-dir})
+  (b/compile-clj {:basis basis
+                  :src-dirs [\"src\"]
+                  :class-dir class-dir})
+  (b/uber {:class-dir class-dir
+           :uber-file uber-file
+           :basis basis}))
+"]
+    (if (:deps-deploy opts)
+      (str base
+           "
+(defn deploy [opts]
+  (jar opts)
+  ((requiring-resolve 'deps-deploy.deps-deploy/deploy)
+    (merge {:installer :remote
+                       :artifact jar-file
+                       :pom-file (b/pom-path {:lib lib :class-dir class-dir})}
+                    opts))
+  opts)
+")
+      base)))
 
 (defn add-build [opts]
   (if-not (fs/exists? "build.clj")
-    (spit "build.clj" build-file)
+    (spit "build.clj" (build-file opts))
     (println "build.clj already exists!"))
   (ensure-deps-edn)
   (let [edn-string (edn-string)
@@ -103,10 +130,16 @@
                   :build)
         alias-nodes (r/parse-string build-alias)]
     (if-not (get-in edn [:aliases alias])
-      (->> (r/assoc-in edn-nodes [:aliases alias]
-                       alias-nodes)
-           str
-           (spit "deps.edn"))
+      (let [nodes (r/assoc-in edn-nodes [:aliases alias]
+                              alias-nodes)
+            nodes (if (:deps-deploy opts)
+                    (r/assoc-in nodes [:aliases alias :deps 'slipset/deps-deploy]
+                                '{:mvn/version "0.2.0"})
+                    nodes)]
+        (->>
+         nodes
+         str
+         (spit "deps.edn")))
       (println (format "deps.edn already contains %s alias!" alias)))))
 
 (defn print-help []
@@ -117,9 +150,15 @@ Subcommands:
 
 add
 
-  test: adds cognitect test runner to :test alias.
-  build: adds tools.build build.clj file and :build alias.
-  kaocha: adds kaocha test runner to :koacha alias.
+  - test: adds cognitect test runner to :test alias.
+
+  - build: adds tools.build build.clj file and :build alias.
+
+    Options:
+
+    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
+
+  - kaocha: adds kaocha test runner to :koacha alias.
 
 Override alias names with :alias option:
 
