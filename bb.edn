@@ -1,4 +1,5 @@
-{:tasks {:requires ([clojure.string :as str]
+{:tasks {:requires ([babashka.fs :as fs]
+                    [clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
          update-readme (let [help (:out (shell {:out :string} "./neil"))]
@@ -12,11 +13,14 @@
                             version (str/join "." [major minor (inc (Integer/parseInt patch))])]
                         (spit "version.txt" version)
                         version)
+         tests (do (load-file "tests.clj")
+                   (clojure.test/run-tests 'tests))
          publish {:doc "Bumps version, pushes tag and lets CI publish to npm."
+                  :depends [tests bump-version]
                   :task
-                  (do (run 'bump-version)
-                      (shell "git add version.txt")
-                      (shell "git commit -m 'Bump version'")
-                      (shell (str "git tag v" (slurp "version.txt")))
-                      (shell "git push --atomic origin main"
-                             (str "v" (slurp "version.txt"))))}}}
+                  (do
+                    (shell "git add version.txt")
+                    (shell "git commit -m 'Bump version'")
+                    (shell (str "git tag v" (slurp "version.txt")))
+                    (shell "git push --atomic origin main"
+                           (str "v" (slurp "version.txt"))))}}}

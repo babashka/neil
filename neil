@@ -12,14 +12,28 @@
          '[clojure.edn :as edn]
          '[clojure.string :as str])
 
-(defn ensure-deps-edn []
-  (when-not (fs/exists? "deps.edn")
-    (spit "deps.edn" (str/triml "
+(def deps-template
+  (str/triml "
 {:deps {}
  :aliases {}}
-"))))
+"))
 
-(defn edn-string [] (slurp "deps.edn"))
+(def bb-template
+  (str/triml "
+{:deps {}
+ :tasks
+ {
+ }}
+"))
+
+(defn ensure-deps-file [opts]
+  (let [target (:deps-file opts)]
+    (when-not (fs/exists? target)
+      (spit target (if (= "bb.edn" target)
+                     bb-template
+                     deps-template)))))
+
+(defn edn-string [opts] (slurp (:deps-file opts)))
 
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
@@ -43,8 +57,8 @@
     (str/join "\n" (map #(str spaces %) lines))))
 
 (defn add-alias [opts alias-kw alias-contents]
-  (ensure-deps-edn)
-  (let [edn-string (edn-string)
+  (ensure-deps-file opts)
+  (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
         alias (or (some-> (opts :alias) keyword)
@@ -59,7 +73,7 @@
                    str
                    str/trim)
             s (str s "\n")]
-        (spit "deps.edn" s))
+        (spit (:deps-file opts) s))
       (println (format "deps.edn already contains %s alias!" alias)))))
 
 (defn add-cognitect-test-runner [opts]
@@ -136,7 +150,7 @@
   (if-not (fs/exists? "build.clj")
     (spit "build.clj" (build-file opts))
     (println "build.clj already exists!"))
-  (ensure-deps-edn)
+  (ensure-deps-file opts)
   (add-alias opts :build (build-alias opts)))
 
 (defn print-help []
@@ -220,8 +234,8 @@ neil add test :alias test2
         :sha)))
 
 (defn add-dep [opts]
-  (ensure-deps-edn)
-  (let [edn-string (edn-string)
+  (ensure-deps-file opts)
+  (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
         lib (or (:lib opts)
                 (first (:cmds opts)))
@@ -260,10 +274,13 @@ neil add test :alias test2
                     (r/assoc-in [:deps as :deps/root] root))
                 nodes)
         s (str (str/trim (str nodes)) "\n")]
-    (spit "deps.edn" s)))
+    (spit (:deps-file opts) s)))
 
 (defn add [[subcommand & opts]]
-  (let [opts (parse-opts opts)]
+  (let [opts (parse-opts opts)
+        opts (if (:deps-file opts)
+               opts
+               (assoc opts :deps-file "deps.edn"))]
     (case subcommand
       "dep" (add-dep opts)
       "test" (add-cognitect-test-runner opts)
