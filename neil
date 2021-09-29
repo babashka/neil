@@ -204,10 +204,14 @@ neil add test :alias test2
       (cheshire/parse-string true)
       :default_branch))
 
-(defn latest-github-sha [lib]
+(defn clean-github-lib [lib]
   (let [lib (str/replace lib "com.github." "")
         lib (str/replace lib "io.github." "")
-        lib (symbol lib)
+        lib (symbol lib)]
+    lib))
+
+(defn latest-github-sha [lib]
+  (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
     (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
                           (namespace lib) (name lib) branch))
@@ -233,7 +237,7 @@ neil add test :alias test2
                       (latest-mvn-version lib)))
         git-url (when git?
                   (or (:git/url opts)
-                      (str "https://github.com/" lib)))
+                      (str "https://github.com/" (clean-github-lib lib))))
         as (or (some-> (:as opts)
                        symbol) lib)
         ;; force newline
