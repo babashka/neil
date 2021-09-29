@@ -33,19 +33,33 @@ Type `neil` to see the help:
 {{help}}
 ```
 
-Examples:
+### add dep
+
+This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`:
 
 ```
 $ neil add dep :lib clj-kondo/clj-kondo
+$ cat deps.edn
+{:deps {clj-kondo/clj-kondo {:mvn/version "2021.09.25"}}}
 ```
-
-This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`
 
 The `:lib` keyword may be elided if the libname is the first argument after `dep`:
 
 ```
 $ neil add dep clj-kondo/clj-kondo
 ```
+
+The `add dep` command will always overwrite an existing dependency.
+
+To add a git library from Github you can use `:sha` to provide a SHA or
+`:latest-sha` to pick the latest sha from the default branch:
+
+```
+$ neil add dep borkdude/sci :latest-sha true
+```
+
+
+### add test
 
 ``` clojure
 $ neil add test
