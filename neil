@@ -255,8 +255,9 @@ neil add test :alias test2
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
-(let [[subcommand & args] *command-line-args*]
-  (case subcommand
-    "add" (add args)
-    ("help" "--help") (print-help)
-    (print-help)))
+(when (= *file* (System/getProperty "babashka.file"))
+  (let [[subcommand & args] *command-line-args*]
+    (case subcommand
+      "add" (add args)
+      ("help" "--help") (print-help)
+      (print-help))))
