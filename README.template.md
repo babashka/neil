@@ -20,6 +20,11 @@ A scoop package for Windows is coming soon.
 - Download the `neil` script to somewhere on your `PATH`. In Windows, also
   download the `neil.bat` script and place it in the `PATH`.
 
+## Status
+
+As we're still finding out the best UX, `neil` may undergo breaking changes from
+version to version.
+
 ## Usage
 
 Type `neil` to see the help:
