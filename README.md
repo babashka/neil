@@ -12,17 +12,18 @@ $ brew install babashka/brew/neil
 
 ### Scoop (Windows)
 
-```
-$ scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
-$ scoop install neil
-```
-For detailed information about scoop installer check [scoop-clojure](https://github.com/littleli/scoop-clojure).
+A scoop package for Windows is coming soon.
 
 ### Manual
 
 - Install [babashka](https://github.com/babashka/babashka#installation)
 - Download the `neil` script to somewhere on your `PATH`. In Windows, also
   download the `neil.bat` script and place it in the `PATH`.
+
+## Status
+
+As we're still finding out the best UX, `neil` may undergo breaking changes from
+version to version.
 
 ## Usage
 
@@ -39,8 +40,10 @@ add
 
     Options:
 
-    :lib - fully qualified symbol like cheshire/cheshire
-    :version - optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :sha - When provided, assumes lib refers to Github repo.
+    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
 
   - test: adds cognitect test runner to :test alias.
 
@@ -57,13 +60,33 @@ Override alias names with :alias option:
 neil add test :alias test2
 ```
 
-Examples:
+### add dep
+
+This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`:
 
 ```
 $ neil add dep :lib clj-kondo/clj-kondo
+$ cat deps.edn
+{:deps {clj-kondo/clj-kondo {:mvn/version "2021.09.25"}}}
 ```
 
-This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`
+The `:lib` keyword may be elided if the libname is the first argument after `dep`:
+
+```
+$ neil add dep clj-kondo/clj-kondo
+```
+
+The `add dep` command will always overwrite an existing dependency.
+
+To add a git library from Github you can use `:sha` to provide a SHA or
+`:latest-sha` to pick the latest sha from the default branch:
+
+```
+$ neil add dep borkdude/sci :latest-sha true
+```
+
+
+### add test
 
 ``` clojure
 $ neil add test
