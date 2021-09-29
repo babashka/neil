@@ -202,8 +202,11 @@ neil add test :alias test2
       (cheshire/parse-string true)
       :default_branch))
 
-(defn latest-sha [lib]
-  (let [branch (default-branch lib)]
+(defn latest-github-sha [lib]
+  (let [lib (str/replace lib "com.github." "")
+        lib (str/replace lib "io.github." "")
+        lib (symbol lib)
+        branch (default-branch lib)]
     (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
                           (namespace lib) (name lib) branch))
         :body
@@ -222,29 +225,35 @@ neil add test :alias test2
         mvn? (not git?)
         version (if git?
                   (or (:sha opts)
-                      (latest-sha lib))
+                      (latest-github-sha lib))
                   (or (:version opts)
                       (latest-clojars-version lib)
                       (latest-mvn-version lib)))
         git-url (when git?
                   (or (:git/url opts)
                       (str "https://github.com/" lib)))
+        as (or (some-> (:as opts)
+                       symbol) lib)
         ;; force newline
-        edn-nodes (-> edn-nodes (r/assoc-in [:deps lib] nil) str r/parse-string)
-        s (str (cond
-                 mvn?
-                 (r/assoc-in edn-nodes [:deps lib]
-                             {:mvn/version version})
-                 git?
-                 ;; multiple steps to force newlines
-                 (-> edn-nodes
-                     (r/assoc-in
-                      [:deps lib :git/url] git-url)
-                     str
-                     r/parse-string
-                     (r/assoc-in
-                      [:deps lib :git/sha] version))))
-        s (str (str/trim s) "\n")]
+        edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
+        nodes (cond
+                mvn?
+                (r/assoc-in edn-nodes [:deps as]
+                            {:mvn/version version})
+                git?
+                ;; multiple steps to force newlines
+                (-> edn-nodes
+                    (r/assoc-in
+                     [:deps as :git/url] git-url)
+                    str
+                    r/parse-string
+                    (r/assoc-in
+                     [:deps as :git/sha] version)))
+        nodes (if-let [root (and git? (:deps/root opts))]
+                (-> nodes
+                    (r/assoc-in [:deps as :deps/root] root))
+                nodes)
+        s (str (str/trim (str nodes)) "\n")]
     (spit "deps.edn" s)))
 
 (defn add [[subcommand & opts]]
