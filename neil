@@ -24,8 +24,8 @@
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
 (defn parse-opts [opts]
-  (let [[args opts] (split-with #(not (str/starts-with? % ":")) opts)]
-    (into {:args args}
+  (let [[cmds opts] (split-with #(not (str/starts-with? % ":")) opts)]
+    (into {:cmds cmds}
           (for [[arg-name arg-val] (partition 2 opts)]
             [(keyword (subs arg-name 1)) arg-val]))))
 
@@ -215,7 +215,7 @@ neil add test :alias test2
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
         lib (or (:lib opts)
-                (first (:args opts)))
+                (first (:cmds opts)))
         lib (symbol lib)
         git? (or (:sha opts)
                  (:latest-sha opts))
