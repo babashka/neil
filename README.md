@@ -34,7 +34,12 @@ version to version.
 Type `neil` to see the help:
 
 ```
-Usage: neil <subcommand>
+Usage: neil <subcommand> <options>
+
+Most subcommands support the options:
+
+- :alias - override alias name
+- :deps-file - override deps.edn file name
 
 Subcommands:
 
@@ -60,10 +65,6 @@ add
     :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
 
   - kaocha: adds kaocha test runner to :koacha alias.
-
-Override alias names with :alias option:
-
-neil add test :alias test2
 ```
 
 ### add dep
