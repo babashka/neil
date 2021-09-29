@@ -58,6 +58,20 @@ To add a git library from Github you can use `:sha` to provide a SHA or
 $ neil add dep borkdude/sci :latest-sha true
 ```
 
+### add build
+
+To add [tools.build](https://clojure.org/guides/tools_build) related features, use:
+
+```
+$ neil add build :deps-deploy true
+```
+
+After that you can run tasks like:
+
+```
+$ clojure -T:build uber
+$ clojure -T:build deploy
+```
 
 ### add test
 
@@ -84,19 +98,6 @@ To change the alias you can provide an option like:
 
 ```
 $ neil add kaocha :alias kaocha2
-```
-
-To add [tools.build](https://clojure.org/guides/tools_build) related features, use:
-
-```
-$ neil add build :deps-deploy true
-```
-
-After that you can run tasks like:
-
-```
-$ clojure -T:build uber
-$ clojure -T:build deploy
 ```
 
 ## Roapmap
