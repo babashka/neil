@@ -21,9 +21,10 @@
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
 (defn parse-opts [opts]
-  (into {}
-        (for [[arg-name arg-val] (partition 2 opts)]
-          [(keyword (subs arg-name 1)) arg-val])))
+  (let [[args opts] (split-with #(not (str/starts-with? % ":")) opts)]
+    (into {:args args}
+          (for [[arg-name arg-val] (partition 2 opts)]
+            [(keyword (subs arg-name 1)) arg-val]))))
 
 (def cognitect-test-runner-alias
   "
@@ -149,6 +150,7 @@ add
 
     :lib - fully qualified symbol like cheshire/cheshire
     :version - optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :latest-sha - when provided, assumes lib refers to Github repo and then picks latest SHA from it.
 
   - test: adds cognitect test runner to :test alias.
 
@@ -193,7 +195,8 @@ neil add test :alias test2
   (ensure-deps-edn)
   (let [edn-string (edn-string)
         edn-nodes (edn-nodes edn-string)
-        lib (:lib opts)
+        lib (or (:lib opts)
+                (first (:args opts)))
         lib (symbol lib)
         version (or (:version opts)
                     (latest-clojars-version lib)
