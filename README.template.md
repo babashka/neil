@@ -41,6 +41,12 @@ $ neil add dep :lib clj-kondo/clj-kondo
 
 This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`
 
+The `:lib` keyword may be elided if the libname is the first argument after `dep`:
+
+```
+$ neil add dep clj-kondo/clj-kondo
+```
+
 ``` clojure
 $ neil add test
 ```
