@@ -39,8 +39,6 @@ This will add the newest version of clj-kondo to the `:deps` map in `deps.edn`:
 
 ```
 $ neil add dep :lib clj-kondo/clj-kondo
-$ cat deps.edn
-{:deps {clj-kondo/clj-kondo {:mvn/version "2021.09.25"}}}
 ```
 
 The `:lib` keyword may be elided if the libname is the first argument after `dep`:
