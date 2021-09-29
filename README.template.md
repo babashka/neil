@@ -12,7 +12,11 @@ $ brew install babashka/brew/neil
 
 ### Scoop (Windows)
 
-A scoop package for Windows is coming soon.
+```
+$ scoop bucket add scoop-clojure https://github.com/littleli/scoop-clojure
+$ scoop install neil
+```
+For detailed information about scoop installer check [scoop-clojure](https://github.com/littleli/scoop-clojure).
 
 ### Manual
 
