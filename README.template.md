@@ -125,4 +125,6 @@ $ brew reinstall --build-from-source ./neil.rb`
 
 ## License
 
-TBD
+Copyright © 2021 Michiel Borkent
+
+Distributed under the MIT License. See LICENSE.
