@@ -18,6 +18,15 @@ $ scoop install neil
 ```
 For detailed information about scoop installer check [scoop-clojure](https://github.com/littleli/scoop-clojure).
 
+### Nix
+
+```bash 
+$ nix-shell -p neil
+
+# Alternatively, if your nix channel doesn't have neil yet:
+$ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
+```
+
 ### Manual
 
 - Install [babashka](https://github.com/babashka/babashka#installation)
