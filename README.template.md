@@ -33,7 +33,7 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 clj -Ttools install io.github.babashka/neil '{:git/tag "v{{version}}"}' :as neil
 ```
 
-See [tools usage](#toolsusage) for more.
+See [tools usage](#tools-usage) for more.
 
 ### Manual
 
