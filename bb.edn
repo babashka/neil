@@ -15,7 +15,7 @@
                         version)
          tests (do (load-file "tests.clj")
                    (clojure.test/run-tests 'tests))
-         publish {:doc "Bumps version, pushes tag and lets CI publish to npm."
+         publish {:doc "Bumps version, pushes tag"
                   :depends [tests bump-version]
                   :task
                   (do
