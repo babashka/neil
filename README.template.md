@@ -30,8 +30,10 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ### Clojure
 
 ``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.16"}' :as neil
+clj -Ttools install io.github.babashka/neil '{:git/tag "v{{version}}"}' :as neil
 ```
+
+See [tools usage](#toolsusage) for more.
 
 ### Manual
 
@@ -115,6 +117,26 @@ To change the alias you can provide an option like:
 
 ```
 $ neil add kaocha :alias kaocha2
+```
+
+## Tools usage
+
+Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
+
+``` clojure
+$ clj -Ttools install io.github.babashka/neil '{:git/tag "v{{version}}"}' :as neil
+```
+
+Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
+
+``` clojure
+clj -Tneil add-dep :lib org.clojure/tools.cli
+```
+
+NOTE: invoking a clojure tool requires you to quote strings:
+
+``` clojure
+clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
 ```
 
 ## Roapmap

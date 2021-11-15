@@ -9,7 +9,8 @@
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
                                 (->> (p/render (slurp "README.template.md")
-                                               {:help (str/trim help)})
+                                               {:help (str/trim help)
+                                                :version (slurp "version.txt")})
                                      (spit "README.md"))))}
          bump-version {:depends [gen-script update-readme]
                        :task (let [version (-> (slurp "version.txt")
