@@ -12,6 +12,60 @@
          '[clojure.edn :as edn]
          '[clojure.string :as str])
 
+(def windows? (str/includes? (System/getProperty "os.name") "Windows"))
+
+(def curl-opts
+  {:throw false
+   :compressed (not windows?)})
+
+(defn latest-clojars-version [qlib]
+  (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
+                        qlib)
+                curl-opts)
+      :body (cheshire/parse-string true)
+      :latest_release))
+
+(defn latest-mvn-version [qlib]
+  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
+                        (namespace qlib)
+                        (name qlib))
+                curl-opts)
+      :body (cheshire/parse-string true)
+      :response
+      :docs
+      first
+      :latestVersion))
+
+(defn default-branch [lib]
+  (-> (curl/get (format "https://api.github.com/repos/%s/%s"
+                        (namespace lib) (name lib)))
+      :body
+      (cheshire/parse-string true)
+      :default_branch))
+
+(defn clean-github-lib [lib]
+  (let [lib (str/replace lib "com.github." "")
+        lib (str/replace lib "io.github." "")
+        lib (symbol lib)]
+    lib))
+
+(defn latest-github-sha [lib]
+  (let [lib (clean-github-lib lib)
+        branch (default-branch lib)]
+    (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
+                          (namespace lib) (name lib) branch))
+        :body
+        (cheshire/parse-string true)
+        :sha)))
+
+(defn latest-github-tag [lib]
+  (let [lib (clean-github-lib lib)]
+    (-> (curl/get (format "https://api.github.com/repos/%s/%s/tags"
+                          (namespace lib) (name lib)))
+        :body
+        (cheshire/parse-string true)
+        first)))
+
 (def deps-template
   (str/triml "
 {:deps {}
@@ -87,9 +141,13 @@
   (add-alias opts :kaocha kaocha-alias))
 
 (defn build-alias [opts]
-  (let [s "
-{:deps {io.github.clojure/tools.build {:tag \"v0.5.1\" :sha \"21da7d4\"}{{deps-deploy}}}
- :ns-default build}"]
+  (let [latest-tag (latest-github-tag 'clojure/tools.build)
+        tag (:name latest-tag)
+        sha (-> latest-tag :commit :sha (subs 0 7))
+        s (format "
+{:deps {io.github.clojure/tools.build {:tag \"%s\" :sha \"%s\"}{{deps-deploy}}}
+ :ns-default build}"
+                  tag sha)]
     (str/replace s "{{deps-deploy}}"
                  (if (:deps-deploy opts)
                    "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
@@ -187,52 +245,6 @@ add
 
   - kaocha: adds kaocha test runner to :koacha alias.
 ")))
-
-(def windows? (str/includes? (System/getProperty "os.name") "Windows"))
-
-(def curl-opts
-  {:throw false
-   :compressed (not windows?)})
-
-(defn latest-clojars-version [qlib]
-  (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                        qlib)
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :latest_release))
-
-(defn latest-mvn-version [qlib]
-  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
-                        (namespace qlib)
-                        (name qlib))
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :response
-      :docs
-      first
-      :latestVersion))
-
-(defn default-branch [lib]
-  (-> (curl/get (format "https://api.github.com/repos/%s/%s"
-                        (namespace lib) (name lib)))
-      :body
-      (cheshire/parse-string true)
-      :default_branch))
-
-(defn clean-github-lib [lib]
-  (let [lib (str/replace lib "com.github." "")
-        lib (str/replace lib "io.github." "")
-        lib (symbol lib)]
-    lib))
-
-(defn latest-github-sha [lib]
-  (let [lib (clean-github-lib lib)
-        branch (default-branch lib)]
-    (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
-                          (namespace lib) (name lib) branch))
-        :body
-        (cheshire/parse-string true)
-        :sha)))
 
 (defn add-dep [opts]
   (ensure-deps-file opts)
