@@ -2,21 +2,27 @@
                     [clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
-         update-readme (let [help (:out (shell {:out :string} "./neil"))]
-                         (without-escaping
-                          (->> (p/render (slurp "README.template.md")
-                                         {:help (str/trim help)})
-                               (spit "README.md"))))
-         bump-version (let [version (-> (slurp "version.txt")
-                                        str/trim)
-                            [major minor patch] (str/split version (re-pattern "\\."))
-                            version (str/join "." [major minor (inc (Integer/parseInt patch))])]
-                        (spit "version.txt" version)
-                        version)
-         tests (do (load-file "tests.clj")
-                   (clojure.test/run-tests 'tests))
+         gen-script (let [prelude (slurp "prelude")
+                          script (slurp "src/babashka/neil.clj")]
+                      (spit "neil" (str/join "\n" [prelude script])))
+         update-readme {:depends [gen-script]
+                        :task (let [help (:out (shell {:out :string} "./neil"))]
+                               (without-escaping
+                                (->> (p/render (slurp "README.template.md")
+                                               {:help (str/trim help)})
+                                     (spit "README.md"))))}
+         bump-version {:depends [gen-script update-readme]
+                       :task (let [version (-> (slurp "version.txt")
+                                               str/trim)
+                                   [major minor patch] (str/split version (re-pattern "\\."))
+                                   version (str/join "." [major minor (inc (Integer/parseInt patch))])]
+                               (spit "version.txt" version)
+                               version)}
+         tests {:depends [gen-script]
+                :task (do (load-file "tests.clj")
+                          (clojure.test/run-tests 'tests))}
          publish {:doc "Bumps version, pushes tag"
-                  :depends [tests bump-version]
+                  :depends [gen-script tests bump-version]
                   :task
                   (do
                     (shell "git add version.txt")

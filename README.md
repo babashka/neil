@@ -20,11 +20,17 @@ For detailed information about scoop installer check [scoop-clojure](https://git
 
 ### Nix
 
-```bash 
+```bash
 $ nix-shell -p neil
 
 # Alternatively, if your nix channel doesn't have neil yet:
 $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
+```
+
+### Clojure
+
+``` bash
+clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.16"}' :as neil
 ```
 
 ### Manual

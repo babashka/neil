@@ -1,12 +1,3 @@
-#!/usr/bin/env bb
-;; -*- mode: clojure -*-
-
-;; DO NOT EDIT DIRECTLY. GENERATED FROM scr/babashka/neil.clj
-
-(require '[babashka.deps :as deps])
-
-(deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.0.2"}}})
-
 (ns babashka.neil
   {:no-doc true})
 
