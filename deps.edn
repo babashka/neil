@@ -1,0 +1,12 @@
+{:deps {babashka/babashka.curl {:mvn/version "0.1.0"}
+        babashka/fs {:mvn/version "0.1.1"}
+        rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
+        borkdude/rewrite-edn {:mvn/version "0.1.0"}
+        cheshire/cheshire {:mvn/version "5.10.1"}}
+ :tools/usage {:ns-default babashka.neil.api}
+ :aliases {:test ;; added by neil
+           {:extra-paths ["test"]
+            :extra-deps {io.github.cognitect-labs/test-runner
+                         {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
+            :main-opts ["-m" "cognitect.test-runner"]
+            :exec-fn cognitect.test-runner.api/test}}}
