@@ -108,7 +108,12 @@
 (defn indent [s n]
   (let [spaces (apply str (repeat n " "))
         lines (str/split-lines s)]
-    (str/join "\n" (map #(str spaces %) lines))))
+    (str/join "\n" (map (fn [s]
+                          (if (str/blank? s) s
+                              (str spaces s))) lines))))
+
+(defn clean-trailing-whitespace [s]
+  (str/join "\n" (map str/trimr (str/split-lines s))))
 
 (defn add-alias [opts alias-kw alias-contents]
   (ensure-deps-file opts)
@@ -124,8 +129,8 @@
                                (let [s (indent alias-contents 1)
                                      alias-nodes (r/parse-string s)]
                                  (r/assoc aliases alias-node alias-nodes))))
-                   str
-                   str/trim)
+                   str)
+            s (clean-trailing-whitespace s)
             s (str s "\n")]
         (spit (:deps-file opts) s))
       (println (format "deps.edn already contains %s alias!" alias)))))
