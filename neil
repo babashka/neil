@@ -133,7 +133,8 @@
             s (clean-trailing-whitespace s)
             s (str s "\n")]
         (spit (:deps-file opts) s))
-      (println (format "deps.edn already contains %s alias!" alias)))))
+      (do (println (format "[neil] Project deps.edn already contains alias %s" (str alias ".")))
+          ::update))))
 
 (defn add-cognitect-test-runner [opts]
   (add-alias opts :test cognitect-test-runner-alias))
@@ -150,13 +151,15 @@
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
         s (format "
-{:deps {io.github.clojure/tools.build {:tag \"%s\" :sha \"%s\"}{{deps-deploy}}}
+{:deps {io.github.clojure/tools.build {:git/tag \"%s\" :git/sha \"%s\"}{{deps-deploy}}}
  :ns-default build}"
                   tag sha)]
-    (str/replace s "{{deps-deploy}}"
-                 (if (:deps-deploy opts)
-                   "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
-                   ""))))
+    {:s (str/replace s "{{deps-deploy}}"
+                     (if (:deps-deploy opts)
+                       "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
+                       ""))
+     :tag tag
+     :sha sha}))
 
 (defn build-file
   [opts]
@@ -212,44 +215,31 @@
 (defn add-build [opts]
   (if-not (fs/exists? "build.clj")
     (spit "build.clj" (build-file opts))
-    (println "build.clj already exists!"))
+    (println "[neil] Project build.clj already exists."))
   (ensure-deps-file opts)
-  (add-alias opts :build (build-alias opts)))
-
-(defn print-help []
-  (println (str/trim "
-Usage: neil <subcommand> <options>
-
-Most subcommands support the options:
-
-- :alias - override alias name
-- :deps-file - override deps.edn file name
-
-Subcommands:
-
-add
-
-  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
-    :sha - When provided, assumes lib refers to Github repo.
-    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
-    :deps/root - Set :deps/root to given value
-    :as - Use as dependency name in deps.edn
-
-  - test: adds cognitect test runner to :test alias.
-
-  - build: adds tools.build build.clj file and :build alias.
-
-    Options:
-
-    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
-
-  - kaocha: adds kaocha test runner to :koacha alias.
-")))
+  (let [ba (build-alias opts)]
+    (when (= ::update (add-alias opts :build (:s ba)))
+      (println "[neil] Updating tools build to newest git tag + sha.")
+      (let [edn-string (edn-string opts)
+            edn (edn/read-string edn-string)
+            build-alias (get-in edn [:aliases :build :deps 'io.github.clojure/tools.build])
+            [tag-key sha-key]
+            (cond (and
+                   (:tag build-alias)
+                   (:sha build-alias))
+                  [:tag :sha]
+                  (and
+                   (:git/tag build-alias)
+                   (:git/sha build-alias))
+                  [:git/tag :git/sha])]
+        (when (and tag-key sha-key)
+          (let [nodes (edn-nodes edn-string)
+                nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build tag-key]
+                                  (:tag ba))
+                nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
+                                  (:sha ba))
+                s (str (str/trim (str nodes)) "\n")]
+            (spit (:deps-file opts) s)))))))
 
 (defn add-dep [opts]
   (ensure-deps-file opts)
@@ -293,6 +283,41 @@ add
                 nodes)
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
+
+(defn print-help []
+  (println (str/trim "
+Usage: neil <subcommand> <options>
+
+Most subcommands support the options:
+
+- :alias - override alias name
+- :deps-file - override deps.edn file name
+
+Subcommands:
+
+add
+
+  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :sha - When provided, assumes lib refers to Github repo.
+    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
+    :deps/root - Set :deps/root to given value
+    :as - Use as dependency name in deps.edn
+
+  - test: adds cognitect test runner to :test alias.
+
+  - build: adds tools.build build.clj file and :build alias.
+
+    Options:
+
+    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
+
+  - kaocha: adds kaocha test runner to :koacha alias.
+")))
 
 (defn add [[subcommand & opts]]
   (let [opts (parse-opts opts)
