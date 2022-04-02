@@ -64,6 +64,8 @@ Then:
 
   $ neil versions org.clojure/clojure | fzf | xargs neil add dep
 
+Could also grep before fzf there if there's too many versions.
+
 Caveat: not sure about the upstream APIs (Maven, Clojars, Git) for listing
 versions. Also not sure if confusion between Maven, Clojars and Git is going to
 cause problems.
