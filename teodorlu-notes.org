@@ -82,3 +82,11 @@ to
 Or =neil dep available-versions=.
 
   neil dep available-versions hiccup/hiccup | fzf | xargs neil dep add
+*** Actually, available-versions is too long. Let's try versions.
+Before:
+
+  neilz dep available-versions hiccup/hiccup | fzf | xargs neil add dep
+
+Now:
+
+  neilz dep versions hiccup/hiccup | fzf | xargs neil add dep
