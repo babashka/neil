@@ -30,6 +30,16 @@
       :body (cheshire/parse-string true)
       :latest_release))
 
+(defn clojars-versions [qlib]
+  (let [body
+        (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
+                              qlib)
+                      curl-opts)
+            :body (cheshire/parse-string true))]
+    (->> body
+         :recent_versions
+         (map :version))))
+
 (defn latest-mvn-version [qlib]
   (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
                         (namespace qlib)
@@ -289,6 +299,14 @@
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
 
+(defn dep-available-versions [opts]
+  (let [lib (or (:lib opts)
+                (first (:cmds opts)))
+        lib (symbol lib)
+        versions (clojars-versions lib)]
+    (doseq [v versions]
+      (println :lib lib :version v))))
+
 (defn print-help []
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -338,14 +356,17 @@ add
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
-(defn addz [[subcommand & opts]]
-  (println "wohoo"))
+(defn dep [[subcommand & opts]]
+  (let [opts (parse-opts opts)
+        opts (with-default-deps-edn opts)]
+    (case subcommand
+      "available-versions" (dep-available-versions opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
     (case subcommand
       "add" (add args)
-      "addz" (addz args)
+      "dep" (dep args)
       ("help" "--help") (print-help)
       (print-help))))
 
