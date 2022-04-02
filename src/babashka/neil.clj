@@ -6,7 +6,8 @@
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
-         '[clojure.string :as str])
+         '[clojure.string :as str]
+         '[clojure.pprint :refer [pprint]])
 
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
 
@@ -32,7 +33,7 @@
          (map :version))))
 
 (defn latest-mvn-version [qlib]
-  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
+  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1"
                         (namespace qlib)
                         (name qlib))
                 curl-opts)
@@ -41,6 +42,18 @@
       :docs
       first
       :latestVersion))
+
+(defn mvn-versions [qlib]
+  (let [payload
+        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=30"
+                              (namespace qlib)
+                              (name qlib))
+                      curl-opts)
+            :body
+            (cheshire/parse-string true))]
+    (->> payload
+         :response :docs
+         (map :v))))
 
 (defn default-branch [lib]
   (-> (curl/get (format "https://api.github.com/repos/%s/%s"
@@ -294,7 +307,12 @@
   (let [lib (or (:lib opts)
                 (first (:cmds opts)))
         lib (symbol lib)
-        versions (clojars-versions lib)]
+        git? (or (:sha opts)
+                 (:latest-sha opts))
+        versions (if git?
+                   ::todo
+                   (or (seq (clojars-versions lib))
+                       (seq (mvn-versions lib))))]
     (doseq [v versions]
       (println :lib lib :version v))))
 
