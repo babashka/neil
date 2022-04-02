@@ -32,14 +32,16 @@
       :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
-  (let [body
+  (let [limit (Long/parseLong limit)
+        body
         (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
                               qlib)
                       curl-opts)
             :body (cheshire/parse-string true))]
     (->> body
          :recent_versions
-         (map :version))))
+         (map :version)
+         (take limit))))
 
 (defn latest-mvn-version [qlib]
   (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1"
