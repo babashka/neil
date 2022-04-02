@@ -290,7 +290,7 @@
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
 
-(defn dep-available-versions [opts]
+(defn dep-versions [opts]
   (let [lib (or (:lib opts)
                 (first (:cmds opts)))
         lib (symbol lib)
@@ -351,7 +351,8 @@ add
   (let [opts (parse-opts opts)
         opts (with-default-deps-edn opts)]
     (case subcommand
-      "available-versions" (dep-available-versions opts))))
+      "versions" (dep-versions opts)
+      "add" (add-dep opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
