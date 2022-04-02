@@ -22,7 +22,7 @@
       :body (cheshire/parse-string true)
       :latest_release))
 
-(defn clojars-versions [qlib]
+(defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
   (let [body
         (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
                               qlib)
@@ -43,11 +43,12 @@
       first
       :latestVersion))
 
-(defn mvn-versions [qlib]
+(defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
   (let [payload
-        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=30"
+        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=%s"
                               (namespace qlib)
-                              (name qlib))
+                              (name qlib)
+                              limit)
                       curl-opts)
             :body
             (cheshire/parse-string true))]
@@ -311,8 +312,8 @@
                  (:latest-sha opts))
         versions (if git?
                    ::todo
-                   (or (seq (clojars-versions lib))
-                       (seq (mvn-versions lib))))]
+                   (or (seq (clojars-versions lib opts))
+                       (seq (mvn-versions lib opts))))]
     (doseq [v versions]
       (println :lib lib :version v))))
 
