@@ -1,0 +1,31 @@
+#+TITLE: Exploring Neil + fzf
+
+This document is a mix of a development journal, design spec and draft for test
+to go in a PR.
+
+* 2022-04-02
+Idea: better selection mechanism for a version of a library by shelling out to
+fzf. Not sure about the API. Neil currently works with fzf. Perhaps add a
+--version-select=fzf arg, or something. We'll see.
+
+For running locally, I'm going to symlink a modified neil from here into
+~/.local/bin/neilz.
+
+Here's a neil add command:
+
+  neil add dep :lib org.clojure/clojure
+
+I'm going to work with an addz command:
+
+  neil addz dep :lib org.clojure/clojure
+
+With =neil addz=, we're going to shell out to =fzf= for version selection rather
+than simply picking the latest. =fzf= is kind of an arbitrary choice, not all
+people are going to have it installed. The command to shell out to for
+completion could be configurable as a CLI argument or an environment variable.
+There are other options too, like =rofi= or =dmenu=. I like =fzf= because it's
+fast, and stays in the terminal rather than open a window.
+
+I'm also going to remove the side-effecting "change the deps.edn" file to make
+it easier to work with in development. That way we can have a simple
+live-reloading watch loop and not have to worry about state / cleanup logic.
