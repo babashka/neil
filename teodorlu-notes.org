@@ -36,3 +36,13 @@ live-reloading watch loop and not have to worry about state / cleanup logic.
 I'm using this thing:
 
   rg --files | entr -rc bash -c "bb gen-script && neilz addz dep :lib org.clojure/clojure"
+** Idea: split neil into search, selection and installation
+Search: list versions, given constraints
+
+Selection: pick a version.
+
+Installation: update deps.edn.
+
+If we do this split with pipes, we could use a normal unix pipe.
+
+  neil versions list hiccup/hiccup | fzf | neil dep add
