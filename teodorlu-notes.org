@@ -4,6 +4,7 @@ This document is a mix of a development journal, design spec and draft for test
 to go in a PR.
 
 * 2022-04-02
+** Idea: interactive library version selection with =fzf=
 Idea: better selection mechanism for a version of a library by shelling out to
 fzf. Not sure about the API. Neil currently works with fzf. Perhaps add a
 --version-select=fzf arg, or something. We'll see.
@@ -31,3 +32,7 @@ fast, and stays in the terminal rather than open a window.
 I'm also going to remove the side-effecting "change the deps.edn" file to make
 it easier to work with in development. That way we can have a simple
 live-reloading watch loop and not have to worry about state / cleanup logic.
+** Developing
+I'm using this thing:
+
+  rg --files | entr -rc bash -c "bb gen-script && neilz addz dep :lib org.clojure/clojure"
