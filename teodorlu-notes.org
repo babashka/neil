@@ -46,3 +46,24 @@ Installation: update deps.edn.
 If we do this split with pipes, we could use a normal unix pipe.
 
   neil versions list hiccup/hiccup | fzf | neil dep add
+*** I kinda don't want to explore hacking in a --version-selector=fzf when we can just do it the Unix way
+No longer want to persue the =neilz addz= stuff, yeah.
+
+Neil's current add API even supports setting the version of a specific library.
+=neil add= can already add a library version.
+*** Possible unixy way
+Idea:
+
+  $ neil versions org.clojure/clojure
+  :lib org.clojure/clojure :version 1.11.0
+  :lib org.clojure/clojure :version 1.10.0
+  :lib org.clojure/clojure :version 1.9.0
+  ...
+
+Then:
+
+  $ neil versions org.clojure/clojure | fzf | xargs neil add dep
+
+Caveat: not sure about the upstream APIs (Maven, Clojars, Git) for listing
+versions. Also not sure if confusion between Maven, Clojars and Git is going to
+cause problems.
