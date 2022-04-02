@@ -8,8 +8,10 @@ Idea: better selection mechanism for a version of a library by shelling out to
 fzf. Not sure about the API. Neil currently works with fzf. Perhaps add a
 --version-select=fzf arg, or something. We'll see.
 
-For running locally, I'm going to symlink a modified neil from here into
-~/.local/bin/neilz.
+For running locally, I'm going to symlink a modified neil from here into a
+folder on PATH.
+
+  ln -srf ./neil ~/.local/bin/neilz
 
 Here's a neil add command:
 
