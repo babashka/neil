@@ -6,8 +6,7 @@
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
-         '[clojure.string :as str]
-         '[clojure.pprint :refer [pprint]])
+         '[clojure.string :as str])
 
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
 
