@@ -42,7 +42,6 @@
   ;; So instead, we just limit from our sequence.
   ;;
   ;; (TODO consider deleting this comment)
-  (println (format "https://clojars.org/api/artifacts/%s" qlib))
   (let [limit (Long/parseLong limit)
         body
         (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
