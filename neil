@@ -338,10 +338,14 @@ add
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
+(defn addz [[subcommand & opts]]
+  (println "wohoo"))
+
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
     (case subcommand
       "add" (add args)
+      "addz" (addz args)
       ("help" "--help") (print-help)
       (print-help))))
 
