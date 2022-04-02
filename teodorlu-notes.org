@@ -114,3 +114,11 @@ Now:
 #+begin_src
   neilz dep versions hiccup/hiccup | fzf | xargs neil add dep
 #+end_src
+*** What about listing versions with git deps?
+I haven't really used git deps that much.
+
+There's existing code for getting the latest git tag and git ref from Github.
+What even ... makes sense ... here?
+
+Listing all tags should be reasonable. But fuzzy-searching on git hash makes no
+sense to me.
