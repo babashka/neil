@@ -12,15 +12,21 @@ fzf. Not sure about the API. Neil currently works with fzf. Perhaps add a
 For running locally, I'm going to symlink a modified neil from here into a
 folder on PATH.
 
-  ln -srf ./neil ~/.local/bin/neilz
+#+begin_src
+ln -srf ./neil ~/.local/bin/neilz
+#+end_src
 
 Here's a neil add command:
 
-  neil add dep :lib org.clojure/clojure
+#+begin_src
+neil add dep :lib org.clojure/clojure
+#+end_src
 
 I'm going to work with an addz command:
 
-  neil addz dep :lib org.clojure/clojure
+#+begin_src
+neil addz dep :lib org.clojure/clojure
+#+end_src
 
 With =neil addz=, we're going to shell out to =fzf= for version selection rather
 than simply picking the latest. =fzf= is kind of an arbitrary choice, not all
@@ -35,7 +41,9 @@ live-reloading watch loop and not have to worry about state / cleanup logic.
 ** Developing
 I'm using this thing:
 
-  rg --files | entr -rc bash -c "bb gen-script && neilz addz dep :lib org.clojure/clojure"
+#+begin_src
+rg --files | entr -rc bash -c "bb gen-script && neilz addz dep :lib org.clojure/clojure"
+#+end_src
 ** Idea: split neil into search, selection and installation
 Search: list versions, given constraints
 
@@ -45,7 +53,9 @@ Installation: update deps.edn.
 
 If we do this split with pipes, we could use a normal unix pipe.
 
-  neil versions list hiccup/hiccup | fzf | xargs neil dep add
+#+begin_src
+neil versions list hiccup/hiccup | fzf | xargs neil dep add
+#+end_src
 *** I kinda don't want to explore hacking in a --version-selector=fzf when we can just do it the Unix way
 No longer want to persue the =neilz addz= stuff, yeah.
 
@@ -54,15 +64,19 @@ Neil's current add API even supports setting the version of a specific library.
 *** Possible unixy way
 Idea:
 
+#+begin_src
   $ neil versions org.clojure/clojure
   :lib org.clojure/clojure :version 1.11.0
   :lib org.clojure/clojure :version 1.10.0
   :lib org.clojure/clojure :version 1.9.0
   ...
+#+end_src
 
 Then:
 
+#+begin_src
   $ neil versions org.clojure/clojure | fzf | xargs neil add dep
+#+end_src
 
 Could also grep before fzf there if there's too many versions.
 
@@ -72,21 +86,31 @@ cause problems.
 *** Argument order
 Realizing that I prefer
 
+#+begin_src
   neil deps add
+#+end_src
 
 to
 
+#+begin_src
   neil add dep
+#+end_src
 
 . =neil deps add= lets us know we're working with deps first. Or =neil dep add=.
 Or =neil dep available-versions=.
 
+#+begin_src
   neil dep available-versions hiccup/hiccup | fzf | xargs neil dep add
+#+end_src
 *** Actually, available-versions is too long. Let's try versions.
 Before:
 
+#+begin_src
   neilz dep available-versions hiccup/hiccup | fzf | xargs neil add dep
+#+end_src
 
 Now:
 
+#+begin_src
   neilz dep versions hiccup/hiccup | fzf | xargs neil add dep
+#+end_src
