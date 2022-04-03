@@ -382,10 +382,7 @@ add
   (let [opts (parse-opts opts)
         opts (with-default-deps-edn opts)]
     (case subcommand
-      "versions" (dep-versions opts)
-      ;; should we have `dep add` too? Perhaps not now? @borkdude - up to you.
-      ;; "add" (add-dep opts)
-      )))
+      "versions" (dep-versions opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
