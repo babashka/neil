@@ -26,8 +26,7 @@
 (deftest dep-versions-test
   (let [dep-versions (fn [lib & args]
                        (-> (process (concat ["./neil" "dep" "versions" lib] args) {:out :string})
-                           check :out str/split-lines))
-        hiccup-versions (dep-versions "hiccup/hiccup")]
+                           check :out str/split-lines))]
     (is (seq (dep-versions "org.clojure/clojure"))
         "We're able to find at least one Clojure version")
     (is (= 3
