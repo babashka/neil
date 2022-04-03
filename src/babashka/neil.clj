@@ -379,7 +379,8 @@ dep
   (let [opts (parse-opts opts)
         opts (with-default-deps-edn opts)]
     (case subcommand
-      "versions" (dep-versions opts))))
+      "versions" (dep-versions opts)
+      "add" (add-dep opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
