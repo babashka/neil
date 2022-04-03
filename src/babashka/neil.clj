@@ -320,14 +320,14 @@
   (let [lib (or (:lib opts)
                 (first (:cmds opts)))
         lib (symbol lib)
-        git? (or (:sha opts)
-                 (:latest-sha opts))
-        versions (if git?
-                   ::todo
-                   (or (seq (clojars-versions lib opts))
-                       (seq (mvn-versions lib opts))))]
-    (doseq [v versions]
-      (println :lib lib :version v))))
+        versions (or (seq (clojars-versions lib opts))
+                     (seq (mvn-versions lib opts)))]
+    (if-not versions
+      (binding [*out* *err*]
+        (println "Unable to find" lib "on Clojars or Maven.")
+        (System/exit 1))
+      (doseq [v versions]
+        (println :lib lib :version v)))))
 
 (defn print-help []
   (println (str/trim "
@@ -362,6 +362,15 @@ add
     :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
 
   - kaocha: adds kaocha test runner to :koacha alias.
+
+dep
+
+  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
+    Git deps.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
 ")))
 
 (defn with-default-deps-edn [opts]
