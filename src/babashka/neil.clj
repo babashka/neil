@@ -344,13 +344,6 @@ add
 
 dep
 
-  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
-    Git deps.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-
   - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
 
     Options:
@@ -361,6 +354,13 @@ dep
     :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
     :deps/root - Set :deps/root to given value
     :as - Use as dependency name in deps.edn
+
+  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
+    Git deps.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
 ")))
 
 (defn with-default-deps-edn [opts]
