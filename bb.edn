@@ -22,9 +22,8 @@
          tests {:depends [gen-script]
                 :task (do (load-file "tests.clj")
                           (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
-                            (System/exit (if (pos? (+ error fail))
-                                           1
-                                           0))))}
+                            (when (pos? (+ error fail))
+                              (throw (ex-info "Tests failed" {:babashka/exit 1})))))}
          publish {:doc "Bumps version, pushes tag"
                   :depends [gen-script tests bump-version]
                   :task
