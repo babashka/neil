@@ -330,16 +330,7 @@ Subcommands:
 
 add
 
-  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
-    :sha - When provided, assumes lib refers to Github repo.
-    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
-    :deps/root - Set :deps/root to given value
-    :as - Use as dependency name in deps.edn
+  - dep: alias for `neil dep add`. Deprecated.
 
   - test: adds cognitect test runner to :test alias.
 
@@ -353,8 +344,18 @@ add
 
 dep
 
-  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
-    Git deps.
+  - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :sha - When provided, assumes lib refers to Github repo.
+    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
+    :deps/root - Set :deps/root to given value
+    :as - Use as dependency name in deps.edn
+
+  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
 
     Options:
 
