@@ -355,8 +355,7 @@ dep
     :deps/root - Set :deps/root to given value
     :as - Use as dependency name in deps.edn
 
-  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
-    Git deps.
+  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
 
     Options:
 
