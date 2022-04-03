@@ -22,23 +22,11 @@
       :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
-  ;; It looks like we call out to the Clojars' API to get /every/ version,
-  ;; perhaps a performance problem. I couldn't find a way to specify a limit as
-  ;; a query parameter.
-  ;;
-  ;; Clojars recent versions SQL:
-  ;;
-  ;;   https://github.com/clojars/clojars-web/blob/c6733177a4bae68f2537b34ddf09b17332c70ba7/resources/queries/queryfile.sql#L210-L219
-  ;;
-  ;; So instead, we just limit from our sequence.
-  ;;
-  ;; (TODO consider deleting this comment)
   (let [limit (Long/parseLong limit)
-        body
-        (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                              qlib)
-                      curl-opts)
-            :body (cheshire/parse-string true))]
+        body (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
+                                   qlib)
+                           curl-opts)
+                 :body (cheshire/parse-string true))]
     (->> body
          :recent_versions
          (map :version)
