@@ -21,7 +21,10 @@
                                version)}
          tests {:depends [gen-script]
                 :task (do (load-file "tests.clj")
-                          (clojure.test/run-tests 'tests))}
+                          (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
+                            (System/exit (if (pos? (+ error fail))
+                                           1
+                                           0))))}
          publish {:doc "Bumps version, pushes tag"
                   :depends [gen-script tests bump-version]
                   :task
