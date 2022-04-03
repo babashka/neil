@@ -30,8 +30,19 @@
       :body (cheshire/parse-string true)
       :latest_release))
 
+(defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
+  (let [limit (Long/parseLong limit)
+        body (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
+                                   qlib)
+                           curl-opts)
+                 :body (cheshire/parse-string true))]
+    (->> body
+         :recent_versions
+         (map :version)
+         (take limit))))
+
 (defn latest-mvn-version [qlib]
-  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%%22%s%%22+AND+a:%%22%s%%22&rows=1"
+  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1"
                         (namespace qlib)
                         (name qlib))
                 curl-opts)
@@ -40,6 +51,19 @@
       :docs
       first
       :latestVersion))
+
+(defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
+  (let [payload
+        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=%s"
+                              (namespace qlib)
+                              (name qlib)
+                              limit)
+                      curl-opts)
+            :body
+            (cheshire/parse-string true))]
+    (->> payload
+         :response :docs
+         (map :v))))
 
 (defn default-branch [lib]
   (-> (curl/get (format "https://api.github.com/repos/%s/%s"
@@ -289,6 +313,19 @@
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
 
+(defn dep-versions [opts]
+  (let [lib (or (:lib opts)
+                (first (:cmds opts)))
+        lib (symbol lib)
+        versions (or (seq (clojars-versions lib opts))
+                     (seq (mvn-versions lib opts)))]
+    (if-not versions
+      (binding [*out* *err*]
+        (println "Unable to find" lib "on Clojars or Maven.")
+        (System/exit 1))
+      (doseq [v versions]
+        (println :lib lib :version v)))))
+
 (defn print-help []
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -322,6 +359,15 @@ add
     :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
 
   - kaocha: adds kaocha test runner to :koacha alias.
+
+dep
+
+  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
+    Git deps.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
 ")))
 
 (defn with-default-deps-edn [opts]
@@ -338,10 +384,17 @@ add
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
+(defn dep [[subcommand & opts]]
+  (let [opts (parse-opts opts)
+        opts (with-default-deps-edn opts)]
+    (case subcommand
+      "versions" (dep-versions opts))))
+
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
     (case subcommand
       "add" (add args)
+      "dep" (dep args)
       ("help" "--help") (print-help)
       (print-help))))
 
