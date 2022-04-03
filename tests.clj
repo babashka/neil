@@ -7,8 +7,6 @@
    [clojure.string :as str]
    [clojure.test :as t :refer [deftest is]]))
 
-(load-file "neil")
-
 (defn neil [arg & args]
   (let [tmp-file (doto (fs/file (fs/temp-dir) "neil"  "deps.edn")
                    (-> fs/parent (fs/create-dirs))
