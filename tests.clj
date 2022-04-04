@@ -21,9 +21,12 @@
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
-(defn run-dep-versions [lib & args]
-  (-> (process (concat ["./neil" "dep" "versions" lib] args) {:out :string})
+(defn run-dep-subcommand [subcommand & args]
+  (-> (process (concat ["./neil" "dep" subcommand] args) {:out :string})
       check :out str/split-lines))
+
+(defn run-dep-versions [lib & args]
+  (apply run-dep-subcommand "versions" lib args))
 
 (deftest dep-versions-test
   (is (seq (run-dep-versions 'org.clojure/clojure))
