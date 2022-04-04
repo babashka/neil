@@ -21,15 +21,29 @@
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
+(defn run-dep-subcommand [subcommand & args]
+  (-> (process (concat ["./neil" "dep" subcommand] args) {:out :string})
+      check :out str/split-lines))
+
+(defn run-dep-versions [lib & args]
+  (apply run-dep-subcommand "versions" lib args))
+
 (deftest dep-versions-test
-  (let [dep-versions (fn [lib & args]
-                       (-> (process (concat ["./neil" "dep" "versions" lib] args) {:out :string})
-                           check :out str/split-lines))]
-    (is (seq (dep-versions 'org.clojure/clojure))
-        "We're able to find at least one Clojure version")
-    (is (= 3
-           (count (dep-versions 'hiccup/hiccup :limit 3)))
-        "We're able to find exactly 3 hiccup versions")))
+  (is (seq (run-dep-versions 'org.clojure/clojure))
+      "We're able to find at least one Clojure version")
+  (is (= 3
+         (count (run-dep-versions 'hiccup/hiccup :limit 3)))
+      "We're able to find exactly 3 hiccup versions"))
+
+(deftest dep-search-test
+  (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
+  (is (not-empty (run-dep-subcommand "search" "hiccups")))
+  (is (some #(str/starts-with? % ":lib hiccups/hiccups" )
+            (run-dep-subcommand "search" "hiccups")))
+  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+" % )
+            (run-dep-subcommand "search" "hiccups")))
+  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+" % )
+            (run-dep-subcommand "search" "hiccups"))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))

@@ -13,6 +13,9 @@
 (def curl-opts
   {:throw false
    :compressed (not windows?)})
+(defn- curl-get-json [url]
+  (-> (curl/get url curl-opts)
+      :body (cheshire/parse-string true)))
 
 (defn latest-clojars-version [qlib]
   (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
@@ -317,6 +320,21 @@
       (doseq [v versions]
         (println :lib lib :version v)))))
 
+(defn dep-search [opts]
+  (let [search-term (first (:cmds opts))
+        url (str "https://clojars.org/search?format=json&q=" search-term)
+        {search-results :results
+         results-count :count} (curl-get-json url)]
+    (when (zero? results-count)
+      (binding [*out* *err*]
+        (println "Unable to find" search-term  "on Clojars.")
+        (System/exit 1)))
+    (doseq [search-result search-results]
+      (println :lib (format  "%s/%s"
+                             (:group_name search-result)
+                             (:jar_name search-result))
+               :version (:version search-result)))))
+
 (defn print-help []
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -355,6 +373,8 @@ dep
     :deps/root - Set :deps/root to given value
     :as - Use as dependency name in deps.edn
 
+  - search: lists available libraries on Clojars matching a search string.
+
   - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
 
     Options:
@@ -381,7 +401,8 @@ dep
         opts (with-default-deps-edn opts)]
     (case subcommand
       "versions" (dep-versions opts)
-      "add" (add-dep opts))))
+      "add" (add-dep opts)
+      "search" (dep-search opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]

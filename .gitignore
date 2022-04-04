@@ -2,3 +2,4 @@
 /.lsp/.cache
 /.clj-kondo/.cache
 /.nrepl-port
+/.direnv/
