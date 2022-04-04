@@ -13,6 +13,9 @@
 (def curl-opts
   {:throw false
    :compressed (not windows?)})
+(defn- curl-get-json [url]
+  (-> (curl/get url curl-opts)
+      :body (cheshire/parse-string true)))
 
 (defn latest-clojars-version [qlib]
   (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
