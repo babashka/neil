@@ -373,6 +373,8 @@ dep
     :deps/root - Set :deps/root to given value
     :as - Use as dependency name in deps.edn
 
+  - search: lists available libraries on Clojars matching a search string.
+
   - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
 
     Options:
