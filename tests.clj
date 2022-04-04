@@ -21,15 +21,17 @@
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
+(defn run-dep-versions [lib & args]
+  (-> (process (concat ["./neil" "dep" "versions" lib] args) {:out :string})
+      check :out str/split-lines))
+
 (deftest dep-versions-test
-  (let [dep-versions (fn [lib & args]
-                       (-> (process (concat ["./neil" "dep" "versions" lib] args) {:out :string})
-                           check :out str/split-lines))]
-    (is (seq (dep-versions 'org.clojure/clojure))
-        "We're able to find at least one Clojure version")
-    (is (= 3
-           (count (dep-versions 'hiccup/hiccup :limit 3)))
-        "We're able to find exactly 3 hiccup versions")))
+  (is (seq (run-dep-versions 'org.clojure/clojure))
+      "We're able to find at least one Clojure version")
+  (is (= 3
+         (count (run-dep-versions 'hiccup/hiccup :limit 3)))
+      "We're able to find exactly 3 hiccup versions"))
+
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
