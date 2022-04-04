@@ -35,6 +35,8 @@
          (count (run-dep-versions 'hiccup/hiccup :limit 3)))
       "We're able to find exactly 3 hiccup versions"))
 
+(deftest dep-search-test
+  (is (not (nil? (run-dep-subcommand "search" "hello")))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))

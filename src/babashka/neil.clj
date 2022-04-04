@@ -317,6 +317,9 @@
       (doseq [v versions]
         (println :lib lib :version v)))))
 
+(defn dep-search [opts]
+  "")
+
 (defn print-help []
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -381,7 +384,8 @@ dep
         opts (with-default-deps-edn opts)]
     (case subcommand
       "versions" (dep-versions opts)
-      "add" (add-dep opts))))
+      "add" (add-dep opts)
+      "search" (dep-search opts))))
 
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
