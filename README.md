@@ -30,7 +30,7 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ### Clojure
 
 ``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.17"}' :as neil
+clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.18"}' :as neil
 ```
 
 See [tools usage](#tools-usage) for more.
@@ -62,16 +62,7 @@ Subcommands:
 
 add
 
-  - dep: adds :lib, a fully qualified symbol, to deps.edn :deps. Example:
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
-    :sha - When provided, assumes lib refers to Github repo.
-    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
-    :deps/root - Set :deps/root to given value
-    :as - Use as dependency name in deps.edn
+  - dep: alias for `neil dep add`. Deprecated.
 
   - test: adds cognitect test runner to :test alias.
 
@@ -82,6 +73,27 @@ add
     :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
 
   - kaocha: adds kaocha test runner to :koacha alias.
+
+dep
+
+  - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
+    :sha - When provided, assumes lib refers to Github repo.
+    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
+    :deps/root - Set :deps/root to given value
+    :as - Use as dependency name in deps.edn
+
+  - search: lists available libraries on Clojars matching a search string.
+
+  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
 ```
 
 ### add dep
@@ -154,7 +166,7 @@ $ neil add kaocha :alias kaocha2
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
 
 ``` clojure
-$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.17"}' :as neil
+$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.18"}' :as neil
 ```
 
 Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
