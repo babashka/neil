@@ -25,10 +25,12 @@
                             (when (pos? (+ error fail))
                               (throw (ex-info "Tests failed" {:babashka/exit 1})))))}
          publish {:doc "Bumps version, pushes tag"
-                  :depends [gen-script tests bump-version]
                   :task
                   (do
-                    (shell "git add version.txt")
+                    (run 'tests)
+                    (run 'bump-version)
+                    (run 'gen-script)
+                    (shell "git add .")
                     (shell "git commit -m 'Bump version'")
                     (shell (str "git tag v" (slurp "version.txt")))
                     (shell "git push --atomic origin main"
