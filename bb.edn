@@ -12,8 +12,7 @@
                                                {:help (str/trim help)
                                                 :version (slurp "version.txt")})
                                      (spit "README.md"))))}
-         bump-version {:depends [gen-script update-readme]
-                       :task (let [version (-> (slurp "version.txt")
+         bump-version {:task (let [version (-> (slurp "version.txt")
                                                str/trim)
                                    [major minor patch] (str/split version (re-pattern "\\."))
                                    version (str/join "." [major minor (inc (Integer/parseInt patch))])]
