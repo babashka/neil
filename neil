@@ -22,6 +22,9 @@
 (def curl-opts
   {:throw false
    :compressed (not windows?)})
+(defn- curl-get-json [url]
+  (-> (curl/get url curl-opts)
+      :body (cheshire/parse-string true)))
 
 (defn latest-clojars-version [qlib]
   (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
@@ -327,7 +330,19 @@
         (println :lib lib :version v)))))
 
 (defn dep-search [opts]
-  "")
+  (let [search-term (first (:cmds opts))
+        url (str "https://clojars.org/search?format=json&q=" search-term)
+        {search-results :results
+         results-count :count} (curl-get-json url)]
+    (when (zero? results-count)
+      (binding [*out* *err*]
+        (println "Unable to find" search-term  "on Clojars.")
+        (System/exit 1)))
+    (doseq [search-result search-results]
+      (println :lib (format  "%s/%s"
+                             (:group_name search-result)
+                             (:jar_name search-result))
+               :version (:version search-result)))))
 
 (defn print-help []
   (println (str/trim "
@@ -356,13 +371,6 @@ add
 
 dep
 
-  - versions: lists available versions of :lib. Currently suppports Clojars/Maven coordinates, no
-    Git deps.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-
   - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
 
     Options:
@@ -373,6 +381,12 @@ dep
     :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
     :deps/root - Set :deps/root to given value
     :as - Use as dependency name in deps.edn
+
+  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
+
+    Options:
+
+    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
 ")))
 
 (defn with-default-deps-edn [opts]

@@ -321,7 +321,19 @@
         (println :lib lib :version v)))))
 
 (defn dep-search [opts]
-  "")
+  (let [search-term (first (:cmds opts))
+        url (str "https://clojars.org/search?format=json&q=" search-term)
+        {search-results :results
+         results-count :count} (curl-get-json url)]
+    (when (zero? results-count)
+      (binding [*out* *err*]
+        (println "Unable to find" search-term  "on Clojars.")
+        (System/exit 1)))
+    (doseq [search-result search-results]
+      (println :lib (format  "%s/%s"
+                             (:group_name search-result)
+                             (:jar_name search-result))
+               :version (:version search-result)))))
 
 (defn print-help []
   (println (str/trim "

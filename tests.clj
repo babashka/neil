@@ -36,7 +36,14 @@
       "We're able to find exactly 3 hiccup versions"))
 
 (deftest dep-search-test
-  (is (not (nil? (run-dep-subcommand "search" "hello")))))
+  (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
+  (is (not-empty (run-dep-subcommand "search" "hiccups")))
+  (is (some #(str/starts-with? % ":lib hiccups/hiccups" )
+            (run-dep-subcommand "search" "hiccups")))
+  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+" % )
+            (run-dep-subcommand "search" "hiccups")))
+  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+" % )
+            (run-dep-subcommand "search" "hiccups"))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
