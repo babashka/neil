@@ -28,9 +28,10 @@
                   (do
                     (run 'tests)
                     (run 'bump-version)
-                    (run 'gen-script)
+                    (run 'update-readme)
                     (shell "git add .")
-                    (shell "git commit -m 'Bump version'")
-                    (shell (str "git tag v" (slurp "version.txt")))
-                    (shell "git push --atomic origin main"
-                           (str "v" (slurp "version.txt"))))}}}
+                    (let [version (slurp "version.txt")]
+                      (shell (format "git commit -m 'Bump version %s'" version))
+                      (shell (str "git tag v" version))
+                      (shell "git push --atomic origin main"
+                             (str "v" version))))}}}

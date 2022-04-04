@@ -30,7 +30,7 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ### Clojure
 
 ``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.20"}' :as neil
+clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.23"}' :as neil
 ```
 
 See [tools usage](#tools-usage) for more.
@@ -166,7 +166,7 @@ $ neil add kaocha :alias kaocha2
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
 
 ``` clojure
-$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.20"}' :as neil
+$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.23"}' :as neil
 ```
 
 Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
