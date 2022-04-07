@@ -33,28 +33,24 @@
          (map :version)
          (take limit))))
 
+(defn- search-mvn [qlib limit]
+  (:response
+   (curl-get-json
+    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s"
+            (namespace qlib)
+            (name qlib)
+            limit))))
+
 (defn latest-mvn-version [qlib]
-  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1"
-                        (namespace qlib)
-                        (name qlib))
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :response
+  (-> (search-mvn qlib 1)
       :docs
       first
       :latestVersion))
 
 (defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
-  (let [payload
-        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=%s"
-                              (namespace qlib)
-                              (name qlib)
-                              limit)
-                      curl-opts)
-            :body
-            (cheshire/parse-string true))]
+  (let [payload (search-mvn qlib limit)]
     (->> payload
-         :response :docs
+         :docs
          (map :v))))
 
 (defn default-branch [lib]
