@@ -33,6 +33,7 @@
          (map :version)
          (take limit))))
 
+
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
@@ -54,10 +55,8 @@
          (map :v))))
 
 (defn default-branch [lib]
-  (-> (curl/get (format "https://api.github.com/repos/%s/%s"
+  ((curl-get-json (format "https://api.github.com/repos/%s/%s"
                         (namespace lib) (name lib)))
-      :body
-      (cheshire/parse-string true)
       :default_branch))
 
 (defn clean-github-lib [lib]
@@ -69,19 +68,15 @@
 (defn latest-github-sha [lib]
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
-    (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
+    ((curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
                           (namespace lib) (name lib) branch))
-        :body
-        (cheshire/parse-string true)
         :sha)))
 
 (defn latest-github-tag [lib]
   (let [lib (clean-github-lib lib)]
-    (-> (curl/get (format "https://api.github.com/repos/%s/%s/tags"
-                          (namespace lib) (name lib)))
-        :body
-        (cheshire/parse-string true)
-        first)))
+    (first
+     (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
+                            (namespace lib) (name lib))))))
 
 (def deps-template
   (str/triml "
