@@ -4,5 +4,6 @@ pkgs.mkShell{
     clojure
     babashka
     clj-kondo
+    graalvm17-ce # for java
   ];
 }

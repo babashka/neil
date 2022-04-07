@@ -17,53 +17,46 @@
   (-> (curl/get url curl-opts)
       :body (cheshire/parse-string true)))
 
+(defn- get-clojars-artifact [qlib]
+  (curl-get-json
+   (format "https://clojars.org/api/artifacts/%s"
+           qlib)))
+
 (defn latest-clojars-version [qlib]
-  (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                        qlib)
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :latest_release))
+  ((get-clojars-artifact qlib) :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
   (let [limit (Long/parseLong limit)
-        body (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                                   qlib)
-                           curl-opts)
-                 :body (cheshire/parse-string true))]
+        body (get-clojars-artifact qlib)]
     (->> body
          :recent_versions
          (map :version)
          (take limit))))
 
+
+(defn- search-mvn [qlib limit]
+  (:response
+   (curl-get-json
+    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s"
+            (namespace qlib)
+            (name qlib)
+            limit))))
+
 (defn latest-mvn-version [qlib]
-  (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=1"
-                        (namespace qlib)
-                        (name qlib))
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :response
+  (-> (search-mvn qlib 1)
       :docs
       first
       :latestVersion))
 
 (defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
-  (let [payload
-        (-> (curl/get (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&core=gav&rows=%s"
-                              (namespace qlib)
-                              (name qlib)
-                              limit)
-                      curl-opts)
-            :body
-            (cheshire/parse-string true))]
+  (let [payload (search-mvn qlib limit)]
     (->> payload
-         :response :docs
+         :docs
          (map :v))))
 
 (defn default-branch [lib]
-  (-> (curl/get (format "https://api.github.com/repos/%s/%s"
+  ((curl-get-json (format "https://api.github.com/repos/%s/%s"
                         (namespace lib) (name lib)))
-      :body
-      (cheshire/parse-string true)
       :default_branch))
 
 (defn clean-github-lib [lib]
@@ -75,19 +68,15 @@
 (defn latest-github-sha [lib]
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
-    (-> (curl/get (format "https://api.github.com/repos/%s/%s/commits/%s"
+    ((curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
                           (namespace lib) (name lib) branch))
-        :body
-        (cheshire/parse-string true)
         :sha)))
 
 (defn latest-github-tag [lib]
   (let [lib (clean-github-lib lib)]
-    (-> (curl/get (format "https://api.github.com/repos/%s/%s/tags"
-                          (namespace lib) (name lib)))
-        :body
-        (cheshire/parse-string true)
-        first)))
+    (first
+     (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
+                            (namespace lib) (name lib))))))
 
 (def deps-template
   (str/triml "
