@@ -26,19 +26,16 @@
   (-> (curl/get url curl-opts)
       :body (cheshire/parse-string true)))
 
+(defn- get-clojars-artifact [qlib]
+  (curl-get-json (format "https://clojars.org/api/artifacts/%s"
+                         qlib)))
+
 (defn latest-clojars-version [qlib]
-  (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                        qlib)
-                curl-opts)
-      :body (cheshire/parse-string true)
-      :latest_release))
+  ((get-clojars-artifact qlib) :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
   (let [limit (Long/parseLong limit)
-        body (-> (curl/get (format "https://clojars.org/api/artifacts/%s"
-                                   qlib)
-                           curl-opts)
-                 :body (cheshire/parse-string true))]
+        body (get-clojars-artifact qlib)]
     (->> body
          :recent_versions
          (map :version)
