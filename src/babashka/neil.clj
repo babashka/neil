@@ -8,7 +8,11 @@
          '[clojure.edn :as edn]
          '[clojure.string :as str])
 
+(import java.net.URLEncoder)
+
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
+
+(defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
 (def curl-opts
   {:throw false
@@ -311,7 +315,7 @@
 
 (defn dep-search [opts]
   (let [search-term (first (:cmds opts))
-        url (str "https://clojars.org/search?format=json&q=" search-term)
+        url (str "https://clojars.org/search?format=json&q=\"" (url-encode search-term) "\"")
         {search-results :results
          results-count :count} (curl-get-json url)]
     (when (zero? results-count)
