@@ -204,7 +204,7 @@ NOTE: invoking a clojure tool requires you to quote strings:
 clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
 ```
 
-## Roapmap
+## Roadmap
 
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
 - Consider `neil test :only foo.bar` which invokes `clojure -M:test -n foo.bar`
