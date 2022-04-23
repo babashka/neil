@@ -88,7 +88,7 @@ the dependency to the project (deps.edn only)."
          (exe (if-let ((exe (executable-find "neil")))
                   exe (user-error "Cannot find 'neil' command!")))
 
-         (res (funcall perform-action exe (concat "dep search " term)))
+         (res (funcall perform-action exe (concat "dep search " (shell-quote-argument term))))
          (lib-name (let ((completion-extra-properties
                           '(:annotation-function neil-search-annotation-fn)))
                      (completing-read
