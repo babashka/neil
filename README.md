@@ -161,6 +161,29 @@ To change the alias you can provide an option like:
 $ neil add kaocha :alias kaocha2
 ```
 
+### dep search
+
+Search Clojars for a string in any attribute of an artifact:
+
+```
+$ neil dep search "babashka.nrepl"
+:lib babashka/babashka.nrepl :version 0.0.6
+```
+
+Note that Clojars stores the namespace and name of a library as separate attributes, so searching for a ns-qualified library will not necessarily return any matches:
+
+```
+$ neil dep search "babashka/babashka.nrepl"
+Unable to find babashka/babashka.nrepl on Clojars.
+```
+
+But a search string can be matched in a library's description:
+
+```
+$ neil dep search "test framework"
+```
+will return libraries with 'test framework' in their description.
+
 ## Tools usage
 
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
