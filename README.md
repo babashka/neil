@@ -264,7 +264,7 @@ clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
 
 [neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package. 
 
-Load it using your proffered Emacs package manager, e.g., for Doom Emacs:
+Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 
 ```emacs-lisp
 ;; packages.el
