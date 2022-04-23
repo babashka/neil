@@ -1,6 +1,6 @@
 ;;; neil.el --- Emacs companion for Babashka Neil -*- lexical-binding: t; -*-
 ;;
-;; Copyright (C) 2022 Ag Ibragimov
+;; Copyright (c) 2021 Michiel Borkent
 ;;
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
@@ -8,7 +8,7 @@
 ;; Modified: April 20, 2022
 ;; Version: 0.0.1
 ;; Keywords: convenience tools
-;; Homepage: https://github.com/agzam/neil
+;; Homepage: https://github.com/babashka/neil
 ;; Package-Requires: ((emacs "26.1"))
 ;;
 ;; This file is part of babashka/neil project.
