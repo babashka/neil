@@ -43,7 +43,12 @@
   (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+" % )
             (run-dep-subcommand "search" "hiccups")))
   (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+" % )
-            (run-dep-subcommand "search" "hiccups"))))
+            (run-dep-subcommand "search" "hiccups")))
+  ; tests for no NPEs/json parsing exceptions
+  (is (any? (run-dep-subcommand "search" "org.clojure/tools.cli")))
+  (is (any? (run-dep-subcommand "search" "babashka nrepl")))
+  (is (thrown-with-msg? Exception #"Unable to find"
+        (run-dep-subcommand "search" "%22searchTermThatIsn'tFound"))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
