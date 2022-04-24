@@ -142,6 +142,30 @@ $ neil dep search "test framework"
 ```
 will return libraries with 'test framework' in their description.
 
+### license list
+
+List/search for licenses that can be added to a project with `neil`. This functionality uses Github's license API, 
+which is also used by [choosealicense.com](https://choosealicense.com/). With no search term, a list of 
+commonly-used licenses is returned:
+
+```
+$ neil license list
+:key agpl-3.0 :name GNU Affero General Public License v3.0
+:key apache-2.0 :name Apache License 2.0
+...
+```
+
+A search term can be added to filter the commonly-used list with a case-insensitive search against the license name:
+
+```
+$ neil license list "lesser general"
+:key lgpl-2.1 :name GNU Lesser General Public License v2.1
+```
+
+The full collection of available licenses can be found in the [license API repo](https://github.com/github/choosealicense.com/tree/gh-pages/_licenses).
+
+`license search` is an alias for `license list`.
+
 ## Tools usage
 
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):

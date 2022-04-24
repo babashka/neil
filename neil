@@ -389,6 +389,29 @@ dep
     opts
     (assoc opts :deps-file "deps.edn")))
 
+;; licenses
+(def licenses-api-url "https://api.github.com/licenses")
+
+(defn license-search [opts]
+  (let [search-term (first (:cmds opts))
+        license-vec (->> (str licenses-api-url "?per_page=50")
+                      curl-get-json
+                      (map #(select-keys % [:key :name])))
+        search-results (if search-term
+                         (filter #(str/includes? 
+                                    (str/lower-case (:name %))
+                                    (str/lower-case search-term)) 
+                           license-vec)
+                         license-vec)]
+    (if (empty? search-results)
+      (binding [*out* *err*]
+        (println "No licenses found")
+        (System/exit 1))
+      (doseq [result search-results]
+        (println :key (:key result) :name (:name result))))))
+
+
+
 (defn add [[subcommand & opts]]
   (let [opts (parse-opts opts)
         opts (with-default-deps-edn opts)]
@@ -406,11 +429,17 @@ dep
       "add" (add-dep opts)
       "search" (dep-search opts))))
 
+(defn license [[subcommand & opts]]
+  (let [opts (parse-opts opts)]
+    (case subcommand
+      ("list" "search") (license-search opts))))
+
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
     (case subcommand
       "add" (add args)
       "dep" (dep args)
+      "license" (license args)
       ("help" "--help") (print-help)
       (print-help))))
 
