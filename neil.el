@@ -53,7 +53,7 @@ Works only for deps.edn projects."
   (when-let (item (assoc s minibuffer-completion-table))
     (format "  %s" (cdr item))))
 
-(defun neil-search (&optional term)
+(defun neil-find-clojure-package (&optional term)
   "Find Clojure dependency by suppliying TERM to neil cmd-line tool.
 When `neil-prompt-for-version-p' is t - after selecting library
 name lets you choose its version.
