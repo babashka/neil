@@ -11,12 +11,15 @@
 ;; Homepage: https://github.com/babashka/neil
 ;; Package-Requires: ((emacs "26.1"))
 ;;
+
+;;; Commentary:
 ;; This file is part of babashka/neil project.
 ;;
 ;;  Description
 ;;
 ;; The package expects neil command-line tool installed
 ;;
+
 ;;; Code:
 
 (defcustom neil-prompt-for-version-p t
