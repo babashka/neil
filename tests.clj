@@ -5,9 +5,7 @@
    [babashka.tasks :as tasks]
    [clojure.edn :as edn]
    [clojure.string :as str]
-   [clojure.test :as t :refer [deftest is testing]]
-   [clojure.string :as str]
-   [clojure.string :as str]))
+   [clojure.test :as t :refer [deftest is testing]]))
 
 (defn test-file [name]
   (doto (fs/file (fs/temp-dir) "neil" name)
