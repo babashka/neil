@@ -150,8 +150,8 @@ commonly-used licenses is returned:
 
 ```
 $ neil license list
-:key agpl-3.0 :name GNU Affero General Public License v3.0
-:key apache-2.0 :name Apache License 2.0
+:license agpl-3.0 :name GNU Affero General Public License v3.0
+:license apache-2.0 :name Apache License 2.0
 ...
 ```
 
@@ -159,7 +159,7 @@ A search term can be added to filter the commonly-used list with a case-insensit
 
 ```
 $ neil license list "lesser general"
-:key lgpl-2.1 :name GNU Lesser General Public License v2.1
+:license lgpl-2.1 :name GNU Lesser General Public License v2.1
 ```
 
 The full collection of available licenses can be found in the [license API repo](https://github.com/github/choosealicense.com/tree/gh-pages/_licenses).
@@ -201,6 +201,26 @@ NOTE: invoking a clojure tool requires you to quote strings:
 
 ``` clojure
 clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
+```
+
+## Emacs Integration 
+
+[neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package. 
+
+Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
+
+```emacs-lisp
+;; packages.el
+
+(package! neil :recipe (:host github :repo "babashka/neil" :files ("*.el")))
+
+;; config.el
+
+(use-package! neil
+  :config 
+  (setq neil-prompt-for-version-p nil
+        neil-inject-dep-to-project-p t))
+
 ```
 
 ## Roadmap

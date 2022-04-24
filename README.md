@@ -207,8 +207,8 @@ commonly-used licenses is returned:
 
 ```
 $ neil license list
-:key agpl-3.0 :name GNU Affero General Public License v3.0
-:key apache-2.0 :name Apache License 2.0
+:license agpl-3.0 :name GNU Affero General Public License v3.0
+:license apache-2.0 :name Apache License 2.0
 ...
 ```
 
@@ -216,7 +216,7 @@ A search term can be added to filter the commonly-used list with a case-insensit
 
 ```
 $ neil license list "lesser general"
-:key lgpl-2.1 :name GNU Lesser General Public License v2.1
+:license lgpl-2.1 :name GNU Lesser General Public License v2.1
 ```
 
 The full collection of available licenses can be found in the [license API repo](https://github.com/github/choosealicense.com/tree/gh-pages/_licenses).
