@@ -43,9 +43,9 @@
   (is (not-empty (run-dep-subcommand "search" "hiccups")))
   (is (some #(str/starts-with? % ":lib hiccups/hiccups" )
             (run-dep-subcommand "search" "hiccups")))
-  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+" % )
+  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+ :description .*" % )
             (run-dep-subcommand "search" "hiccups")))
-  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+" % )
+  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+ :description .*" % )
             (run-dep-subcommand "search" "hiccups")))
   ; tests for no NPEs/json parsing exceptions
   (is (any? (run-dep-subcommand "search" "org.clojure/tools.cli")))
