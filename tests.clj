@@ -61,7 +61,7 @@
 
 (deftest license-list-test
   (testing "list/search with no args returns lines with key and name"
-    (is (every? #(re-find #"^:key.*:name" %) (run-license nil "list"))))
+    (is (every? #(re-find #"^:license.*:name" %) (run-license nil "list"))))
   (testing "search with matching term prints results"
     (is (not-empty (run-license nil "search" "license"))))
   (testing "search for non-existing license prints error"

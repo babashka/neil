@@ -60,8 +60,8 @@
 
 (defn default-branch [lib]
   ((curl-get-json (format "https://api.github.com/repos/%s/%s"
-                        (namespace lib) (name lib)))
-      :default_branch))
+                          (namespace lib) (name lib)))
+   :default_branch))
 
 (defn clean-github-lib [lib]
   (let [lib (str/replace lib "com.github." "")
@@ -73,8 +73,8 @@
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
     ((curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
-                          (namespace lib) (name lib) branch))
-        :sha)))
+                            (namespace lib) (name lib) branch))
+     :sha)))
 
 (defn latest-github-tag [lib]
   (let [lib (clean-github-lib lib)]
@@ -373,22 +373,22 @@ dep
     Options:
 
     :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    
+
 license
 
   - list: lists commonly-used licenses available to be added to project. Takes an optional search string
           to filter results.
-          
+
   - search: alias for `list`
-  
+
   - add: writes license text to a file
-  
+
     Options:
-    
+
     :license - The key of the license to use (e.g. epl-1.0, mit, unlicense). :license keyword may be
                elided when license key is provided as first argument.
     :file - The file to write. Defaults to 'LICENSE'.
-  
+
 ")))
 
 (defn with-default-deps-edn [opts]
@@ -402,34 +402,34 @@ license
 (defn license-search [opts]
   (let [search-term (first (:cmds opts))
         license-vec (->> (str licenses-api-url "?per_page=50")
-                      curl-get-json
-                      (map #(select-keys % [:key :name])))
+                         curl-get-json
+                         (map #(select-keys % [:key :name])))
         search-results (if search-term
-                         (filter #(str/includes? 
-                                    (str/lower-case (:name %))
-                                    (str/lower-case search-term)) 
-                           license-vec)
+                         (filter #(str/includes?
+                                   (str/lower-case (:name %))
+                                   (str/lower-case search-term))
+                                 license-vec)
                          license-vec)]
     (if (empty? search-results)
       (binding [*out* *err*]
         (println "No licenses found")
         (System/exit 1))
       (doseq [result search-results]
-        (println :key (:key result) :name (:name result))))))
+        (println :license (:key result) :name (pr-str (:name result)))))))
 
 (defn license-to-file [opts]
   (let [license-key (or (:license opts) (first (:cmds opts)))
         output-file (or (:file opts) "LICENSE")
         {:keys [message name body]} (some->> license-key url-encode
-                                      (str licenses-api-url "/")
-                                      curl-get-json)]
+                                             (str licenses-api-url "/")
+                                             curl-get-json)]
     (cond
       (not license-key) (throw (ex-info "No license key provided." {}))
-      (= message "Not Found") 
-        (throw (ex-info (format "License '%s' not found." license-key) {:license license-key}))
+      (= message "Not Found")
+      (throw (ex-info (format "License '%s' not found." license-key) {:license license-key}))
       (not body)
-        (throw (ex-info (format "License '%s' has no body text." (or name license-key)) 
-                 {:license license-key}))
+      (throw (ex-info (format "License '%s' has no body text." (or name license-key))
+                      {:license license-key}))
       :else (spit output-file body))))
 
 (defn add-license [opts]
