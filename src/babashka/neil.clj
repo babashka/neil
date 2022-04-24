@@ -373,12 +373,73 @@ dep
     Options:
 
     :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    
+license
+
+  - list: lists commonly-used licenses available to be added to project. Takes an optional search string
+          to filter results.
+          
+  - search: alias for `list`
+  
+  - add: writes license text to a file
+  
+    Options:
+    
+    :license - The key of the license to use (e.g. epl-1.0, mit, unlicense). :license keyword may be
+               elided when license key is provided as first argument.
+    :file - The file to write. Defaults to 'LICENSE'.
+  
 ")))
 
 (defn with-default-deps-edn [opts]
   (if (:deps-file opts)
     opts
     (assoc opts :deps-file "deps.edn")))
+
+;; licenses
+(def licenses-api-url "https://api.github.com/licenses")
+
+(defn license-search [opts]
+  (let [search-term (first (:cmds opts))
+        license-vec (->> (str licenses-api-url "?per_page=50")
+                      curl-get-json
+                      (map #(select-keys % [:key :name])))
+        search-results (if search-term
+                         (filter #(str/includes? 
+                                    (str/lower-case (:name %))
+                                    (str/lower-case search-term)) 
+                           license-vec)
+                         license-vec)]
+    (if (empty? search-results)
+      (binding [*out* *err*]
+        (println "No licenses found")
+        (System/exit 1))
+      (doseq [result search-results]
+        (println :key (:key result) :name (:name result))))))
+
+(defn license-to-file [opts]
+  (let [license-key (or (:license opts) (first (:cmds opts)))
+        output-file (or (:file opts) "LICENSE")
+        {:keys [message name body]} (some->> license-key url-encode
+                                      (str licenses-api-url "/")
+                                      curl-get-json)]
+    (cond
+      (not license-key) (throw (ex-info "No license key provided." {}))
+      (= message "Not Found") 
+        (throw (ex-info (format "License '%s' not found." license-key) {:license license-key}))
+      (not body)
+        (throw (ex-info (format "License '%s' has no body text." (or name license-key)) 
+                 {:license license-key}))
+      :else (spit output-file body))))
+
+(defn add-license [opts]
+  (try
+    (license-to-file opts)
+    (catch Exception e
+      (binding [*out* *err*]
+        (println (ex-message e))
+        (System/exit 1)))))
+
 
 (defn add [[subcommand & opts]]
   (let [opts (parse-opts opts)
@@ -397,11 +458,18 @@ dep
       "add" (add-dep opts)
       "search" (dep-search opts))))
 
+(defn license [[subcommand & opts]]
+  (let [opts (parse-opts opts)]
+    (case subcommand
+      ("list" "search") (license-search opts)
+      "add" (add-license opts))))
+
 (defn -main []
   (let [[subcommand & args] *command-line-args*]
     (case subcommand
       "add" (add args)
       "dep" (dep args)
+      "license" (license args)
       ("help" "--help") (print-help)
       (print-help))))
 

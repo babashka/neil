@@ -119,6 +119,70 @@ To change the alias you can provide an option like:
 $ neil add kaocha :alias kaocha2
 ```
 
+### dep search
+
+Search Clojars for a string in any attribute of an artifact:
+
+```
+$ neil dep search "babashka.nrepl"
+:lib babashka/babashka.nrepl :version 0.0.6
+```
+
+Note that Clojars stores the namespace and name of a library as separate attributes, so searching for a ns-qualified library will not necessarily return any matches:
+
+```
+$ neil dep search "babashka/babashka.nrepl"
+Unable to find babashka/babashka.nrepl on Clojars.
+```
+
+But a search string can be matched in a library's description:
+
+```
+$ neil dep search "test framework"
+```
+will return libraries with 'test framework' in their description.
+
+### license list
+
+List/search for licenses that can be added to a project with `neil`. This functionality uses Github's license API, 
+which is also used by [choosealicense.com](https://choosealicense.com/). With no search term, a list of 
+commonly-used licenses is returned:
+
+```
+$ neil license list
+:key agpl-3.0 :name GNU Affero General Public License v3.0
+:key apache-2.0 :name Apache License 2.0
+...
+```
+
+A search term can be added to filter the commonly-used list with a case-insensitive search against the license name:
+
+```
+$ neil license list "lesser general"
+:key lgpl-2.1 :name GNU Lesser General Public License v2.1
+```
+
+The full collection of available licenses can be found in the [license API repo](https://github.com/github/choosealicense.com/tree/gh-pages/_licenses).
+
+`license search` is an alias for `license list`.
+
+### license add
+
+Retrieve license text from Github's license API and write it to a file. See the `license list` help for details on available licenses.
+
+```
+$ neil license add :license mit :file myproj/license.txt
+```
+
+Will write the MIT license to the file myproject/license.txt. The `:license` keyword can be left out if the license key is the first argument,
+and `:file` defaults to LICENSE, so a minimal usage:
+
+```
+$ neil license add epl-1.0
+```
+
+Will create a LICENSE file in the current directory with the EPL 1.0 text.
+
 ## Tools usage
 
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
@@ -139,7 +203,7 @@ NOTE: invoking a clojure tool requires you to quote strings:
 clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
 ```
 
-## Roapmap
+## Roadmap
 
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
 - Consider `neil test :only foo.bar` which invokes `clojure -M:test -n foo.bar`
