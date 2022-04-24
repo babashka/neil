@@ -373,6 +373,14 @@ dep
     Options:
 
     :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    
+license
+
+  - list: lists commonly-used licenses available to be added to project. Takes an optional search string
+          to filter results.
+          
+  - search: alias for `list`  
+  
 ")))
 
 (defn with-default-deps-edn [opts]
