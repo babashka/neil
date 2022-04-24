@@ -415,7 +415,7 @@ license
         (println "No licenses found")
         (System/exit 1))
       (doseq [result search-results]
-        (println :key (:key result) :name (:name result))))))
+        (println :license (:key result) :name (pr-str (:name result)))))))
 
 (defn license-to-file [opts]
   (let [license-key (or (:license opts) (first (:cmds opts)))
