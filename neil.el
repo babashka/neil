@@ -10,15 +10,11 @@
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
 ;; Package-Requires: ((emacs "26.1"))
-;;
 
 ;;; Commentary:
-;; This file is part of babashka/neil project.
-;;
-;;  Description
-;;
-;; The package expects neil command-line tool installed
-;;
+
+;; neil.el is a helper package for babashka/neil. It requires neil command-line utility
+;; installed and available in the PATH, see: https://github.com/babashka/neil#installation.
 
 ;;; Code:
 
@@ -37,9 +33,9 @@ Works only for deps.edn projects."
 
 (defun neil--identify-project-build-tool ()
   "Find build tools used in the project."
-  (let* ((default-directory (or (when (boundp 'projectile-project-root)
+  (let* ((default-directory (or (when (fboundp 'projectile-project-root)
                                   (funcall #'projectile-project-root))
-                                (when (boundp 'clojure-project-dir)
+                                (when (fboundp 'clojure-project-dir)
                                   (funcall #'clojure-project-dir))))
          (build-files '((clojure-cli . "deps.edn")
                         (lein . "project.clj")
