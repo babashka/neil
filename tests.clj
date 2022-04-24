@@ -6,6 +6,7 @@
     [clojure.edn :as edn]
     [clojure.string :as str]
     [clojure.test :as t :refer [deftest is testing]]
+    [clojure.string :as str]
     [clojure.string :as str]))
 
 (defn test-file [name]
@@ -54,10 +55,10 @@
   (is (thrown-with-msg? Exception #"Unable to find"
         (run-dep-subcommand "search" "%22searchTermThatIsn'tFound"))))
 
-(defn run-license [filename subcommand & args]
-  (let [lic-file (when filename (test-file filename))]
-    (-> (process (concat ["./neil" "license" subcommand] 
-                   args (when lic-file [:file lic-file])) {:out :string})
+(defn run-license [filename subcommand & [args]]
+  (let [args (or args "")]
+    (-> (process (concat ["./neil" "license" subcommand]
+                   (tokenize args) (when filename [:file filename])) {:out :string})
       check :out str/split-lines)))
 
 (deftest license-list-test
@@ -67,6 +68,21 @@
     (is (not-empty (run-license nil "search" "license"))))
   (testing "search for non-existing license prints error"
     (is (thrown-with-msg? Exception #"No licenses" (run-license nil "search" "nonExistentLicense")))))
+
+(deftest license-add-test
+  (let [out-file (test-file "LICENSE.txt")]
+    (testing "license add creates license file (:license key elided)"
+      (run-license out-file "add" "epl-2.0")
+      (is (str/includes? (slurp out-file) "Eclipse Public License")))
+    (testing "license add creates license file (with :license key)"
+      (run-license out-file "add" ":license epl-2.0")
+      (is (str/includes? (slurp out-file) "Eclipse Public License")))
+    (testing "missing license key errors"
+      (is (thrown-with-msg? Exception #"No license key" 
+            (run-license out-file "add"))))
+    (testing "invalid license key errors"
+      (is (thrown-with-msg? Exception #"nonExistentLicense" 
+            (run-license out-file "add" "nonExistentLicense"))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))

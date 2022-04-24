@@ -166,6 +166,23 @@ The full collection of available licenses can be found in the [license API repo]
 
 `license search` is an alias for `license list`.
 
+### license add
+
+Retrieve license text from Github's license API and write it to a file. See the `license list` help for details on available licenses.
+
+```
+$ neil license add :license mit :file myproj/license.txt
+```
+
+Will write the MIT license to the file myproject/license.txt. The `:license` keyword can be left out if the license key is the first argument,
+and `:file` defaults to LICENSE, so a minimal usage:
+
+```
+$ neil license add epl-1.0
+```
+
+Will create a LICENSE file in the current directory with the EPL 1.0 text.
+
 ## Tools usage
 
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
