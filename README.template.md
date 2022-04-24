@@ -203,9 +203,9 @@ NOTE: invoking a clojure tool requires you to quote strings:
 clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
 ```
 
-## Emacs Integration
+## Emacs Integration 
 
-[neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package.
+[neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package. 
 
 Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 
