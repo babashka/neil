@@ -18,6 +18,9 @@
 
 ;;; Code:
 
+(require 'seq)
+(require 'subr-x)
+
 (defcustom neil-prompt-for-version-p t
   "When t, select from available versions of a lib.
 Otherwise, use the latest found."
@@ -58,6 +61,7 @@ Otherwise uses the given value."
   (let-alist (cdr (assoc s minibuffer-completion-table))
     (concat "   " .version "    " .description)))
 
+;;;###autoload
 (defun neil-find-clojure-package (&optional term)
   "Find Clojure dependency by suppliying TERM to neil cmd-line tool.
 When `neil-prompt-for-version-p' is t - after selecting library
