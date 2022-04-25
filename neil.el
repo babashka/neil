@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
-;; Package-Requires: ((emacs "26.1"))
+;; Package-Requires: ((emacs "27.1"))
 
 ;;; Commentary:
 
@@ -31,6 +31,12 @@ Works only for deps.edn projects."
   :type 'boolean
   :group 'neil)
 
+(defcustom neil-executable-path nil
+  "If nil, tries to find neil executable in the PATH.
+Otherwise uses the given value."
+  :type 'string
+  :group 'neil)
+
 (defun neil--identify-project-build-tool ()
   "Find build tools used in the project."
   (let* ((default-directory (or (when (fboundp 'projectile-project-root)
@@ -49,8 +55,8 @@ Works only for deps.edn projects."
 
 (defun neil-search-annotation-fn (s)
   "Annotate dependency S with its version."
-  (when-let (item (assoc s minibuffer-completion-table))
-    (format "  %s" (cdr item))))
+  (let-alist (cdr (assoc s minibuffer-completion-table))
+    (concat "   " .version "    " .description)))
 
 (defun neil-find-clojure-package (&optional term)
   "Find Clojure dependency by suppliying TERM to neil cmd-line tool.
@@ -80,12 +86,19 @@ the dependency to the project (deps.edn only)."
                            (split-string res "\n")))))
               (seq-map
                (lambda (s)
-                 (when (string-match ":lib \\(.*\\) :version \\(.*\\)" s)
-                   `(,(match-string 1 s) . ,(match-string 2 s))))
+                 (rx-let ((dep-rx (seq ":lib " (group-n 1 (one-or-more graph))
+                                       (zero-or-one (seq blank ":version " (group-n 2 (one-or-more graph))))
+                                       (zero-or-one (seq blank ":description " (group-n 3 (one-or-more ascii)))))))
+                   (string-match (rx dep-rx) s)
+                   (let ((lib (match-string 1 s))
+                         (ver (match-string 2 s))
+                         (desc (match-string 3 s)))
+                     (list lib . ((when ver `(version . ,ver))
+                                  (when desc `(description . ,desc)))))))
                res))))
 
-         (exe (if-let ((exe (executable-find "neil")))
-                  exe (user-error "Cannot find 'neil' command!")))
+         (exe (if-let ((exe (executable-find (or neil-executable-path "neil"))))
+                  exe (user-error "Cannot find 'neil' cmd-line utility!")))
 
          (res (funcall perform-action exe (concat "dep search " (shell-quote-argument term))))
          (lib-name (let ((completion-extra-properties
@@ -103,7 +116,7 @@ the dependency to the project (deps.edn only)."
                                                 (complete-with-action action completions string pred))))))
                           (completing-read
                            (format "Choose version of %s :" lib-name)
-                           (funcall keep-order (seq-map 'cdr versions)))))
+                           (funcall keep-order (seq-map (lambda (x) (alist-get 'version x)) versions)))))
                     (cdr (assoc lib-name res))))
          (dep-str (funcall format-dep-str lib-name version)))
 
