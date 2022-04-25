@@ -327,7 +327,7 @@
                              (:group_name search-result)
                              (:jar_name search-result))
                :version (:version search-result)
-               :description (:description search-result)))))
+               :description (pr-str (:description search-result))))))
 
 (defn print-help []
   (println (str/trim "
