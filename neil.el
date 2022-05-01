@@ -1,6 +1,6 @@
-;;; neil.el --- Emacs companion for Babashka Neil -*- lexical-binding: t; -*-
+;;; neil.el --- companion for Babashka Neil -*- lexical-binding: t; -*-
 ;;
-;; Copyright (c) 2021 Michiel Borkent
+;; Copyright (c) 2021 - 2022 Michiel Borkent
 ;;
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
@@ -10,6 +10,7 @@
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
 ;; Package-Requires: ((emacs "27.1"))
+;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:
 
@@ -22,13 +23,13 @@
 (require 'subr-x)
 
 (defcustom neil-prompt-for-version-p t
-  "When t, select from available versions of a lib.
+  "When non-nil, select from available versions of a lib.
 Otherwise, use the latest found."
   :type 'boolean
   :group 'neil)
 
 (defcustom neil-inject-dep-to-project-p nil
-  "When t, try to add library dependency to current project.
+  "When non-til, try to add library dependency to current project.
 Otherwise, simply store the dependency string in the `kill-ring'.
 Works only for deps.edn projects."
   :type 'boolean
@@ -63,7 +64,7 @@ Otherwise uses the given value."
 
 ;;;###autoload
 (defun neil-find-clojure-package (&optional term)
-  "Find Clojure dependency by suppliying TERM to neil cmd-line tool.
+  "Find Clojure dependency by supplying TERM to neil cmd-line tool.
 When `neil-prompt-for-version-p' is t - after selecting library
 name lets you choose its version.
 With `neil-inject-dep-to-project-p' set to t, automatically adds
