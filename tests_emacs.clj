@@ -1,16 +1,17 @@
 (ns tests-emacs
-  (:require [babashka.tasks :as tasks]))
+  (:require [babashka.tasks :as tasks]
+            [clojure.string :as str]))
 
 (def install-buttercup-routine
-  (str
-   "(progn"
-   " (require (quote package))"
-   " (add-to-list (quote package-archives)"
-   "  (quote (\\\"melpa-stable\\\". \\\"http://stable.melpa.org/packages\\\")) t)"
-   " (package-install (quote buttercup)))"))
+  '(progn
+    (require (quote package))
+    (add-to-list (quote package-archives)
+                 (quote ("melpa-stable" . "http://stable.melpa.org/packages")) t)
+    (package-install (quote buttercup))))
 
 (defn install-buttercup []
-  (tasks/shell (format "emacs -Q --batch --eval \"%s\"" install-buttercup-routine)))
+  (let [cmd (-> install-buttercup-routine str (str/escape {\" "\\\""}))]
+    (tasks/shell (format "emacs -Q --batch --eval \"%s\"" cmd))))
 
 (defn run-tests []
   (install-buttercup)
