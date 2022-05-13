@@ -1,7 +1,7 @@
 name: GitHub Actions Demo
 on: [push, pull_request]
 jobs:
-  Explore-GitHub-Actions:
+  Testing:
     runs-on: ubuntu-latest
     steps:
       - name: Check out repository code
@@ -16,3 +16,4 @@ jobs:
         uses: purcell/setup-emacs@master
         with:
           version: 28.1
+      - run: bb run tests-emacs

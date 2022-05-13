@@ -4,8 +4,8 @@
 ;;
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
-;; Created: April 20, 2022
-;; Modified: April 20, 2022
+;; Created: May, 2022
+;; Modified: May, 2022
 ;; Version: 0.0.1
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
@@ -30,8 +30,7 @@
   (before-each
     (setq prompt-calls 0
           shell-cmd-calls 0
-          neil-inject-dep-to-project-p nil
-          )
+          neil-inject-dep-to-project-p nil)
     (spy-on #'executable-find :and-return-value "/bin/neil")
     (spy-on #'shell-command-to-string
             :and-call-fake
@@ -86,6 +85,5 @@
     (let ((neil-prompt-for-version-p t))
       (expect (neil-find-clojure-package "test-pkg") :to-equal
               "[foo/test-pkg \"1.0.0\"]"))))
-
 
 ;;; neil-tests.el ends here
