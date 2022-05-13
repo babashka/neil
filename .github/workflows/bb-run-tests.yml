@@ -12,3 +12,7 @@ jobs:
       - run: ./install
       # Then run the tests
       - run: bb run tests
+      - name: Run Emacs tests for neil.el
+        uses: purcell/setup-emacs@master
+        with:
+          version: 28.1

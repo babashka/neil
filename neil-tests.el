@@ -87,4 +87,5 @@
       (expect (neil-find-clojure-package "test-pkg") :to-equal
               "[foo/test-pkg \"1.0.0\"]"))))
 
+
 ;;; neil-tests.el ends here
