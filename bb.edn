@@ -23,6 +23,9 @@
                           (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
                             (when (pos? (+ error fail))
                               (throw (ex-info "Tests failed" {:babashka/exit 1})))))}
+         tests-emacs {:extra-paths ["."]
+                      :requires ([tests-emacs :as te])
+                      :task (te/run-tests)}
          publish {:doc "Bumps version, pushes tag"
                   :task
                   (do

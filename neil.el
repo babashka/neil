@@ -120,9 +120,9 @@ the dependency to the project (deps.edn only)."
                                                   `(metadata (display-sort-function . ,#'identity))
                                                 (complete-with-action action completions string pred))))))
                           (completing-read
-                           (format "Choose version of %s :" lib-name)
+                           (format "Choose version of %s:" lib-name)
                            (funcall keep-order (seq-map (lambda (x) (alist-get 'version x)) versions)))))
-                    (cdr (assoc lib-name res))))
+                    (alist-get 'version (cdr (assoc lib-name res)))))
          (dep-str (funcall format-dep-str lib-name version)))
 
     (when (and neil-inject-dep-to-project-p
