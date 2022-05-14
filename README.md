@@ -21,16 +21,16 @@ For detailed information about scoop installer check [scoop-clojure](https://git
 ### Nix
 
 ```bash
-$ nix run github:NixOS/nixpkgs/nixos-unstable#neil
-
-# Nix without flakes
 $ nix-shell -p neil
+
+# Alternatively, if your nix channel doesn't have neil yet:
+$ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ```
 
 ### Clojure
 
 ``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.28"}' :as neil
+clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.29"}' :as neil
 ```
 
 See [tools usage](#tools-usage) for more.
@@ -245,7 +245,7 @@ Will create a LICENSE file in the current directory with the EPL 1.0 text.
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
 
 ``` clojure
-$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.28"}' :as neil
+$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.29"}' :as neil
 ```
 
 Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
