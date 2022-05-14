@@ -27,7 +27,7 @@
            qlib)))
 
 (defn latest-clojars-version [qlib]
-  ((get-clojars-artifact qlib) :latest_release))
+  (get (get-clojars-artifact qlib) :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
   (let [limit (Long/parseLong limit)
@@ -59,8 +59,8 @@
          (map :v))))
 
 (defn default-branch [lib]
-  ((curl-get-json (format "https://api.github.com/repos/%s/%s"
-                          (namespace lib) (name lib)))
+  (get (curl-get-json (format "https://api.github.com/repos/%s/%s"
+                              (namespace lib) (name lib)))
    :default_branch))
 
 (defn clean-github-lib [lib]
@@ -72,8 +72,8 @@
 (defn latest-github-sha [lib]
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
-    ((curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
-                            (namespace lib) (name lib) branch))
+    (get (curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
+                                (namespace lib) (name lib) branch))
      :sha)))
 
 (defn latest-github-tag [lib]
