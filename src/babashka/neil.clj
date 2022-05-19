@@ -473,6 +473,7 @@ license
       "add" (add args)
       "dep" (dep args)
       "license" (license args)
+      ("version" "--version") (println "neil" version)
       ("help" "--help") (print-help)
       (print-help))))
 
