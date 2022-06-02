@@ -3,6 +3,7 @@
 
 (require '[babashka.curl :as curl]
          '[babashka.fs :as fs]
+         '[babashka.cli :as cli]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
@@ -136,7 +137,7 @@
   (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
-        alias (or (some-> (opts :alias) keyword)
+        alias (or (:alias opts)
                   alias-kw)
         alias-node (r/parse-string (str "\n " alias " ;; added by neil"))]
     (if-not (get-in edn [:aliases alias])
@@ -171,7 +172,7 @@
  :ns-default build}"
                   tag sha)]
     {:s (str/replace s "{{deps-deploy}}"
-                     (if (:deps-deploy opts)
+                     (if (not (false? (:deps-deploy opts)))
                        "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
                        ""))
      :tag tag
@@ -276,8 +277,7 @@
         git-url (when git?
                   (or (:git/url opts)
                       (str "https://github.com/" (clean-github-lib lib))))
-        as (or (some-> (:as opts)
-                       symbol) lib)
+        as (or (:as opts) lib)
         ;; force newline
         edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
         nodes (cond
@@ -442,35 +442,39 @@ license
         (System/exit 1)))))
 
 
-(defn add [[subcommand & opts]]
-  (let [opts (parse-opts opts)
-        opts (with-default-deps-edn opts)]
+(defn add [subcommand opts]
+  (let [opts (with-default-deps-edn opts)]
     (case subcommand
       "dep" (add-dep opts)
       "test" (add-cognitect-test-runner opts)
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
-(defn dep [[subcommand & opts]]
-  (let [opts (parse-opts opts)
-        opts (with-default-deps-edn opts)]
+(defn dep [subcommand opts]
+  (let [opts (with-default-deps-edn opts)]
     (case subcommand
       "versions" (dep-versions opts)
       "add" (add-dep opts)
       "search" (dep-search opts))))
 
-(defn license [[subcommand & opts]]
+(defn license [subcommand opts]
   (let [opts (parse-opts opts)]
     (case subcommand
       ("list" "search") (license-search opts)
       "add" (add-license opts))))
 
 (defn -main []
-  (let [[subcommand & args] *command-line-args*]
+  (let [{:keys [cmds opts]}
+        (cli/parse-args *command-line-args*
+                        {:coerce {:deps-deploy parse-boolean
+                                  :as symbol
+                                  :alias keyword}})
+        opts (assoc opts :cmds cmds)
+        [subcommand subcommand*] cmds]
     (case subcommand
-      "add" (add args)
-      "dep" (dep args)
-      "license" (license args)
+      "add" (add subcommand* opts)
+      "dep" (dep subcommand* opts)
+      "license" (license subcommand* opts)
       ("help" "--help") (print-help)
       (print-help))))
 
