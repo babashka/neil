@@ -1,9 +1,9 @@
 (ns babashka.neil
   {:no-doc true})
 
-(require '[babashka.curl :as curl]
+(require '[babashka.cli :as cli]
+         '[babashka.curl :as curl]
          '[babashka.fs :as fs]
-         '[babashka.cli :as cli]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
@@ -31,8 +31,7 @@
   (get (get-clojars-artifact qlib) :latest_release))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
-  (let [limit (Long/parseLong limit)
-        body (get-clojars-artifact qlib)]
+  (let [body (get-clojars-artifact qlib)]
     (->> body
          :recent_versions
          (map :version)
@@ -107,12 +106,6 @@
 (defn edn-string [opts] (slurp (:deps-file opts)))
 
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
-
-(defn parse-opts [opts]
-  (let [[cmds opts] (split-with #(not (str/starts-with? % ":")) opts)]
-    (into {:cmds cmds}
-          (for [[arg-name arg-val] (partition 2 opts)]
-            [(keyword (subs arg-name 1)) arg-val]))))
 
 (def cognitect-test-runner-alias
   "
@@ -441,7 +434,6 @@ license
         (println (ex-message e))
         (System/exit 1)))))
 
-
 (defn add [subcommand opts]
   (let [opts (with-default-deps-edn opts)]
     (case subcommand
@@ -458,19 +450,19 @@ license
       "search" (dep-search opts))))
 
 (defn license [subcommand opts]
-  (let [opts (parse-opts opts)]
-    (case subcommand
-      ("list" "search") (license-search opts)
-      "add" (add-license opts))))
+  (case subcommand
+    ("list" "search") (license-search opts)
+    "add" (add-license opts)))
 
-(defn -main []
+(defn -main [& args]
   (let [{:keys [cmds opts]}
-        (cli/parse-args *command-line-args*
+        (cli/parse-args args
                         {:coerce {:deps-deploy parse-boolean
                                   :as symbol
-                                  :alias keyword}})
-        opts (assoc opts :cmds cmds)
-        [subcommand subcommand*] cmds]
+                                  :alias keyword
+                                  :limit parse-long}})
+        [subcommand subcommand* & cmds] cmds
+        opts (assoc opts :cmds cmds)]
     (case subcommand
       "add" (add subcommand* opts)
       "dep" (dep subcommand* opts)
