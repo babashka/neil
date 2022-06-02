@@ -11,6 +11,8 @@
 
 (import java.net.URLEncoder)
 
+(def version "0.0.29")
+
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
 
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
@@ -466,6 +468,7 @@ license
       "add" (add subcommand* opts)
       "dep" (dep subcommand* opts)
       "license" (license subcommand* opts)
+      ("version" "--version") (println "neil" version)
       ("help" "--help") (print-help)
       (print-help))))
 
