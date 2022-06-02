@@ -1,7 +1,8 @@
 (ns babashka.neil
   {:no-doc true})
 
-(require '[babashka.curl :as curl]
+(require '[babashka.cli :as cli]
+         '[babashka.curl :as curl]
          '[babashka.fs :as fs]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
@@ -31,14 +32,12 @@
 (defn latest-clojars-version [qlib]
   (get (get-clojars-artifact qlib) :latest_release))
 
-(defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
-  (let [limit (Long/parseLong limit)
-        body (get-clojars-artifact qlib)]
+(defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
+  (let [body (get-clojars-artifact qlib)]
     (->> body
          :recent_versions
          (map :version)
          (take limit))))
-
 
 (defn- search-mvn [qlib limit]
   (:response
@@ -46,7 +45,7 @@
     (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s"
             (namespace qlib)
             (name qlib)
-            limit))))
+            (str limit)))))
 
 (defn latest-mvn-version [qlib]
   (-> (search-mvn qlib 1)
@@ -54,7 +53,7 @@
       first
       :latestVersion))
 
-(defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
+(defn mvn-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [payload (search-mvn qlib limit)]
     (->> payload
          :docs
@@ -109,12 +108,6 @@
 
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
-(defn parse-opts [opts]
-  (let [[cmds opts] (split-with #(not (str/starts-with? % ":")) opts)]
-    (into {:cmds cmds}
-          (for [[arg-name arg-val] (partition 2 opts)]
-            [(keyword (subs arg-name 1)) arg-val]))))
-
 (def cognitect-test-runner-alias
   "
 {:extra-paths [\"test\"]
@@ -138,7 +131,7 @@
   (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
         edn (edn/read-string edn-string)
-        alias (or (some-> (opts :alias) keyword)
+        alias (or (:alias opts)
                   alias-kw)
         alias-node (r/parse-string (str "\n " alias " ;; added by neil"))]
     (if-not (get-in edn [:aliases alias])
@@ -278,8 +271,7 @@
         git-url (when git?
                   (or (:git/url opts)
                       (str "https://github.com/" (clean-github-lib lib))))
-        as (or (some-> (:as opts)
-                       symbol) lib)
+        as (or (:as opts) lib)
         ;; force newline
         edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
         nodes (cond
@@ -443,36 +435,40 @@ license
         (println (ex-message e))
         (System/exit 1)))))
 
-
-(defn add [[subcommand & opts]]
-  (let [opts (parse-opts opts)
-        opts (with-default-deps-edn opts)]
+(defn add [subcommand opts]
+  (let [opts (with-default-deps-edn opts)]
     (case subcommand
       "dep" (add-dep opts)
       "test" (add-cognitect-test-runner opts)
       "build" (add-build opts)
       "kaocha" (add-kaocha opts))))
 
-(defn dep [[subcommand & opts]]
-  (let [opts (parse-opts opts)
-        opts (with-default-deps-edn opts)]
+(defn dep [subcommand opts]
+  (let [opts (with-default-deps-edn opts)]
     (case subcommand
       "versions" (dep-versions opts)
       "add" (add-dep opts)
       "search" (dep-search opts))))
 
-(defn license [[subcommand & opts]]
-  (let [opts (parse-opts opts)]
-    (case subcommand
-      ("list" "search") (license-search opts)
-      "add" (add-license opts))))
+(defn license [subcommand opts]
+  (case subcommand
+    ("list" "search") (license-search opts)
+    "add" (add-license opts)))
 
-(defn -main []
-  (let [[subcommand & args] *command-line-args*]
+(defn -main [& _args]
+  (let [{:keys [cmds opts]}
+        (cli/parse-args *command-line-args*
+                        {:coerce {:deps-deploy parse-boolean
+                                  :as symbol
+                                  :alias keyword
+                                  :limit parse-long}})
+        [subcommand subcommand* & cmds] cmds
+        opts (assoc opts :cmds cmds)
+        opts (merge {:deps-deploy true} opts)]
     (case subcommand
-      "add" (add args)
-      "dep" (dep args)
-      "license" (license args)
+      "add" (add subcommand* opts)
+      "dep" (dep subcommand* opts)
+      "license" (license subcommand* opts)
       ("version" "--version") (println "neil" version)
       ("help" "--help") (print-help)
       (print-help))))
