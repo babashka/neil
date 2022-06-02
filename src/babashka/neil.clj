@@ -30,13 +30,12 @@
 (defn latest-clojars-version [qlib]
   (get (get-clojars-artifact qlib) :latest_release))
 
-(defn clojars-versions [qlib {:keys [limit] :or {limit "10"}}]
+(defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
     (->> body
          :recent_versions
          (map :version)
          (take limit))))
-
 
 (defn- search-mvn [qlib limit]
   (:response
@@ -44,7 +43,7 @@
     (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s"
             (namespace qlib)
             (name qlib)
-            limit))))
+            (str limit)))))
 
 (defn latest-mvn-version [qlib]
   (-> (search-mvn qlib 1)
@@ -52,7 +51,7 @@
       first
       :latestVersion))
 
-(defn mvn-versions [qlib {:keys [limit] :or {limit "10"}}]
+(defn mvn-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [payload (search-mvn qlib limit)]
     (->> payload
          :docs
@@ -454,9 +453,9 @@ license
     ("list" "search") (license-search opts)
     "add" (add-license opts)))
 
-(defn -main [& args]
+(defn -main [& _args]
   (let [{:keys [cmds opts]}
-        (cli/parse-args args
+        (cli/parse-args *command-line-args*
                         {:coerce {:deps-deploy parse-boolean
                                   :as symbol
                                   :alias keyword
