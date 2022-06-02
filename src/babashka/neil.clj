@@ -166,7 +166,7 @@
  :ns-default build}"
                   tag sha)]
     {:s (str/replace s "{{deps-deploy}}"
-                     (if (not (false? (:deps-deploy opts)))
+                     (if (:deps-deploy opts)
                        "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
                        ""))
      :tag tag
@@ -463,7 +463,8 @@ license
                                   :alias keyword
                                   :limit parse-long}})
         [subcommand subcommand* & cmds] cmds
-        opts (assoc opts :cmds cmds)]
+        opts (assoc opts :cmds cmds)
+        opts (merge {:deps-deploy true} opts)]
     (case subcommand
       "add" (add subcommand* opts)
       "dep" (dep subcommand* opts)
