@@ -62,7 +62,7 @@
 (defn default-branch [lib]
   (get (curl-get-json (format "https://api.github.com/repos/%s/%s"
                               (namespace lib) (name lib)))
-   :default_branch))
+       :default_branch))
 
 (defn clean-github-lib [lib]
   (let [lib (str/replace lib "com.github." "")
@@ -75,7 +75,7 @@
         branch (default-branch lib)]
     (get (curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
                                 (namespace lib) (name lib) branch))
-     :sha)))
+         :sha)))
 
 (defn latest-github-tag [lib]
   (let [lib (clean-github-lib lib)]
@@ -456,22 +456,26 @@ license
     "add" (add-license opts)))
 
 (defn -main [& _args]
-  (let [{:keys [cmds opts]}
-        (cli/parse-args *command-line-args*
-                        {:coerce {:deps-deploy parse-boolean
-                                  :as symbol
-                                  :alias keyword
-                                  :limit parse-long}})
-        [subcommand subcommand* & cmds] cmds
-        opts (assoc opts :cmds cmds)
-        opts (merge {:deps-deploy true} opts)]
-    (case subcommand
-      "add" (add subcommand* opts)
-      "dep" (dep subcommand* opts)
-      "license" (license subcommand* opts)
-      ("version" "--version") (println "neil" version)
-      ("help" "--help") (print-help)
-      (print-help))))
+  (cli/dispatch
+   [["add" "dep"] add-dep
+    ["add" "test"] add-cognitect-test-runner
+    ["add" "build"] add-build
+    ["add" "kaocha"] add-kaocha
+    ["dep" "versions"] dep-versions
+    ["dep" "add"] add-dep
+    ["dep" "search"] dep-search
+    ["license" "list"] license-search
+    ["license" "search" license-search]
+    ["license" "add"] add-license
+    ["version" "--version"] (fn [_]
+                              (println "neil" version))
+    ["help"] print-help
+    :else print-help]
+   *command-line-args*
+   {:coerce {:deps-deploy parse-boolean
+             :as symbol
+             :alias keyword
+             :limit parse-long}}))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (-main))
