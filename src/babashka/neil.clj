@@ -147,14 +147,14 @@
       (do (println (format "[neil] Project deps.edn already contains alias %s" (str alias ".")))
           ::update))))
 
-(defn add-cognitect-test-runner [opts]
+(defn add-cognitect-test-runner [{:keys [opts]}]
   (add-alias opts :test cognitect-test-runner-alias))
 
 (def kaocha-alias
   "
 {:extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}}")
 
-(defn add-kaocha [opts]
+(defn add-kaocha [{:keys [opts]}]
   (add-alias opts :kaocha kaocha-alias))
 
 (defn build-alias [opts]
@@ -223,7 +223,7 @@
 ")
       base)))
 
-(defn add-build [opts]
+(defn add-build [{:keys [opts]}]
   (if-not (fs/exists? "build.clj")
     (spit "build.clj" (build-file opts))
     (println "[neil] Project build.clj already exists."))
@@ -252,12 +252,12 @@
                 s (str (str/trim (str nodes)) "\n")]
             (spit (:deps-file opts) s)))))))
 
-(defn add-dep [opts]
+(defn add-dep [{:keys [opts rest-cmds]}]
   (ensure-deps-file opts)
   (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
         lib (or (:lib opts)
-                (first (:cmds opts)))
+                (first rest-cmds))
         lib (symbol lib)
         git? (or (:sha opts)
                  (:latest-sha opts))
@@ -294,9 +294,9 @@
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
 
-(defn dep-versions [opts]
+(defn dep-versions [{:keys [rest-cmds opts]}]
   (let [lib (or (:lib opts)
-                (first (:cmds opts)))
+                (first rest-cmds))
         lib (symbol lib)
         versions (or (seq (clojars-versions lib opts))
                      (seq (mvn-versions lib opts)))]
@@ -307,8 +307,8 @@
       (doseq [v versions]
         (println :lib lib :version v)))))
 
-(defn dep-search [opts]
-  (let [search-term (first (:cmds opts))
+(defn dep-search [{:keys [rest-cmds]}]
+  (let [search-term (first rest-cmds)
         url (str "https://clojars.org/search?format=json&q=\"" (url-encode search-term) "\"")
         {search-results :results
          results-count :count} (curl-get-json url)]
@@ -323,7 +323,7 @@
                :version (:version search-result)
                :description (pr-str (:description search-result))))))
 
-(defn print-help []
+(defn print-help [_]
   (println (str/trim "
 Usage: neil <subcommand> <options>
 
@@ -394,8 +394,8 @@ license
 ;; licenses
 (def licenses-api-url "https://api.github.com/licenses")
 
-(defn license-search [opts]
-  (let [search-term (first (:cmds opts))
+(defn license-search [{:keys [rest-cmds]}]
+  (let [search-term (first rest-cmds)
         license-vec (->> (str licenses-api-url "?per_page=50")
                          curl-get-json
                          (map #(select-keys % [:key :name])))
@@ -412,8 +412,8 @@ license
       (doseq [result search-results]
         (println :license (:key result) :name (pr-str (:name result)))))))
 
-(defn license-to-file [opts]
-  (let [license-key (or (:license opts) (first (:cmds opts)))
+(defn license-to-file [{:keys [rest-cmds opts]}]
+  (let [license-key (or (:license opts) (first rest-cmds))
         output-file (or (:file opts) "LICENSE")
         {:keys [message name body]} (some->> license-key url-encode
                                              (str licenses-api-url "/")
@@ -465,7 +465,7 @@ license
     ["dep" "add"] add-dep
     ["dep" "search"] dep-search
     ["license" "list"] license-search
-    ["license" "search" license-search]
+    ["license" "search"] license-search
     ["license" "add"] add-license
     ["version" "--version"] (fn [_]
                               (println "neil" version))
