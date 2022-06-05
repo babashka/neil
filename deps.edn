@@ -2,7 +2,7 @@
         babashka/fs {:mvn/version "0.1.1"}
         rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
-        org.babashka/cli {:mvn/version "0.1.5"}
+        org.babashka/cli {:mvn/version "0.2.11"}
         cheshire/cheshire {:mvn/version "5.10.1"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases {:test ;; added by neil
