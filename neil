@@ -264,12 +264,11 @@
                 s (str (str/trim (str nodes)) "\n")]
             (spit (:deps-file opts) s)))))))
 
-(defn add-dep [{:keys [opts rest-cmds]}]
+(defn add-dep [{:keys [opts]}]
   (ensure-deps-file opts)
   (let [edn-string (edn-string opts)
         edn-nodes (edn-nodes edn-string)
-        lib (or (:lib opts)
-                (first rest-cmds))
+        lib (:lib opts)
         lib (symbol lib)
         git? (or (:sha opts)
                  (:latest-sha opts))
@@ -306,9 +305,8 @@
         s (str (str/trim (str nodes)) "\n")]
     (spit (:deps-file opts) s)))
 
-(defn dep-versions [{:keys [rest-cmds opts]}]
-  (let [lib (or (:lib opts)
-                (first rest-cmds))
+(defn dep-versions [{:keys [opts]}]
+  (let [lib (:lib opts)
         lib (symbol lib)
         versions (or (seq (clojars-versions lib opts))
                      (seq (mvn-versions lib opts)))]
@@ -319,8 +317,8 @@
       (doseq [v versions]
         (println :lib lib :version v)))))
 
-(defn dep-search [{:keys [rest-cmds]}]
-  (let [search-term (first rest-cmds)
+(defn dep-search [{:keys [opts]}]
+  (let [search-term (:search-term opts)
         url (str "https://clojars.org/search?format=json&q=\"" (url-encode search-term) "\"")
         {search-results :results
          results-count :count} (curl-get-json url)]
@@ -406,8 +404,8 @@ license
 ;; licenses
 (def licenses-api-url "https://api.github.com/licenses")
 
-(defn license-search [{:keys [rest-cmds]}]
-  (let [search-term (first rest-cmds)
+(defn license-search [{:keys [opts]}]
+  (let [search-term (:search-term opts)
         license-vec (->> (str licenses-api-url "?per_page=50")
                          curl-get-json
                          (map #(select-keys % [:key :name])))
@@ -424,8 +422,8 @@ license
       (doseq [result search-results]
         (println :license (:key result) :name (pr-str (:name result)))))))
 
-(defn license-to-file [{:keys [rest-cmds opts]}]
-  (let [license-key (or (:license opts) (first rest-cmds))
+(defn license-to-file [{:keys [opts]}]
+  (let [license-key (:license opts)
         output-file (or (:file opts) "LICENSE")
         {:keys [message name body]} (some->> license-key url-encode
                                              (str licenses-api-url "/")
@@ -467,22 +465,27 @@ license
     ("list" "search") (license-search opts)
     "add" (add-license opts)))
 
+(defn print-version [_]
+  (println "neil" version))
+
 (defn -main [& _args]
   (cli/dispatch
-   [["add" "dep"] add-dep
-    ["add" "test"] add-cognitect-test-runner
-    ["add" "build"] add-build
-    ["add" "kaocha"] add-kaocha
-    ["dep" "versions"] dep-versions
-    ["dep" "add"] add-dep
-    ["dep" "search"] dep-search
-    ["license" "list"] license-search
-    ["license" "search"] license-search
-    ["license" "add"] add-license
-    ["version" "--version"] (fn [_]
-                              (println "neil" version))
-    ["help"] print-help
-    :else print-help]
+   [{:cmds ["add" "dep"] :fn add-dep :cmds-opts [:lib]}
+    {:cmds ["add" "test"] :fn add-cognitect-test-runner}
+    {:cmds ["add" "build"] :fn add-build}
+    {:cmds ["add" "kaocha"] :fn add-kaocha}
+    {:cmds ["dep" "versions"] :fn dep-versions :cmds-opts [:lib]}
+    {:cmds ["dep" "add"] :fn add-dep :cmds-opts [:lib]}
+    {:cmds ["dep" "search"] :fn dep-search :cmds-opts [:search-term]}
+    {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
+    {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
+    {:cmds ["license" "add"] :fn add-license :cmds-opts [:license]}
+    {:cmds ["version"] :fn print-version}
+    {:cmds ["help"] :fn print-help}
+    {:cmds [] :fn (fn [{:keys [opts] :as m}]
+                    (if (:version opts)
+                      (print-version m)
+                      (print-help m)))}]
    *command-line-args*
    {:coerce {:deps-deploy parse-boolean
              :as symbol
