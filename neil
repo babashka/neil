@@ -8,7 +8,7 @@
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.2.0"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
-                        {:mvn/version "0.2.11"}}})
+                        {:mvn/version "0.2.12"}}})
 
 (ns babashka.neil
   {:no-doc true})
@@ -396,11 +396,6 @@ license
 
 ")))
 
-(defn with-default-deps-edn [opts]
-  (if (:deps-file opts)
-    opts
-    (assoc opts :deps-file "deps.edn")))
-
 ;; licenses
 (def licenses-api-url "https://api.github.com/licenses")
 
@@ -470,7 +465,8 @@ license
    {:coerce {:deps-deploy parse-boolean
              :as symbol
              :alias keyword
-             :limit parse-long}}))
+             :limit parse-long}
+    :exec-args {:deps-file "deps.edn"}}))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (-main))

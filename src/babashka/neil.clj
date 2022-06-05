@@ -384,11 +384,6 @@ license
 
 ")))
 
-(defn with-default-deps-edn [opts]
-  (if (:deps-file opts)
-    opts
-    (assoc opts :deps-file "deps.edn")))
-
 ;; licenses
 (def licenses-api-url "https://api.github.com/licenses")
 
@@ -458,7 +453,8 @@ license
    {:coerce {:deps-deploy parse-boolean
              :as symbol
              :alias keyword
-             :limit parse-long}}))
+             :limit parse-long}
+    :exec-args {:deps-file "deps.edn"}}))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (-main))
