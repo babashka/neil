@@ -33,7 +33,7 @@ Add the following alias to your global or project-local `deps.edn`:
 
 ``` bash
 :neil {:deps {io.github.babashka/neil {:git/tag "v0.0.31"
-                                       :git/sha "b0962ef"}}
+                                       :git/sha "61e9d2f"}}
        :main-opts ["-m" "babashka.neil"]}
 ```
 
@@ -189,7 +189,7 @@ Will create a LICENSE file in the current directory with the EPL 1.0 text.
 
 ## Emacs Integration
 
-[neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package. 
+[neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package.
 
 Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 
