@@ -433,26 +433,6 @@ license
         (println (ex-message e))
         (System/exit 1)))))
 
-(defn add [subcommand opts]
-  (let [opts (with-default-deps-edn opts)]
-    (case subcommand
-      "dep" (add-dep opts)
-      "test" (add-cognitect-test-runner opts)
-      "build" (add-build opts)
-      "kaocha" (add-kaocha opts))))
-
-(defn dep [subcommand opts]
-  (let [opts (with-default-deps-edn opts)]
-    (case subcommand
-      "versions" (dep-versions opts)
-      "add" (add-dep opts)
-      "search" (dep-search opts))))
-
-(defn license [subcommand opts]
-  (case subcommand
-    ("list" "search") (license-search opts)
-    "add" (add-license opts)))
-
 (defn print-version [_]
   (println "neil" version))
 
