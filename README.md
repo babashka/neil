@@ -30,7 +30,7 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ### Clojure
 
 ``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.29"}' :as neil
+clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.30"}' :as neil
 ```
 
 See [tools usage](#tools-usage) for more.
@@ -245,7 +245,7 @@ Will create a LICENSE file in the current directory with the EPL 1.0 text.
 Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
 
 ``` clojure
-$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.29"}' :as neil
+$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.30"}' :as neil
 ```
 
 Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
