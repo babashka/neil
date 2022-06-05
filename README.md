@@ -29,11 +29,13 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 
 ### Clojure
 
-``` bash
-clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.30"}' :as neil
-```
+Add to your global or project-local `deps.edn` aliases:
 
-See [tools usage](#tools-usage) for more.
+``` clojure
+:neil {:deps {io.github.babashka/neil {:git/tag "v0.0.30"
+                                       :git/sha "b0962ef"}}
+       :main-opts ["-m" "babashka.neil"]}
+```
 
 ### Manual
 
@@ -240,27 +242,7 @@ $ neil license add epl-1.0
 
 Will create a LICENSE file in the current directory with the EPL 1.0 text.
 
-## Tools usage
-
-Instead of a babashka CLI script, you can install and invoke `neil` as a [clojure tool](https://clojure.org/reference/deps_and_cli#tool_install):
-
-``` clojure
-$ clj -Ttools install io.github.babashka/neil '{:git/tag "v0.0.30"}' :as neil
-```
-
-Instead of `neil add dep ...` you now write `clj -Tneil add-dep ...`:
-
-``` clojure
-clj -Tneil add-dep :lib org.clojure/tools.cli
-```
-
-NOTE: invoking a clojure tool requires you to quote strings:
-
-``` clojure
-clj -Tneil add-dep :lib org.clojure/tools.cli :version '"1.0.206"'
-```
-
-## Emacs Integration 
+## Emacs Integration
 
 [neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package. 
 
