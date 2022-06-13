@@ -275,11 +275,15 @@
         [version git?] (if explicit-git?
                          [(or (:sha opts)
                               (latest-github-sha lib)) true]
-                         (cond
-                           (:version opts) [(:version opts) false]
-                           (latest-clojars-version lib) [(latest-clojars-version lib) false]
-                           (latest-mvn-version lib) [(latest-mvn-version lib) false]
-                           (latest-github-sha lib) [(latest-github-sha lib) true]))
+                         (or
+                          (when-let [v (:version opts)]
+                            [v false])
+                          (when-let [v (latest-clojars-version lib)]
+                            [v false])
+                          (when-let [v (latest-mvn-version lib)]
+                            [v false])
+                          (when-let [v (latest-github-sha lib)]
+                            [v true])))
         mvn? (not git?)
         git-url (when git?
                   (or (:git/url opts)
