@@ -2,9 +2,10 @@
                     [clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
-         gen-script (let [prelude (slurp "prelude")
-                          script (slurp "src/babashka/neil.clj")]
-                      (spit "neil" (str/join "\n" [prelude script])))
+         gen-script (when (seq (fs/modified-since "neil" #{"prelude" "src/babashka/neil.clj"}))
+                      (let [prelude (slurp "prelude")
+                            script (slurp "src/babashka/neil.clj")]
+                        (spit "neil" (str/join "\n" [prelude script]))))
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
