@@ -357,37 +357,30 @@
 Usage: neil <subcommand> <options>
 
 Most subcommands support the options:
-
---alias      Override alias name.
---deps-file  Override deps.edn file name.
+  --alias      Override alias name.
+  --deps-file  Override deps.edn file name.
 
 Subcommands:
 
 add
-
-  - dep: alias for `neil dep add`. Deprecated.
-  - test: adds cognitect test runner to :test alias.
-  - build: adds tools.build build.clj file and :build alias.
+  dep    Alias for `neil dep add`.
+  test   adds cognitect test runner to :test alias.
+  build  adds tools.build build.clj file and :build alias.
     Options:
     --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
-  - kaocha: adds kaocha test runner to :koacha alias.
+  kaocha adds kaocha test runner to :koacha alias.
 
 dep
-
-  - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
+  add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
 
 license
-
-  - list: lists commonly-used licenses available to be added to project. Takes an optional search string
-          to filter results.
-  - search: alias for `list`
-  - add: writes license text to a file
+  list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
+  search Alias for `list`
+  add    Writes license text to a file
     Options:
-    :license - The key of the license to use (e.g. epl-1.0, mit, unlicense). :license keyword may be
-               elided when license key is provided as first argument.
-    :file - The file to write. Defaults to 'LICENSE'.
-
+    --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
+    --file    The file to write. Defaults to 'LICENSE'.
 ")))
 
 ;; licenses
