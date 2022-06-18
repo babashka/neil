@@ -270,15 +270,21 @@
         edn-nodes (edn-nodes edn-string)
         lib (:lib opts)
         lib (symbol lib)
-        git? (or (:sha opts)
-                 (:latest-sha opts))
+        explicit-git? (or (:sha opts)
+                          (:latest-sha opts))
+        [version git?] (if explicit-git?
+                         [(or (:sha opts)
+                              (latest-github-sha lib)) true]
+                         (or
+                          (when-let [v (:version opts)]
+                            [v false])
+                          (when-let [v (latest-clojars-version lib)]
+                            [v false])
+                          (when-let [v (latest-mvn-version lib)]
+                            [v false])
+                          (when-let [v (latest-github-sha lib)]
+                            [v true])))
         mvn? (not git?)
-        version (if git?
-                  (or (:sha opts)
-                      (latest-github-sha lib))
-                  (or (:version opts)
-                      (latest-clojars-version lib)
-                      (latest-mvn-version lib)))
         git-url (when git?
                   (or (:git/url opts)
                       (str "https://github.com/" (clean-github-lib lib))))
