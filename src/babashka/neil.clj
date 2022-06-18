@@ -9,6 +9,21 @@
          '[clojure.edn :as edn]
          '[clojure.string :as str])
 
+(def spec {:lib {:desc "Fully qualified library name."}
+           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
+           :sha {:desc "When provided, assumes lib refers to Github repo."}
+           :latest-sha {:desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :deps/root {:desc "Sets deps/root to give value."}
+           :as {:desc "Use as dependency name in deps.edn"
+                :coerce :symbol}
+           :alias {:ref "<alias>"
+                   :desc "Add to alias <alias>."
+                   :coerce :keyword}
+           :deps-file {:ref "<file>"
+                       :desc "Add to <file> instead of deps.edn."}
+           :limit {:coerce :long}
+           })
+
 (import java.net.URLEncoder)
 
 (def version "0.0.31")
@@ -252,52 +267,62 @@
                 s (str (str/trim (str nodes)) "\n")]
             (spit (:deps-file opts) s)))))))
 
-(defn add-dep [{:keys [opts]}]
-  (ensure-deps-file opts)
-  (let [edn-string (edn-string opts)
-        edn-nodes (edn-nodes edn-string)
-        lib (:lib opts)
-        lib (symbol lib)
-        explicit-git? (or (:sha opts)
-                          (:latest-sha opts))
-        [version git?] (if explicit-git?
-                         [(or (:sha opts)
-                              (latest-github-sha lib)) true]
-                         (or
-                          (when-let [v (:version opts)]
-                            [v false])
-                          (when-let [v (latest-clojars-version lib)]
-                            [v false])
-                          (when-let [v (latest-mvn-version lib)]
-                            [v false])
-                          (when-let [v (latest-github-sha lib)]
-                            [v true])))
-        mvn? (not git?)
-        git-url (when git?
-                  (or (:git/url opts)
-                      (str "https://github.com/" (clean-github-lib lib))))
-        as (or (:as opts) lib)
-        ;; force newline
-        edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
-        nodes (cond
-                mvn?
-                (r/assoc-in edn-nodes [:deps as]
-                            {:mvn/version version})
-                git?
-                ;; multiple steps to force newlines
-                (-> edn-nodes
-                    (r/assoc-in
-                     [:deps as :git/url] git-url)
-                    str
-                    r/parse-string
-                    (r/assoc-in
-                     [:deps as :git/sha] version)))
-        nodes (if-let [root (and git? (:deps/root opts))]
-                (-> nodes
-                    (r/assoc-in [:deps as :deps/root] root))
-                nodes)
-        s (str (str/trim (str nodes)) "\n")]
-    (spit (:deps-file opts) s)))
+(defn print-dep-add-help []
+  (println "Usage: neil add dep [lib] [options]")
+  (println "Options:")
+  (println (cli/format-opts
+            {:spec spec
+             :order [:lib :version :sha :latest-sha :deps/root :as :alias :deps-file]})))
+
+(defn dep-add [{:keys [opts]}]
+  (if (:help opts)
+    (print-dep-add-help)
+    (do
+      (ensure-deps-file opts)
+      (let [edn-string (edn-string opts)
+            edn-nodes (edn-nodes edn-string)
+            lib (:lib opts)
+            lib (symbol lib)
+            explicit-git? (or (:sha opts)
+                              (:latest-sha opts))
+            [version git?] (if explicit-git?
+                             [(or (:sha opts)
+                                  (latest-github-sha lib)) true]
+                             (or
+                              (when-let [v (:version opts)]
+                                [v false])
+                              (when-let [v (latest-clojars-version lib)]
+                                [v false])
+                              (when-let [v (latest-mvn-version lib)]
+                                [v false])
+                              (when-let [v (latest-github-sha lib)]
+                                [v true])))
+            mvn? (not git?)
+            git-url (when git?
+                      (or (:git/url opts)
+                          (str "https://github.com/" (clean-github-lib lib))))
+            as (or (:as opts) lib)
+            ;; force newline
+            edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
+            nodes (cond
+                    mvn?
+                    (r/assoc-in edn-nodes [:deps as]
+                                {:mvn/version version})
+                    git?
+                    ;; multiple steps to force newlines
+                    (-> edn-nodes
+                        (r/assoc-in
+                         [:deps as :git/url] git-url)
+                        str
+                        r/parse-string
+                        (r/assoc-in
+                         [:deps as :git/sha] version)))
+            nodes (if-let [root (and git? (:deps/root opts))]
+                    (-> nodes
+                        (r/assoc-in [:deps as :deps/root] root))
+                    nodes)
+            s (str (str/trim (str nodes)) "\n")]
+        (spit (:deps-file opts) s)))))
 
 (defn dep-versions [{:keys [opts]}]
   (let [lib (:lib opts)
@@ -333,57 +358,32 @@ Usage: neil <subcommand> <options>
 
 Most subcommands support the options:
 
-- :alias - override alias name
-- :deps-file - override deps.edn file name
+--alias      Override alias name.
+--deps-file  Override deps.edn file name.
 
 Subcommands:
 
 add
 
   - dep: alias for `neil dep add`. Deprecated.
-
   - test: adds cognitect test runner to :test alias.
-
   - build: adds tools.build build.clj file and :build alias.
-
     Options:
-
-    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
-
+    --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
   - kaocha: adds kaocha test runner to :koacha alias.
 
 dep
 
   - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
-    :sha - When provided, assumes lib refers to Github repo.
-    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
-    :deps/root - Set :deps/root to given value
-    :as - Use as dependency name in deps.edn
-
-  - search: lists available libraries on Clojars matching a search string.
-
-  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+    Run neil add dep --help to see all options.
 
 license
 
   - list: lists commonly-used licenses available to be added to project. Takes an optional search string
           to filter results.
-
   - search: alias for `list`
-
   - add: writes license text to a file
-
     Options:
-
     :license - The key of the license to use (e.g. epl-1.0, mit, unlicense). :license keyword may be
                elided when license key is provided as first argument.
     :file - The file to write. Defaults to 'LICENSE'.
@@ -439,12 +439,12 @@ license
 
 (defn -main [& _args]
   (cli/dispatch
-   [{:cmds ["add" "dep"] :fn add-dep :cmds-opts [:lib]}
+   [{:cmds ["add" "dep"] :fn dep-add :cmds-opts [:lib]}
     {:cmds ["add" "test"] :fn add-cognitect-test-runner}
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
     {:cmds ["dep" "versions"] :fn dep-versions :cmds-opts [:lib]}
-    {:cmds ["dep" "add"] :fn add-dep :cmds-opts [:lib]}
+    {:cmds ["dep" "add"] :fn dep-add :cmds-opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :cmds-opts [:search-term]}
     {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
@@ -456,10 +456,7 @@ license
                       (print-version m)
                       (print-help m)))}]
    *command-line-args*
-   {:coerce {:deps-deploy parse-boolean
-             :as symbol
-             :alias keyword
-             :limit parse-long}
+   {:spec spec
     :exec-args {:deps-file "deps.edn"}}))
 
 (when (= *file* (System/getProperty "babashka.file"))
