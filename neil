@@ -8,7 +8,7 @@
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.2.0"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
-                        {:mvn/version "0.2.12"}}})
+                        {:mvn/version "0.2.21"}}})
 
 (ns babashka.neil
   {:no-doc true})
