@@ -58,61 +58,30 @@ Type `neil` to see the help:
 Usage: neil <subcommand> <options>
 
 Most subcommands support the options:
-
-- :alias - override alias name
-- :deps-file - override deps.edn file name
+  --alias      Override alias name.
+  --deps-file  Override deps.edn file name.
 
 Subcommands:
 
 add
-
-  - dep: alias for `neil dep add`. Deprecated.
-
-  - test: adds cognitect test runner to :test alias.
-
-  - build: adds tools.build build.clj file and :build alias.
-
+  dep    Alias for `neil dep add`.
+  test   adds cognitect test runner to :test alias.
+  build  adds tools.build build.clj file and :build alias.
     Options:
-
-    :deps-deploy true - adds deps-deploy as dependency and deploy task in build.clj
-
-  - kaocha: adds kaocha test runner to :koacha alias.
+    --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
+  kaocha adds kaocha test runner to :koacha alias.
 
 dep
-
-  - add: adds :lib, a fully qualified symbol, to deps.edn :deps.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
-    :version - Optional version. When not provided, picks newest version from Clojars or Maven Central.
-    :sha - When provided, assumes lib refers to Github repo.
-    :latest-sha - When provided, assumes lib refers to Github repo and then picks latest SHA from it.
-    :deps/root - Set :deps/root to given value
-    :as - Use as dependency name in deps.edn
-
-  - search: lists available libraries on Clojars matching a search string.
-
-  - versions: lists available versions of :lib. Suppports Clojars/Maven coordinates, no Git deps yet.
-
-    Options:
-
-    :lib - Fully qualified symbol. :lib keyword may be elided when lib name is provided as first option.
+  add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
+    Run neil add dep --help to see all options.
 
 license
-
-  - list: lists commonly-used licenses available to be added to project. Takes an optional search string
-          to filter results.
-
-  - search: alias for `list`
-
-  - add: writes license text to a file
-
+  list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
+  search Alias for `list`
+  add    Writes license text to a file
     Options:
-
-    :license - The key of the license to use (e.g. epl-1.0, mit, unlicense). :license keyword may be
-               elided when license key is provided as first argument.
-    :file - The file to write. Defaults to 'LICENSE'.
+    --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
+    --file    The file to write. Defaults to 'LICENSE'.
 ```
 
 ### add dep

@@ -26,7 +26,7 @@
 
 (import java.net.URLEncoder)
 
-(def version "0.0.31")
+(def version "0.0.32")
 
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
 
