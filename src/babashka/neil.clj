@@ -20,7 +20,8 @@
                    :desc "Add to alias <alias>."
                    :coerce :keyword}
            :deps-file {:ref "<file>"
-                       :desc "Add to <file> instead of deps.edn."}
+                       :desc "Add to <file> instead of deps.edn."
+                       :default "deps.edn"}
            :limit {:coerce :long}
            })
 

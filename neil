@@ -8,7 +8,7 @@
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.2.0"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
-                        {:mvn/version "0.2.22"}}})
+                        {:mvn/version "0.2.23"}}})
 
 (ns babashka.neil
   {:no-doc true})
@@ -32,7 +32,8 @@
                    :desc "Add to alias <alias>."
                    :coerce :keyword}
            :deps-file {:ref "<file>"
-                       :desc "Add to <file> instead of deps.edn."}
+                       :desc "Add to <file> instead of deps.edn."
+                       :default "deps.edn"}
            :limit {:coerce :long}
            })
 
