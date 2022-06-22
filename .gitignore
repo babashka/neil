@@ -3,3 +3,5 @@
 /.clj-kondo/.cache
 /.nrepl-port
 /.direnv/
+.clj-kondo/babashka
+.clj-kondo/funcool
