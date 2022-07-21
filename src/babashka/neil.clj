@@ -1,13 +1,18 @@
 (ns babashka.neil
   {:no-doc true})
 
-(require '[babashka.cli :as cli]
+(require '[babashka.classpath :as cp]
+         '[babashka.cli :as cli]
          '[babashka.curl :as curl]
          '[babashka.fs :as fs]
+         '[babashka.tasks :as tasks]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
          '[clojure.string :as str])
+
+;; deps-new reads classpath from property
+(System/setProperty "java.class.path" (cp/get-classpath))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
@@ -353,6 +358,38 @@
                :version (:version search-result)
                :description (pr-str (:description search-result))))))
 
+(def deps-new-opts
+  [; main opts
+   :template
+   :name
+   :target-dir
+   :overwrite
+
+   ; optional overrides
+   :artifact/id
+   :description
+   :developer
+   :group/id
+   :main
+   :name
+   :now/date
+   :now/year
+   :raw-name
+   :scm/domain
+   :scm/user
+   :scm/repo
+   :top
+   :user
+   :version])
+
+(defn run-deps-new [{:keys [opts]}]
+  (let [{:keys [template]
+         :or {template "scratch"}} opts
+        task-args (mapcat (fn [[k v]] [(str k) (pr-str v)])
+                          (dissoc opts :template))]
+    (apply tasks/clojure "-Tnew" template task-args)
+    nil))
+
 (defn print-help [_]
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -374,6 +411,9 @@ add
 dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
+
+new
+  Invoke deps-new
 
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
@@ -443,6 +483,7 @@ license
     {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :cmds-opts [:license]}
+    {:cmds ["new"] :fn run-deps-new :cmds-opts deps-new-opts}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
     {:cmds [] :fn (fn [{:keys [opts] :as m}]
