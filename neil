@@ -432,8 +432,8 @@ new: Create a new project using deps-new
   See the deps-new docs for all available options:
   https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
 
-  Example:
-    neil new app foo --overwrite
+  Examples:
+    neil new scratch foo --overwrite
 
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
