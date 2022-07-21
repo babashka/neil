@@ -21,11 +21,11 @@
          '[babashka.cli :as cli]
          '[babashka.curl :as curl]
          '[babashka.fs :as fs]
-         '[babashka.tasks :as tasks]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
-         '[clojure.string :as str])
+         '[clojure.string :as str]
+         '[org.corfield.new :as new])
 
 ;; deps-new reads classpath from property
 (System/setProperty "java.class.path" (cp/get-classpath))
@@ -401,9 +401,8 @@
 (defn run-deps-new [{:keys [opts]}]
   (let [{:keys [template]
          :or {template "scratch"}} opts
-        task-args (mapcat (fn [[k v]] [(str k) (pr-str v)])
-                          (dissoc opts :template))]
-    (apply tasks/clojure "-Tnew" template task-args)
+        template-fn (requiring-resolve (symbol "org.corfield.new" template))]
+    (template-fn (dissoc opts :template))
     nil))
 
 (defn print-help [_]
