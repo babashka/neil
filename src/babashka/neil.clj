@@ -410,8 +410,15 @@ dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
 
-new
-  Invoke deps-new
+new: Create a new project using deps-new
+  Runs one of the template functions in org.corfield.new.
+
+  See the deps-new docs for all available options:
+  https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
+
+  Example:
+    neil new app foo --overwrite
+
 
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
