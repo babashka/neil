@@ -419,7 +419,6 @@ new: Create a new project using deps-new
   Example:
     neil new app foo --overwrite
 
-
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
