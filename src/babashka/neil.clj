@@ -8,8 +8,7 @@
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
-         '[clojure.string :as str]
-         '[org.corfield.new :as new])
+         '[clojure.string :as str])
 
 ;; deps-new reads classpath from property
 (System/setProperty "java.class.path" (cp/get-classpath))
