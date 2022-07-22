@@ -20,14 +20,12 @@
 (require '[babashka.classpath :as cp]
          '[babashka.cli :as cli]
          '[babashka.curl :as curl]
+         '[babashka.deps :as deps]
          '[babashka.fs :as fs]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
          '[clojure.string :as str])
-
-;; deps-new reads classpath from property
-(System/setProperty "java.class.path" (cp/get-classpath))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
@@ -380,6 +378,11 @@
    :target-dir
    :overwrite
 
+   ; template deps overrides
+   :local/root
+   :git/url
+   :git/sha
+
    ; optional overrides
    :artifact/id
    :description
@@ -397,11 +400,29 @@
    :user
    :version])
 
+(defn- built-in-template? [template]
+  (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
+
+(defn- github-repo-url [lib]
+  (str "https://github.com/" (clean-github-lib lib)))
+
+(defn- add-template-deps [template opts]
+  (let [lib (edn/read-string template)
+        local-root (:local/root opts)]
+    (if local-root
+      (deps/add-deps {:deps {lib {:local/root local-root}}})
+      (let [url (or (:git/url opts) (github-repo-url lib))
+            sha (or (:git/sha opts) (latest-github-sha lib))]
+        (deps/add-deps {:deps {lib {:git/url url :git/sha sha}}})))))
+
 (defn run-deps-new [{:keys [opts]}]
+  (require 'org.corfield.new)
   (let [{:keys [template]
-         :or {template "scratch"}} opts
-        template-fn (requiring-resolve (symbol "org.corfield.new" template))]
-    (template-fn (dissoc opts :template))
+         :or {template "scratch"}} opts]
+    (when-not (built-in-template? template)
+      (add-template-deps template opts))
+    (System/setProperty "java.class.path" (cp/get-classpath))
+    ((resolve 'org.corfield.new/create) opts)
     nil))
 
 (defn print-help [_]
