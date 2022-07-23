@@ -361,6 +361,7 @@
    :name
    :target-dir
    :overwrite
+   :dry-run
 
    ; template deps overrides
    :local/root
@@ -390,24 +391,40 @@
 (defn- github-repo-url [lib]
   (str "https://github.com/" (clean-github-lib lib)))
 
-(defn- add-template-deps [template opts]
+(defn- template-libs [template opts]
   (let [lib (edn/read-string template)
         local-root (:local/root opts)]
     (if local-root
-      (deps/add-deps {:deps {lib {:local/root local-root}}})
+      {lib {:local/root local-root}}
       (let [url (or (:git/url opts) (github-repo-url lib))
             sha (or (:git/sha opts) (latest-github-sha lib))]
-        (deps/add-deps {:deps {lib {:git/url url :git/sha sha}}})))))
+        {lib {:git/url url :git/sha sha}}))))
+
+(defn- set-class-path-property []
+  (System/setProperty "java.class.path" (cp/get-classpath)))
+
+(defn- deps-new-plan [cli-opts]
+  (let [create-opts (merge {:template "scratch"}
+                           (dissoc cli-opts :dry-run :deps-file))
+        template-deps (when-not (built-in-template? (:template create-opts))
+                        (template-libs (:template create-opts) cli-opts))]
+    {:template-deps template-deps
+     :create-opts create-opts}))
+
+(defn- deps-new-create [create-opts]
+  ((resolve 'org.corfield.new/create) create-opts))
 
 (defn run-deps-new [{:keys [opts]}]
   (require 'org.corfield.new)
-  (let [{:keys [template]
-         :or {template "scratch"}} opts]
-    (when-not (built-in-template? template)
-      (add-template-deps template opts))
-    (System/setProperty "java.class.path" (cp/get-classpath))
-    ((resolve 'org.corfield.new/create) opts)
-    nil))
+  (let [plan (deps-new-plan opts)
+        {:keys [template-deps create-opts]} plan]
+    (if (:dry-run opts)
+      plan
+      (do
+        (when template-deps (deps/add-deps {:deps template-deps}))
+        (set-class-path-property)
+        (deps-new-create create-opts)
+        nil))))
 
 (defn print-help [_]
   (println (str/trim "
