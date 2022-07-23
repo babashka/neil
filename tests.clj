@@ -82,5 +82,23 @@
       (is (thrown-with-msg? Exception #"nonExistentLicense" 
             (run-license out-file "add" "nonExistentLicense"))))))
 
+(deftest new-scratch-test
+  (let [target-dir (str (fs/temp-dir) "/my-scratch")]
+    (spit (test-file "deps.edn") "{}")
+    (neil (str "new scratch my-scratch :overwrite true :target-dir " target-dir))
+    (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
+           (slurp (fs/file (str target-dir "/src/scratch.clj")))))
+    (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
+           (slurp (fs/file (str target-dir "/deps.edn")))))))
+
+(deftest new-remote-test
+  (let [target-dir (str (fs/temp-dir) "/my-kit")]
+    (spit (test-file "deps.edn") "{}")
+    (neil (str "new io.github.rads/kit my-kit :overwrite true :target-dir " target-dir))
+    (is (= (slurp (fs/file "test-resources/new/my-kit/src/scratch.clj"))
+           (slurp (fs/file (str target-dir "/src/scratch.clj")))))
+    (is (= (slurp (fs/file "test-resources/new/my-kit/deps.edn"))
+           (slurp (fs/file (str target-dir "/deps.edn")))))))
+
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
