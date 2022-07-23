@@ -101,17 +101,72 @@
                             :name "my-scratch"}}
              edn)))))
 
+(deftest new-overrides-test
+  (spit (test-file "deps.edn") "{}")
+  (let [edn (run-new-command ":artifact/id" "foo"
+                             ":description" "foo"
+                             ":developer" "foo"
+                             ":dry-run" "true"
+                             ":group/id" "foo"
+                             ":main" "foo"
+                             ":name" "my-scratch"
+                             ":now/date" "foo"
+                             ":now/year" "foo"
+                             ":overwrite" "true"
+                             ":raw-name" "foo"
+                             ":scm/domain" "foo"
+                             ":scm/repo" "foo"
+                             ":scm/user" "foo"
+                             ":target-dir" "foo"
+                             ":template" "scratch"
+                             ":top" "foo"
+                             ":user" "foo"
+                             ":version" "foo")]
+    (is (= {:template-deps nil
+            :create-opts {:artifact/id "foo"
+                          :description "foo"
+                          :developer "foo"
+                          :group/id "foo"
+                          :main "foo"
+                          :name "my-scratch"
+                          :now/date "foo"
+                          :now/year "foo"
+                          :overwrite true
+                          :raw-name "foo"
+                          :scm/domain "foo"
+                          :scm/repo "foo"
+                          :scm/user "foo"
+                          :target-dir "foo"
+                          :template "scratch"
+                          :top "foo"
+                          :user "foo"
+                          :version "foo"}}
+           edn))))
+
 (deftest new-remote-test
   (let [target-dir (str (fs/temp-dir) "/my-kit")]
     (fs/delete-tree target-dir)
     (spit (test-file "deps.edn") "{}")
-    (run-new-command "io.github.rads/kit" "my-kit"
-                     ":target-dir" target-dir
-                     ":overwrite" "true")
-    (is (= (slurp (fs/file "test-resources/new/my-kit/src/scratch.clj"))
-           (slurp (fs/file (str target-dir "/src/scratch.clj")))))
-    (is (= (slurp (fs/file "test-resources/new/my-kit/deps.edn"))
-           (slurp (fs/file (str target-dir "/deps.edn")))))))
+    (let [run #(apply run-new-command
+                      "io.github.rads/kit" "my-kit"
+                      ":target-dir" target-dir
+                      ":overwrite" "true"
+                      %&)]
+      (testing "dry run"
+        (is (= {:template-deps {'io.github.rads/kit
+                                {:git/url "https://github.com/rads/kit"
+                                 :git/sha "a7169fec2d20fd414bcb194bb40a067cae9a80ac"}}
+                :create-opts {:template "io.github.rads/kit"
+                              :target-dir target-dir
+                              :overwrite true
+                              :name "my-kit"}}
+               (run ":dry-run" "true"))))
+      (testing "template output"
+        (run ":dry-run" "false")
+        (is (= (slurp (fs/file "test-resources/new/my-kit/src/scratch.clj"))
+               (slurp (fs/file (str target-dir "/src/scratch.clj")))))
+        (is (= (slurp (fs/file "test-resources/new/my-kit/deps.edn"))
+               (slurp (fs/file (str target-dir "/deps.edn")))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
