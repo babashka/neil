@@ -82,19 +82,32 @@
       (is (thrown-with-msg? Exception #"nonExistentLicense" 
             (run-license out-file "add" "nonExistentLicense"))))))
 
+(defn run-new-command [& args]
+  (-> @(process (concat ["./neil" "new"] args) {:out :string})
+      :out
+      edn/read-string))
+
 (deftest new-scratch-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (spit (test-file "deps.edn") "{}")
-    (neil (str "new scratch my-scratch :overwrite true :target-dir " target-dir))
-    (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
-           (slurp (fs/file (str target-dir "/src/scratch.clj")))))
-    (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
-           (slurp (fs/file (str target-dir "/deps.edn")))))))
+    (let [edn (run-new-command "scratch" "my-scratch"
+                               ":target-dir" target-dir
+                               ":dry-run" "true"
+                               ":overwrite" "true")]
+      (is (= {:template-deps nil
+              :create-opts {:template "scratch"
+                            :overwrite true
+                            :target-dir target-dir
+                            :name "my-scratch"}}
+             edn)))))
 
 (deftest new-remote-test
   (let [target-dir (str (fs/temp-dir) "/my-kit")]
+    (fs/delete-tree target-dir)
     (spit (test-file "deps.edn") "{}")
-    (neil (str "new io.github.rads/kit my-kit :overwrite true :target-dir " target-dir))
+    (run-new-command "io.github.rads/kit" "my-kit"
+                     ":target-dir" target-dir
+                     ":overwrite" "true")
     (is (= (slurp (fs/file "test-resources/new/my-kit/src/scratch.clj"))
            (slurp (fs/file (str target-dir "/src/scratch.clj")))))
     (is (= (slurp (fs/file "test-resources/new/my-kit/deps.edn"))
