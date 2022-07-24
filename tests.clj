@@ -113,6 +113,7 @@
       (testing "dry run"
         (is (= {:template-deps {'io.github.rads/neil-new-test-template
                                 {:git/url "https://github.com/rads/neil-new-test-template"
+                                 :git/tag "1.0.0"
                                  :git/sha "e7954c34146fcdc4ab54fa4690bec3ceb9247d05"}}
                 :create-opts {:template "io.github.rads/neil-new-test-template"
                               :target-dir target-dir
