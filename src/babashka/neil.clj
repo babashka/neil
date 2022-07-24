@@ -412,7 +412,7 @@
      :create-opts create-opts}))
 
 (defn- deps-new-create [create-opts]
-  ((resolve 'org.corfield.new/create) create-opts))
+  ((requiring-resolve 'org.corfield.new/create) create-opts))
 
 (defn run-deps-new [{:keys [opts]}]
   (require 'org.corfield.new)
