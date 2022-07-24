@@ -361,14 +361,43 @@
 (defn- github-repo-url [lib]
   (str "https://github.com/" (clean-github-lib lib)))
 
+(def valid-lib-opts
+  #{#{}
+    #{:local/root}
+    #{:git/sha}
+    #{:git/tag}
+    #{:git/url}
+    #{:git/url :git/sha}
+    #{:git/url :git/tag}})
+
+(defn invalid-lib-opts-message [lib-opts]
+  (str "Requires one of the following combinations of lib options:\n"
+       (pr-str valid-lib-opts) "\n\n"
+       "Provided:\n"
+       (pr-str lib-opts)))
+
 (defn- template-libs [template opts]
-  (let [lib (edn/read-string template)
-        local-root (:local/root opts)]
-    (if local-root
-      {lib {:local/root local-root}}
-      (let [url (or (:git/url opts) (github-repo-url lib))
-            sha (or (:git/sha opts) (latest-github-sha lib))]
-        {lib {:git/url url :git/sha sha}}))))
+  (let [lib-opts (set (keys (select-keys opts (into #{} cat valid-lib-opts))))
+        lib-sym (edn/read-string template)]
+    (case lib-opts
+      (#{:local/root})
+      {lib-sym {:local/root (:local/root opts)}}
+
+      (#{}
+       #{:git/sha}
+       #{:git/url}
+       #{:git/url :git/sha})
+      (let [url (or (:git/url opts) (github-repo-url lib-sym))
+            sha (or (:git/sha opts) (latest-github-sha lib-sym))]
+        {lib-sym {:git/url url :git/sha sha}})
+
+      (#{:git/tag}
+       #{:git/url :git/tag})
+      (let [url (or (:git/url opts) (github-repo-url lib-sym))
+            tag (or (:git/tag opts) (latest-github-tag lib-sym))]
+        {lib-sym {:git/url url :git/tag tag}})
+
+      (throw (ex-info (invalid-lib-opts-message lib-opts) {})))))
 
 (defn- set-class-path-property []
   (System/setProperty "java.class.path" (cp/get-classpath)))
