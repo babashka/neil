@@ -1,5 +1,5 @@
 (ns scratch
-  "FIXME: my new io.github.rads/kit project.")
+  "FIXME: my new io.github.rads/neil-new-test-template project.")
 
 (defn exec
   "Invoke me with clojure -X scratch/exec"
