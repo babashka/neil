@@ -383,15 +383,15 @@
       (#{:local/root})
       {lib-sym {:local/root (:local/root opts)}}
 
-      (#{}
-       #{:git/sha}
-       #{:git/url}
+      (#{:git/sha}
        #{:git/url :git/sha})
       (let [url (or (:git/url opts) (github-repo-url lib-sym))
             sha (or (:git/sha opts) (latest-github-sha lib-sym))]
         {lib-sym {:git/url url :git/sha sha}})
 
-      (#{:git/tag}
+      (#{}
+       #{:git/tag}
+       #{:git/url}
        #{:git/url :git/tag})
       (let [url (or (:git/url opts) (github-repo-url lib-sym))
             tag (or (:git/tag opts) (latest-github-tag lib-sym))]
