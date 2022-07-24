@@ -101,48 +101,6 @@
                             :name "my-scratch"}}
              edn)))))
 
-(deftest new-overrides-test
-  (spit (test-file "deps.edn") "{}")
-  (let [edn (run-new-command ":artifact/id" "foo"
-                             ":description" "foo"
-                             ":developer" "foo"
-                             ":dry-run" "true"
-                             ":group/id" "foo"
-                             ":main" "foo"
-                             ":name" "my-scratch"
-                             ":now/date" "foo"
-                             ":now/year" "foo"
-                             ":overwrite" "true"
-                             ":raw-name" "foo"
-                             ":scm/domain" "foo"
-                             ":scm/repo" "foo"
-                             ":scm/user" "foo"
-                             ":target-dir" "foo"
-                             ":template" "scratch"
-                             ":top" "foo"
-                             ":user" "foo"
-                             ":version" "foo")]
-    (is (= {:template-deps nil
-            :create-opts {:artifact/id "foo"
-                          :description "foo"
-                          :developer "foo"
-                          :group/id "foo"
-                          :main "foo"
-                          :name "my-scratch"
-                          :now/date "foo"
-                          :now/year "foo"
-                          :overwrite true
-                          :raw-name "foo"
-                          :scm/domain "foo"
-                          :scm/repo "foo"
-                          :scm/user "foo"
-                          :target-dir "foo"
-                          :template "scratch"
-                          :top "foo"
-                          :user "foo"
-                          :version "foo"}}
-           edn))))
-
 (deftest new-remote-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (fs/delete-tree target-dir)

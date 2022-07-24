@@ -24,8 +24,8 @@
            :deps-file {:ref "<file>"
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
-           :limit {:coerce :long}
-           })
+           :limit {:coerce :long}})
+           
 
 (import java.net.URLEncoder)
 
@@ -355,36 +355,6 @@
                :version (:version search-result)
                :description (pr-str (:description search-result))))))
 
-(def deps-new-opts
-  [; main opts
-   :template
-   :name
-   :target-dir
-   :overwrite
-   :dry-run
-
-   ; template deps overrides
-   :local/root
-   :git/url
-   :git/sha
-
-   ; optional overrides
-   :artifact/id
-   :description
-   :developer
-   :group/id
-   :main
-   :name
-   :now/date
-   :now/year
-   :raw-name
-   :scm/domain
-   :scm/user
-   :scm/repo
-   :top
-   :user
-   :version])
-
 (defn- built-in-template? [template]
   (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
 
@@ -525,7 +495,7 @@ license
     {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :cmds-opts [:license]}
-    {:cmds ["new"] :fn run-deps-new :cmds-opts deps-new-opts}
+    {:cmds ["new"] :fn run-deps-new :cmds-opts [:template :name :target-dir]}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
     {:cmds [] :fn (fn [{:keys [opts] :as m}]
