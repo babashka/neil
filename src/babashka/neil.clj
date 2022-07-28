@@ -464,6 +464,9 @@
   []
   (System/setProperty "java.class.path" (cp/get-classpath)))
 
+(def create-opts-deny-list
+  [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
+
 (defn- deps-new-plan
   "Returns a plan for calling org.corfield.new/create.
 
@@ -474,7 +477,7 @@
                    create function."
   [cli-opts]
   (let [create-opts (merge {:template "scratch"}
-                           (dissoc cli-opts :dry-run :deps-file))
+                           (apply dissoc cli-opts create-opts-deny-list))
         tpl-deps (when-not (built-in-template? (:template create-opts))
                    (template-deps (:template create-opts) cli-opts))]
     {:template-deps tpl-deps
