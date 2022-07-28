@@ -509,14 +509,45 @@ dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
 
-new: Create a new project using deps-new
-  Runs one of the template functions in org.corfield.new.
+new:
+  Create a project using deps-new
 
-  See the deps-new docs for all available options:
+  Usage:
+    neil new template name [target-dir] [template-opts]
+
+  Runs the org.corfield.new/create function. All of the deps-new options can be
+  provided as CLI options:
+
   https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
+
+  Both built-in and remote templates are supported. Built-in templates use
+  unqualified names (e.g. scratch) whereas remote templates use fully-qualified
+  names (e.g. io.github.kit/kit-clj).
+
+  If a remote template is provided, the babashka.deps/add-deps function will be
+  called automatically before running org.corfield.new/create. The deps for the
+  template are inferred automatically from the template name. The following
+  options can be used to control the add-deps behavior:
+
+    --git/url
+      Override the :git/url in the :deps map. If no URL is provided, a template
+      name starting with io.github is expected and the URL will point to GitHub.
+
+    --git/tag
+      Override the :git/tag in the :deps map. If no SHA or tag is provided, the
+      latest tag from the default branch on GitHub will be used.
+
+    --sha --git/sha
+      Override the :git/sha in the :deps map. If no SHA is provided, the latest
+      tag for the default branch from GitHub will be used.
+
+    --latest-sha
+      Override the :git/sha in the :deps map with the latest SHA from the
+      default branch on GitHub.
 
   Examples:
     neil new scratch foo --overwrite
+    neil new io.github.rads/neil-new-test-template foo2 --latest-sha
 
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
