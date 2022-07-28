@@ -112,16 +112,19 @@
                                 (namespace lib) (name lib) branch))
          :sha)))
 
-(defn list-tags [lib]
+(defn list-github-tags [lib]
   (let [lib (clean-github-lib lib)]
     (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
                            (namespace lib) (name lib)))))
 
 (defn latest-github-tag [lib]
-  (let [lib (clean-github-lib lib)]
-    (first
-     (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
-                            (namespace lib) (name lib))))))
+  (-> (list-github-tags lib)
+      first))
+
+(defn find-github-tag [lib tag]
+  (->> (list-github-tags lib)
+       (filter #(= (:name %) tag))
+       first))
 
 (def deps-template
   (str/triml "
@@ -418,10 +421,7 @@
    (fn [lib-sym lib-opts]
      (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
            tag (:git/tag lib-opts)
-           commit (->> (list-tags (git-url->lib-sym url))
-                       (filter #(= (:name %) tag))
-                       first
-                       :commit)]
+           {:keys [commit]} (find-github-tag (git-url->lib-sym url) tag)]
        {lib-sym {:git/url url :git/tag tag :git/sha (:sha commit)}}))
 
    [#{:git/sha} #{:git/url :git/sha}]
