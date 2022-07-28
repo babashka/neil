@@ -545,19 +545,20 @@ new:
 
     --git/url
       Override the :git/url in the :deps map. If no URL is provided, a template
-      name starting with io.github is expected and the URL will point to GitHub.
+      name starting with io.github or com.github is expected and the URL will
+      point to GitHub.
 
     --git/tag
       Override the :git/tag in the :deps map. If no SHA or tag is provided, the
-      latest tag from the default branch on GitHub will be used.
+      latest tag from the default branch of :git/url will be used.
 
     --sha --git/sha
-      Override the :git/sha in the :deps map. If no SHA is provided, the latest
-      tag for the default branch from GitHub will be used.
+      Override the :git/sha in the :deps map. If no SHA or tag is provided, the
+      latest tag from the default branch of :git/url will be used.
 
     --latest-sha
       Override the :git/sha in the :deps map with the latest SHA from the
-      default branch on GitHub.
+      default branch of :git/url.
 
   Examples:
     neil new scratch foo --overwrite
