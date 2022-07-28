@@ -382,8 +382,22 @@
   [template]
   (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
 
-(defn- github-repo-url [lib]
+(defn- github-repo-http-url [lib]
   (str "https://github.com/" (clean-github-lib lib)))
+
+(def github-repo-ssh-regex #"^git@github.com:([^/]+)/([^\.]+)\.git$")
+(def github-repo-http-regex #"^https://github.com/([^/]+)/([^\.]+)(\.git)?$")
+
+(defn- parse-git-url [git-url]
+  (let [[[_ gh-user repo-name]] (or (re-seq github-repo-ssh-regex git-url)
+                                    (re-seq github-repo-http-regex git-url))]
+    (if (and gh-user repo-name)
+      {:gh-user gh-user :repo-name repo-name}
+      (throw (ex-info "Failed to parse :git/url" {:git/url git-url})))))
+
+(defn- git-url->lib-sym [git-url]
+  (when-let [{:keys [gh-user repo-name]} (parse-git-url git-url)]
+    (symbol (str "io.github." gh-user) repo-name)))
 
 (def lib-opts->template-deps-fn
   "A map to define valid CLI options for deps-new template deps.
@@ -396,15 +410,15 @@
 
    [#{} #{:git/url}]
    (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
-           {:keys [name commit]} (latest-github-tag lib-sym)]
+     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
+           {:keys [name commit]} (latest-github-tag (git-url->lib-sym url))]
        {lib-sym {:git/url url :git/tag name :git/sha (:sha commit)}}))
 
    [#{:git/tag} #{:git/url :git/tag}]
    (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
            tag (:git/tag lib-opts)
-           commit (->> (list-tags lib-sym)
+           commit (->> (list-tags (git-url->lib-sym url))
                        (filter #(= (:name %) tag))
                        first
                        :commit)]
@@ -412,14 +426,14 @@
 
    [#{:git/sha} #{:git/url :git/sha}]
    (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
            sha (:git/sha lib-opts)]
        {lib-sym {:git/url url :git/sha sha}}))
 
    [#{:latest-sha} #{:git/url :latest-sha}]
    (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
-           sha (latest-github-sha lib-sym)]
+     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
+           sha (latest-github-sha (git-url->lib-sym url))]
        {lib-sym {:git/url url :git/sha sha}}))
 
    [#{:git/url :git/tag :git/sha}]
