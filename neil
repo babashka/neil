@@ -25,6 +25,7 @@
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
          '[clojure.edn :as edn]
+         '[clojure.set :as set]
          '[clojure.string :as str])
 
 (def spec {:lib {:desc "Fully qualified library name."}
@@ -415,6 +416,12 @@
            sha (:git/sha lib-opts)]
        {lib-sym {:git/url url :git/sha sha}}))
 
+   [#{:latest-sha} #{:git/url :latest-sha}]
+   (fn [lib-sym lib-opts]
+     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+           sha (latest-github-sha lib-sym)]
+       {lib-sym {:git/url url :git/sha sha}}))
+
    [#{:git/url :git/tag :git/sha}]
    (fn [lib-sym lib-opts]
      {lib-sym (select-keys lib-opts [:git/url :git/tag :git/sha])})})
@@ -426,7 +433,9 @@
 (defn- deps-new-cli-opts->lib-opts
   "Returns parsed deps-new template deps opts from raw CLI opts."
   [cli-opts]
-  (select-keys cli-opts (into #{} cat valid-lib-opts)))
+  (-> cli-opts
+      (set/rename-keys {:sha :git/sha})
+      (select-keys (into #{} cat valid-lib-opts))))
 
 (defn- invalid-lib-opts-error [provided-lib-opts]
   (ex-info (str "Provided invalid combination of CLI options for deps-new "
