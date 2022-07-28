@@ -483,6 +483,42 @@
 (defn- deps-new-create [create-opts]
   ((requiring-resolve 'org.corfield.new/create) create-opts))
 
+(defn print-new-help []
+  (println (str/trim "
+Usage: neil new [template] [name] [target-dir] [options]
+
+Runs the org.corfield.new/create function from deps-new.
+
+All of the deps-new options can be provided as CLI options:
+
+https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
+
+Both built-in and remote templates are supported. Built-in templates use
+unqualified names (e.g. scratch) whereas remote templates use fully-qualified
+names (e.g. io.github.kit/kit-clj).
+
+If a remote template is provided, the babashka.deps/add-deps function will be
+called automatically before running org.corfield.new/create. The deps for the
+template are inferred automatically from the template name. The following
+options can be used to control the add-deps behavior:
+
+  --git/url
+    Override the :git/url in the :deps map. If no URL is provided, a template
+    name starting with io.github or com.github is expected and the URL will
+    point to GitHub.
+
+  --git/tag
+    Override the :git/tag in the :deps map. If no SHA or tag is provided, the
+    latest tag from the default branch of :git/url will be used.
+
+  --sha --git/sha
+    Override the :git/sha in the :deps map. If no SHA or tag is provided, the
+    latest tag from the default branch of :git/url will be used.
+
+  --latest-sha
+    Override the :git/sha in the :deps map with the latest SHA from the
+    default branch of :git/url.")))
+
 (defn run-deps-new
   "Runs org.corfield.new/create using the provided CLI options.
 
@@ -490,16 +526,19 @@
   provided by deps-new-plan. This function's job is to execute side-effects
   using the plan to provide repeatability."
   [{:keys [opts]}]
-  (require 'org.corfield.new)
-  (let [plan (deps-new-plan opts)
-        {:keys [template-deps create-opts]} plan]
-    (if (:dry-run opts)
-      plan
-      (do
-        (when template-deps (deps/add-deps {:deps template-deps}))
-        (set-class-path-property)
-        (deps-new-create create-opts)
-        nil))))
+  (if (:help opts)
+    (print-new-help)
+    (do
+      (require 'org.corfield.new)
+      (let [plan (deps-new-plan opts)
+            {:keys [template-deps create-opts]} plan]
+        (if (:dry-run opts)
+          plan
+          (do
+            (when template-deps (deps/add-deps {:deps template-deps}))
+            (set-class-path-property)
+            (deps-new-create create-opts)
+            nil))))))
 
 (defn print-help [_]
   (println (str/trim "
@@ -525,40 +564,7 @@ dep
 
 new:
   Create a project using deps-new
-
-  Usage:
-    neil new template name [target-dir] [template-opts]
-
-  Runs the org.corfield.new/create function. All of the deps-new options can be
-  provided as CLI options:
-
-  https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
-
-  Both built-in and remote templates are supported. Built-in templates use
-  unqualified names (e.g. scratch) whereas remote templates use fully-qualified
-  names (e.g. io.github.kit/kit-clj).
-
-  If a remote template is provided, the babashka.deps/add-deps function will be
-  called automatically before running org.corfield.new/create. The deps for the
-  template are inferred automatically from the template name. The following
-  options can be used to control the add-deps behavior:
-
-    --git/url
-      Override the :git/url in the :deps map. If no URL is provided, a template
-      name starting with io.github or com.github is expected and the URL will
-      point to GitHub.
-
-    --git/tag
-      Override the :git/tag in the :deps map. If no SHA or tag is provided, the
-      latest tag from the default branch of :git/url will be used.
-
-    --sha --git/sha
-      Override the :git/sha in the :deps map. If no SHA or tag is provided, the
-      latest tag from the default branch of :git/url will be used.
-
-    --latest-sha
-      Override the :git/sha in the :deps map with the latest SHA from the
-      default branch of :git/url.
+    Run neil new --help to see all options.
 
   Examples:
     neil new scratch foo --overwrite
