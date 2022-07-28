@@ -360,81 +360,113 @@
                :version (:version search-result)
                :description (pr-str (:description search-result))))))
 
-(defn- built-in-template? [template]
+(defn- built-in-template?
+  "Returns true if the template name maps to a function in org.corfield.new."
+  [template]
   (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
 
 (defn- github-repo-url [lib]
   (str "https://github.com/" (clean-github-lib lib)))
 
+(def lib-opts->template-deps-fn
+  "A map to define valid CLI options for deps-new template deps.
+
+  - Each key is a sequence of valid combinations of CLI opts.
+  - Each value is a function which returns a tools.deps lib map."
+  {[#{:local/root}]
+   (fn [lib-sym lib-opts]
+     {lib-sym (select-keys lib-opts [:local/root])})
+
+   [#{} #{:git/url}]
+   (fn [lib-sym lib-opts]
+     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+           {:keys [name commit]} (latest-github-tag lib-sym)]
+       {lib-sym {:git/url url :git/tag name :git/sha (:sha commit)}}))
+
+   [#{:git/tag} #{:git/url :git/tag}]
+   (fn [lib-sym lib-opts]
+     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+           tag (:git/tag lib-opts)
+           commit (->> (list-tags lib-sym)
+                       (filter #(= (:name %) tag))
+                       first
+                       :commit)]
+       {lib-sym {:git/url url :git/tag tag :git/sha (:sha commit)}}))
+
+   [#{:git/sha} #{:git/url :git/sha}]
+   (fn [lib-sym lib-opts]
+     (let [url (or (:git/url lib-opts) (github-repo-url lib-sym))
+           sha (:git/sha lib-opts)]
+       {lib-sym {:git/url url :git/sha sha}}))
+
+   [#{:git/url :git/tag :git/sha}]
+   (fn [lib-sym lib-opts]
+     {lib-sym (select-keys lib-opts [:git/url :git/tag :git/sha])})})
+
 (def valid-lib-opts
-  #{#{:local/root}
+  "The set of all valid combinations of deps-new template deps opts."
+  (into #{} cat (keys lib-opts->template-deps-fn)))
 
-    #{}
-    #{:git/url}
+(defn- deps-new-cli-opts->lib-opts
+  "Returns parsed deps-new template deps opts from raw CLI opts."
+  [cli-opts]
+  (select-keys cli-opts (into #{} cat valid-lib-opts)))
 
-    #{:git/tag}
-    #{:git/url :git/tag}
+(defn- invalid-lib-opts-error [provided-lib-opts]
+  (ex-info (str "Provided invalid combination of CLI options for deps-new "
+                "template deps.")
+           {:provided-opts (set (keys provided-lib-opts))
+            :valid-combinations valid-lib-opts}))
 
-    #{:git/sha}
-    #{:git/url :git/sha}
+(defn- find-template-deps-fn
+  "Returns a template-deps-fn given lib-opts parsed from raw CLI opts."
+  [lib-opts]
+  (some (fn [[k v]] (and (contains? (set k) (set (keys lib-opts))) v))
+        lib-opts->template-deps-fn))
 
-    #{:git/url :git/tag :git/sha}})
+(defn- template-deps
+  "Returns a tools.deps lib map for the given CLI opts."
+  [template cli-opts]
+  (let [lib-opts (deps-new-cli-opts->lib-opts cli-opts)
+        lib-sym (edn/read-string template)
+        template-deps-fn (find-template-deps-fn lib-opts)]
+    (if-not template-deps-fn
+      (throw (invalid-lib-opts-error lib-opts))
+      (template-deps-fn lib-sym lib-opts))))
 
-(defn invalid-lib-opts-message [lib-opts]
-  (str "Requires one of the following combinations of lib options:\n"
-       (pr-str valid-lib-opts) "\n\n"
-       "Provided:\n"
-       (pr-str lib-opts)))
+(defn- set-class-path-property
+  "Sets the java.class.path property to the current classpath.
 
-(defn- template-libs [template opts]
-  (let [lib-opts (set (keys (select-keys opts (into #{} cat valid-lib-opts))))
-        lib-sym (edn/read-string template)]
-    (case lib-opts
-      (#{:local/root})
-      {lib-sym (select-keys opts [:local/root])}
-
-      (#{}
-       #{:git/url})
-      (let [url (or (:git/url opts) (github-repo-url lib-sym))
-            {:keys [name commit]} (latest-github-tag lib-sym)]
-        {lib-sym {:git/url url :git/tag name :git/sha (:sha commit)}})
-
-      (#{:git/tag}
-       #{:git/url :git/tag})
-      (let [url (or (:git/url opts) (github-repo-url lib-sym))
-            tag (:git/tag opts)
-            commit (->> (list-tags lib-sym)
-                        (filter #(= (:name %) tag))
-                        first
-                        :commit)]
-        {lib-sym {:git/url url :git/tag tag :git/sha (:sha commit)}})
-
-      (#{:git/sha}
-       #{:git/url :git/sha})
-      (let [url (or (:git/url opts) (github-repo-url lib-sym))
-            sha (:git/sha opts)]
-        {lib-sym {:git/url url :git/sha sha}})
-
-      #{:git/url :git/tag :git/sha}
-      {lib-sym (select-keys opts [:git/url :git/tag :git/sha])}
-
-      (throw (ex-info (invalid-lib-opts-message lib-opts) {})))))
-
-(defn- set-class-path-property []
+  This needs to be called before running org.corfield.new/create."
+  []
   (System/setProperty "java.class.path" (cp/get-classpath)))
 
-(defn- deps-new-plan [cli-opts]
+(defn- deps-new-plan
+  "Returns a plan for calling org.corfield.new/create.
+
+  :template-deps - These deps will be added with babashka.deps/add-deps before
+                   calling the create function.
+
+  :create-opts   - This map contains the options that will be passed to the
+                   create function."
+  [cli-opts]
   (let [create-opts (merge {:template "scratch"}
                            (dissoc cli-opts :dry-run :deps-file))
-        template-deps (when-not (built-in-template? (:template create-opts))
-                        (template-libs (:template create-opts) cli-opts))]
-    {:template-deps template-deps
+        tpl-deps (when-not (built-in-template? (:template create-opts))
+                   (template-deps (:template create-opts) cli-opts))]
+    {:template-deps tpl-deps
      :create-opts create-opts}))
 
 (defn- deps-new-create [create-opts]
   ((requiring-resolve 'org.corfield.new/create) create-opts))
 
-(defn run-deps-new [{:keys [opts]}]
+(defn run-deps-new
+  "Runs org.corfield.new/create using the provided CLI options.
+
+  To support the dry run feature, side-effects should be described in the plan
+  provided by deps-new-plan. This function's job is to execute side-effects
+  using the plan to provide repeatability."
+  [{:keys [opts]}]
   (require 'org.corfield.new)
   (let [plan (deps-new-plan opts)
         {:keys [template-deps create-opts]} plan]
