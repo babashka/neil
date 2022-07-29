@@ -94,8 +94,7 @@
                                ":target-dir" target-dir
                                ":dry-run" "true"
                                ":overwrite" "true")]
-      (is (= {:template-deps nil
-              :create-opts {:template "scratch"
+      (is (= {:create-opts {:template "scratch"
                             :overwrite true
                             :target-dir target-dir
                             :name "my-scratch"}}

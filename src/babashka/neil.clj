@@ -1,10 +1,8 @@
 (ns babashka.neil
   {:no-doc true})
 
-(require '[babashka.classpath :as cp]
-         '[babashka.cli :as cli]
+(require '[babashka.cli :as cli]
          '[babashka.curl :as curl]
-         '[babashka.deps :as deps]
          '[babashka.fs :as fs]
          '[borkdude.rewrite-edn :as r]
          '[cheshire.core :as cheshire]
@@ -33,6 +31,8 @@
 (def version "0.0.33")
 
 (def windows? (str/includes? (System/getProperty "os.name") "Windows"))
+
+(def bb? (System/getProperty "babashka.version"))
 
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
@@ -457,13 +457,6 @@
       (throw (invalid-lib-opts-error lib-opts))
       (template-deps-fn lib-sym lib-opts))))
 
-(defn- set-class-path-property
-  "Sets the java.class.path property to the current classpath.
-
-  This needs to be called before running org.corfield.new/create."
-  []
-  (System/setProperty "java.class.path" (cp/get-classpath)))
-
 (def create-opts-deny-list
   [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
 
@@ -478,10 +471,10 @@
   [cli-opts]
   (let [create-opts (merge {:template "scratch"}
                            (apply dissoc cli-opts create-opts-deny-list))
-        tpl-deps (when-not (built-in-template? (:template create-opts))
+        tpl-deps (when (and bb? (not (built-in-template? (:template create-opts))))
                    (template-deps (:template create-opts) cli-opts))]
-    {:template-deps tpl-deps
-     :create-opts create-opts}))
+    (merge (when tpl-deps {:template-deps tpl-deps})
+           {:create-opts create-opts})))
 
 (defn- deps-new-create [create-opts]
   ((requiring-resolve 'org.corfield.new/create) create-opts))
@@ -526,6 +519,16 @@ options can be used to control the add-deps behavior:
     Override the :git/sha in the :deps map with the latest SHA from the
     default branch of :git/url.")))
 
+(defn- deps-new-add-template-deps
+  "Adds template deps at runtime and sets the java.class.path.
+
+  The java.class.path property is used by org.corfield.new/create to find
+  templates."
+  [template-deps]
+  (let [_ ((requiring-resolve 'babashka.deps/add-deps) {:deps template-deps})
+        cp ((requiring-resolve 'babashka.classpath/get-classpath))]
+    (System/setProperty "java.class.path" cp)))
+
 (defn run-deps-new
   "Runs org.corfield.new/create using the provided CLI options.
 
@@ -540,10 +543,9 @@ options can be used to control the add-deps behavior:
       (let [plan (deps-new-plan opts)
             {:keys [template-deps create-opts]} plan]
         (if (:dry-run opts)
-          plan
+          (do (pr plan) nil)
           (do
-            (when template-deps (deps/add-deps {:deps template-deps}))
-            (set-class-path-property)
+            (when template-deps (deps-new-add-template-deps template-deps))
             (deps-new-create create-opts)
             nil))))))
 
