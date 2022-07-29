@@ -505,11 +505,11 @@ All of the deps-new options can be provided as CLI options:
 
 https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
 
-Both built-in and remote templates are supported. Built-in templates use
-unqualified names (e.g. scratch) whereas remote templates use fully-qualified
+Both built-in and external templates are supported. Built-in templates use
+unqualified names (e.g. scratch) whereas external templates use fully-qualified
 names (e.g. io.github.kit/kit-clj).
 
-If a remote template is provided, the babashka.deps/add-deps function will be
+If an external template is provided, the babashka.deps/add-deps function will be
 called automatically before running org.corfield.new/create. The deps for the
 template are inferred automatically from the template name. The following
 options can be used to control the add-deps behavior:
