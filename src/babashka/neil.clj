@@ -543,7 +543,7 @@ options can be used to control the add-deps behavior:
       (let [plan (deps-new-plan opts)
             {:keys [template-deps create-opts]} plan]
         (if (:dry-run opts)
-          (do (pr plan) nil)
+          (do (prn plan) nil)
           (do
             (when template-deps (deps-new-add-template-deps template-deps))
             (deps-new-create create-opts)
