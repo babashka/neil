@@ -520,7 +520,10 @@ options can be used to control the add-deps behavior:
     default branch of :git/url.")))
 
 (defn- deps-new-set-classpath
-  "The java.class.path required by org.corfield.new/create."
+  "Sets the java.class.path property.
+
+  This is required by org.corfield.new/create. In Clojure it's set by default,
+  but in Babashka it must be set explicitly."
   []
   (let [classpath ((requiring-resolve 'babashka.classpath/get-classpath))]
     (System/setProperty "java.class.path" classpath)))
