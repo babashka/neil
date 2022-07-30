@@ -519,15 +519,16 @@ options can be used to control the add-deps behavior:
     Override the :git/sha in the :deps map with the latest SHA from the
     default branch of :git/url.")))
 
-(defn- deps-new-add-template-deps
-  "Adds template deps at runtime and sets the java.class.path.
+(defn- deps-new-set-classpath
+  "The java.class.path required by org.corfield.new/create."
+  []
+  (let [classpath ((requiring-resolve 'babashka.classpath/get-classpath))]
+    (System/setProperty "java.class.path" classpath)))
 
-  The java.class.path property is used by org.corfield.new/create to find
-  templates."
+(defn- deps-new-add-template-deps
+  "Adds template deps at runtime."
   [template-deps]
-  (let [_ ((requiring-resolve 'babashka.deps/add-deps) {:deps template-deps})
-        cp ((requiring-resolve 'babashka.classpath/get-classpath))]
-    (System/setProperty "java.class.path" cp)))
+  ((requiring-resolve 'babashka.deps/add-deps) {:deps template-deps}))
 
 (defn run-deps-new
   "Runs org.corfield.new/create using the provided CLI options.
@@ -546,6 +547,7 @@ options can be used to control the add-deps behavior:
           (do (prn plan) nil)
           (do
             (when template-deps (deps-new-add-template-deps template-deps))
+            (when bb? (deps-new-set-classpath))
             (deps-new-create create-opts)
             nil))))))
 
