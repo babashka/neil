@@ -12,4 +12,4 @@
                                                :git/sha "76259a27c57dba4530671a3d18c610ed904297d7"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
-                        {:mvn/version "0.3.31"}}})
+                        {:mvn/version "0.3.33"}}})
