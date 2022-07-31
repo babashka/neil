@@ -297,7 +297,7 @@ options can be used to control the add-deps behavior:
                        :default "deps.edn"}
            :limit {:coerce :long}})
 
-(def version "0.0.34")
+(def version "0.1.36")
 
 (def windows? (fs/windows?))
 
