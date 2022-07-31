@@ -24,6 +24,12 @@
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
+(deftest add-nrepl-test
+  (let [{:keys [edn]} (neil "add nrepl")
+        {:keys [main-opts extra-deps]} (-> edn :aliases :nrepl)]
+    (is (get extra-deps 'nrepl/nrepl))
+    (is (= ["-m" "nrepl.cmdline" "--interactive" "--color"] main-opts))))
+
 (defn run-dep-subcommand [subcommand & args]
   (-> (process (concat ["./neil" "dep" subcommand] args) {:out :string})
       check :out str/split-lines))
