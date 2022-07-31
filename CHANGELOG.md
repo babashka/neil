@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.34
+## 0.1.36
 
 - Add `neil new`: invokes `deps-new` with template. Recommended template to use with `neil` is `scratch`. Type `neil new --help` to see help.
 
