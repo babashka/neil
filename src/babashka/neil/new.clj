@@ -183,8 +183,8 @@ options can be used to control the add-deps behavior:
   To support the dry run feature, side-effects should be described in the plan
   provided by deps-new-plan. This function's job is to execute side-effects
   using the plan to provide repeatability."
-  [{:keys [opts]}]
-  (if (:help opts)
+  [{:keys [opts cmds]}]
+  (if (or (:help opts) (= cmds ["new"]))
     (print-new-help)
     (do
       (require 'org.corfield.new)
