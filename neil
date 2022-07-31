@@ -193,6 +193,15 @@
 (defn add-kaocha [{:keys [opts]}]
   (add-alias opts :kaocha kaocha-alias))
 
+(defn nrepl-alias []
+  (format "
+{:extra-deps {nrepl/nrepl {:mvn/version \"%s\"}}
+ :main-opts [\"-m\" \"nrepl.cmdline\" \"--interactive\" \"--color\"]}"
+          (latest-clojars-version 'nrepl/nrepl)))
+
+(defn add-nrepl [{:keys [opts]}]
+  (add-alias opts :nrepl (nrepl-alias)))
+
 (defn build-alias [opts]
   (let [latest-tag (latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
@@ -421,6 +430,7 @@ add
     Options:
     --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
   kaocha adds kaocha test runner to :koacha alias.
+  nrepl  adds nrepl server to :nrepl alias.
 
 dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
@@ -497,6 +507,7 @@ license
     {:cmds ["add" "test"] :fn add-cognitect-test-runner}
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
+    {:cmds ["add" "nrepl"] :fn add-nrepl}
     {:cmds ["dep" "versions"] :fn dep-versions :cmds-opts [:lib]}
     {:cmds ["dep" "add"] :fn dep-add :cmds-opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :cmds-opts [:search-term]}

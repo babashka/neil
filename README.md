@@ -70,6 +70,7 @@ add
     Options:
     --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
   kaocha adds kaocha test runner to :koacha alias.
+  nrepl  adds nrepl server to :nrepl alias.
 
 dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
@@ -147,6 +148,20 @@ To change the alias you can provide an option like:
 
 ```
 $ neil add kaocha :alias kaocha2
+```
+
+### add nrepl
+
+To add an [nREPL server](https://github.com/nrepl/nrepl), use:
+
+```
+$ neil add nrepl
+```
+
+After that you can start a REPL with:
+
+```
+$ clj -M:repl
 ```
 
 ### dep search
