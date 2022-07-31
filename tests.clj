@@ -41,11 +41,11 @@
 (deftest dep-search-test
   (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
   (is (not-empty (run-dep-subcommand "search" "hiccups")))
-  (is (some #(str/starts-with? % ":lib hiccups/hiccups" )
+  (is (some #(str/starts-with? % ":lib hiccups/hiccups")
             (run-dep-subcommand "search" "hiccups")))
-  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+ :description .*" % )
+  (is (some #(re-matches  #":lib hiccups/hiccups :version \d+(\.\d+)+ :description .*" %)
             (run-dep-subcommand "search" "hiccups")))
-  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+ :description .*" % )
+  (is (some #(re-matches  #":lib macchiato/hiccups :version \d+(\.\d+)+ :description .*" %)
             (run-dep-subcommand "search" "hiccups")))
   ; tests for no NPEs/json parsing exceptions
   (is (any? (run-dep-subcommand "search" "org.clojure/tools.cli")))
@@ -81,6 +81,50 @@
     (testing "invalid license key errors"
       (is (thrown-with-msg? Exception #"nonExistentLicense" 
             (run-license out-file "add" "nonExistentLicense"))))))
+
+(defn run-new-command [& args]
+  (-> @(process (concat ["./neil" "new"] args) {:out :string})
+      :out
+      edn/read-string))
+
+(deftest new-scratch-test
+  (let [target-dir (str (fs/temp-dir) "/my-scratch")]
+    (spit (test-file "deps.edn") "{}")
+    (let [edn (run-new-command "scratch" "my-scratch"
+                               ":target-dir" target-dir
+                               ":dry-run" "true"
+                               ":overwrite" "true")]
+      (is (= {:create-opts {:template "scratch"
+                            :overwrite true
+                            :target-dir target-dir
+                            :name "my-scratch"}}
+             edn)))))
+
+(deftest new-remote-test
+  (let [target-dir (str (fs/temp-dir) "/my-scratch")]
+    (fs/delete-tree target-dir)
+    (spit (test-file "deps.edn") "{}")
+    (let [run #(apply run-new-command
+                      "io.github.rads/neil-new-test-template" "my-scratch"
+                      ":target-dir" target-dir
+                      ":overwrite" "true"
+                      %&)]
+      (testing "dry run"
+        (is (= {:template-deps {'io.github.rads/neil-new-test-template
+                                {:git/url "https://github.com/rads/neil-new-test-template"
+                                 :git/tag "1.0.0"
+                                 :git/sha "e7954c34146fcdc4ab54fa4690bec3ceb9247d05"}}
+                :create-opts {:template "io.github.rads/neil-new-test-template"
+                              :target-dir target-dir
+                              :overwrite true
+                              :name "my-scratch"}}
+               (run ":dry-run" "true"))))
+      (testing "template output"
+        (run ":dry-run" "false")
+        (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
+               (slurp (fs/file (str target-dir "/src/scratch.clj")))))
+        (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
+               (slurp (fs/file (str target-dir "/deps.edn")))))))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))
