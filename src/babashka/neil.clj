@@ -116,14 +116,30 @@
         edn (edn/read-string edn-string)
         alias (or (:alias opts)
                   alias-kw)
-        alias-node (r/parse-string (str "\n " alias " ;; added by neil"))]
-    (if-not (get-in edn [:aliases alias])
-      (let [s (->> (r/update edn-nodes :aliases
-                             (fn [aliases]
-                               (let [s (indent alias-contents 1)
-                                     alias-nodes (r/parse-string s)]
-                                 (r/assoc aliases alias-node alias-nodes))))
-                   str)
+        existing-aliases (get-in edn [:aliases])
+        alias-node (r/parse-string
+                     (str (when (seq existing-aliases) "\n ")
+                          alias
+                          " ;; added by neil"))]
+    (if-not (get existing-aliases alias)
+      (let [s (-> (if-not (seq existing-aliases)
+                    ; If there are no existing aliases, we assoc an empty map
+                    ; before updating to prevent borkdude.rewrite-edn/update
+                    ; from removing the newline preceding the :aliases key.
+                    (r/assoc edn-nodes :aliases {})
+                    edn-nodes)
+                  (r/update :aliases
+                            (fn [aliases]
+                              (let [s (indent alias-contents 1)
+                                    alias-nodes (r/parse-string s)
+                                    aliases' (r/assoc aliases alias-node alias-nodes)]
+                                (if-not (seq existing-aliases)
+                                  ; If there are no existing aliases, add an
+                                  ; explicit newline after the :aliases key.
+                                  (r/parse-string (str "\n" (indent (str aliases') 1)))
+                                  aliases'))))
+
+                  str)
             s (clean-trailing-whitespace s)
             s (str s "\n")]
         (spit (:deps-file opts) s))
