@@ -76,6 +76,14 @@ dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
 
+new:
+  Create a project using deps-new
+    Run neil new --help to see all options.
+
+  Examples:
+    neil new scratch foo --overwrite
+    neil new io.github.rads/neil-new-test-template foo2 --latest-sha
+
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
@@ -148,20 +156,6 @@ To change the alias you can provide an option like:
 
 ```
 $ neil add kaocha :alias kaocha2
-```
-
-### add nrepl
-
-To add an [nREPL server](https://github.com/nrepl/nrepl), use:
-
-```
-$ neil add nrepl
-```
-
-After that you can start a REPL with:
-
-```
-$ clj -M:repl
 ```
 
 ### dep search
