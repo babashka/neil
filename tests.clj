@@ -93,6 +93,14 @@
       :out
       edn/read-string))
 
+(deftest new-help-test
+  (doseq [cmd ["./neil new"
+               "./neil new --help"
+               "./neil new scratch --help"
+               "./neil new scratch my-scratch --help"]]
+    (let [{:keys [out]} @(process cmd {:out :string})]
+      (is (str/starts-with? out "Usage: neil new")))))
+
 (deftest new-scratch-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (spit (test-file "deps.edn") "{}")
