@@ -3,8 +3,13 @@
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
          gen-script (let [prelude (slurp "prelude")
-                          script (slurp "src/babashka/neil.clj")]
-                      (spit "neil" (str/join "\n" [prelude script])))
+                          curl (slurp "src/babashka/neil/curl.clj")
+                          git (slurp "src/babashka/neil/git.clj")
+                          new (slurp "src/babashka/neil/new.clj")
+                          neil (slurp "src/babashka/neil.clj")]
+                      (spit "neil" (str/join "\n" [prelude
+                                                   curl git new
+                                                   neil])))
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping

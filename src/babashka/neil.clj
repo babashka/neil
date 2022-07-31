@@ -1,14 +1,14 @@
 (ns babashka.neil
-  {:no-doc true})
-
-(require '[babashka.cli :as cli]
-         '[babashka.curl :as curl]
-         '[babashka.fs :as fs]
-         '[borkdude.rewrite-edn :as r]
-         '[cheshire.core :as cheshire]
-         '[clojure.edn :as edn]
-         '[clojure.set :as set]
-         '[clojure.string :as str])
+  {:no-doc true}
+  (:require
+   [babashka.cli :as cli]
+   [babashka.fs :as fs]
+   [babashka.neil.curl :refer [curl-get-json url-encode]]
+   [babashka.neil.git :as git]
+   [babashka.neil.new :as new]
+   [borkdude.rewrite-edn :as r]
+   [clojure.edn :as edn]
+   [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
@@ -24,24 +24,12 @@
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
            :limit {:coerce :long}})
-           
-
-(import java.net.URLEncoder)
 
 (def version "0.0.33")
 
-(def windows? (str/includes? (System/getProperty "os.name") "Windows"))
+(def windows? (fs/windows?))
 
 (def bb? (System/getProperty "babashka.version"))
-
-(defn url-encode [s] (URLEncoder/encode s "UTF-8"))
-
-(def curl-opts
-  {:throw false
-   :compressed (not windows?)})
-(defn- curl-get-json [url]
-  (-> (curl/get url curl-opts)
-      :body (cheshire/parse-string true)))
 
 (defn- get-clojars-artifact [qlib]
   (curl-get-json
@@ -77,38 +65,6 @@
     (->> payload
          :docs
          (map :v))))
-
-(defn default-branch [lib]
-  (get (curl-get-json (format "https://api.github.com/repos/%s/%s"
-                              (namespace lib) (name lib)))
-       :default_branch))
-
-(defn clean-github-lib [lib]
-  (let [lib (str/replace lib "com.github." "")
-        lib (str/replace lib "io.github." "")
-        lib (symbol lib)]
-    lib))
-
-(defn latest-github-sha [lib]
-  (let [lib (clean-github-lib lib)
-        branch (default-branch lib)]
-    (get (curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
-                                (namespace lib) (name lib) branch))
-         :sha)))
-
-(defn list-github-tags [lib]
-  (let [lib (clean-github-lib lib)]
-    (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
-                           (namespace lib) (name lib)))))
-
-(defn latest-github-tag [lib]
-  (-> (list-github-tags lib)
-      first))
-
-(defn find-github-tag [lib tag]
-  (->> (list-github-tags lib)
-       (filter #(= (:name %) tag))
-       first))
 
 (def deps-template
   (str/triml "
@@ -194,7 +150,7 @@
   (add-alias opts :nrepl (nrepl-alias)))
 
 (defn build-alias [opts]
-  (let [latest-tag (latest-github-tag 'clojure/tools.build)
+  (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
         s (format "
@@ -308,7 +264,7 @@
                               (:latest-sha opts))
             [version git?] (if explicit-git?
                              [(or (:sha opts)
-                                  (latest-github-sha lib)) true]
+                                  (git/latest-github-sha lib)) true]
                              (or
                               (when-let [v (:version opts)]
                                 [v false])
@@ -316,12 +272,12 @@
                                 [v false])
                               (when-let [v (latest-mvn-version lib)]
                                 [v false])
-                              (when-let [v (latest-github-sha lib)]
+                              (when-let [v (git/latest-github-sha lib)]
                                 [v true])))
             mvn? (not git?)
             git-url (when git?
                       (or (:git/url opts)
-                          (str "https://github.com/" (clean-github-lib lib))))
+                          (str "https://github.com/" (git/clean-github-lib lib))))
             as (or (:as opts) lib)
             ;; force newline
             edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
@@ -372,196 +328,6 @@
                              (:jar_name search-result))
                :version (:version search-result)
                :description (pr-str (:description search-result))))))
-
-(defn- built-in-template?
-  "Returns true if the template name maps to a function in org.corfield.new."
-  [template]
-  (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
-
-(defn- github-repo-http-url [lib]
-  (str "https://github.com/" (clean-github-lib lib)))
-
-(def github-repo-ssh-regex #"^git@github.com:([^/]+)/([^\.]+)\.git$")
-(def github-repo-http-regex #"^https://github.com/([^/]+)/([^\.]+)(\.git)?$")
-
-(defn- parse-git-url [git-url]
-  (let [[[_ gh-user repo-name]] (or (re-seq github-repo-ssh-regex git-url)
-                                    (re-seq github-repo-http-regex git-url))]
-    (if (and gh-user repo-name)
-      {:gh-user gh-user :repo-name repo-name}
-      (throw (ex-info "Failed to parse :git/url" {:git/url git-url})))))
-
-(defn- git-url->lib-sym [git-url]
-  (when-let [{:keys [gh-user repo-name]} (parse-git-url git-url)]
-    (symbol (str "io.github." gh-user) repo-name)))
-
-(def lib-opts->template-deps-fn
-  "A map to define valid CLI options for deps-new template deps.
-
-  - Each key is a sequence of valid combinations of CLI opts.
-  - Each value is a function which returns a tools.deps lib map."
-  {[#{:local/root}]
-   (fn [lib-sym lib-opts]
-     {lib-sym (select-keys lib-opts [:local/root])})
-
-   [#{} #{:git/url}]
-   (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
-           {:keys [name commit]} (latest-github-tag (git-url->lib-sym url))]
-       {lib-sym {:git/url url :git/tag name :git/sha (:sha commit)}}))
-
-   [#{:git/tag} #{:git/url :git/tag}]
-   (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
-           tag (:git/tag lib-opts)
-           {:keys [commit]} (find-github-tag (git-url->lib-sym url) tag)]
-       {lib-sym {:git/url url :git/tag tag :git/sha (:sha commit)}}))
-
-   [#{:git/sha} #{:git/url :git/sha}]
-   (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
-           sha (:git/sha lib-opts)]
-       {lib-sym {:git/url url :git/sha sha}}))
-
-   [#{:latest-sha} #{:git/url :latest-sha}]
-   (fn [lib-sym lib-opts]
-     (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
-           sha (latest-github-sha (git-url->lib-sym url))]
-       {lib-sym {:git/url url :git/sha sha}}))
-
-   [#{:git/url :git/tag :git/sha}]
-   (fn [lib-sym lib-opts]
-     {lib-sym (select-keys lib-opts [:git/url :git/tag :git/sha])})})
-
-(def valid-lib-opts
-  "The set of all valid combinations of deps-new template deps opts."
-  (into #{} cat (keys lib-opts->template-deps-fn)))
-
-(defn- deps-new-cli-opts->lib-opts
-  "Returns parsed deps-new template deps opts from raw CLI opts."
-  [cli-opts]
-  (-> cli-opts
-      (set/rename-keys {:sha :git/sha})
-      (select-keys (into #{} cat valid-lib-opts))))
-
-(defn- invalid-lib-opts-error [provided-lib-opts]
-  (ex-info (str "Provided invalid combination of CLI options for deps-new "
-                "template deps.")
-           {:provided-opts (set (keys provided-lib-opts))
-            :valid-combinations valid-lib-opts}))
-
-(defn- find-template-deps-fn
-  "Returns a template-deps-fn given lib-opts parsed from raw CLI opts."
-  [lib-opts]
-  (some (fn [[k v]] (and (contains? (set k) (set (keys lib-opts))) v))
-        lib-opts->template-deps-fn))
-
-(defn- template-deps
-  "Returns a tools.deps lib map for the given CLI opts."
-  [template cli-opts]
-  (let [lib-opts (deps-new-cli-opts->lib-opts cli-opts)
-        lib-sym (edn/read-string template)
-        template-deps-fn (find-template-deps-fn lib-opts)]
-    (if-not template-deps-fn
-      (throw (invalid-lib-opts-error lib-opts))
-      (template-deps-fn lib-sym lib-opts))))
-
-(def create-opts-deny-list
-  [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
-
-(defn- deps-new-plan
-  "Returns a plan for calling org.corfield.new/create.
-
-  :template-deps - These deps will be added with babashka.deps/add-deps before
-                   calling the create function.
-
-  :create-opts   - This map contains the options that will be passed to the
-                   create function."
-  [cli-opts]
-  (let [create-opts (merge {:template "scratch"}
-                           (apply dissoc cli-opts create-opts-deny-list))
-        tpl-deps (when (and bb? (not (built-in-template? (:template create-opts))))
-                   (template-deps (:template create-opts) cli-opts))]
-    (merge (when tpl-deps {:template-deps tpl-deps})
-           {:create-opts create-opts})))
-
-(defn- deps-new-create [create-opts]
-  ((requiring-resolve 'org.corfield.new/create) create-opts))
-
-(defn print-new-help []
-  (println (str/trim "
-Usage: neil new [template] [name] [target-dir] [options]
-
-Runs the org.corfield.new/create function from deps-new.
-
-All of the deps-new options can be provided as CLI options:
-
-https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
-
-Both built-in and external templates are supported. Built-in templates use
-unqualified names (e.g. scratch) whereas external templates use fully-qualified
-names (e.g. io.github.kit/kit-clj).
-
-If an external template is provided, the babashka.deps/add-deps function will be
-called automatically before running org.corfield.new/create. The deps for the
-template are inferred automatically from the template name. The following
-options can be used to control the add-deps behavior:
-
-  --local/root
-    Override the :deps map to use the provided :local/root path.
-
-  --git/url
-    Override the :git/url in the :deps map. If no URL is provided, a template
-    name starting with io.github or com.github is expected and the URL will
-    point to GitHub.
-
-  --git/tag
-    Override the :git/tag in the :deps map. If no SHA or tag is provided, the
-    latest tag from the default branch of :git/url will be used.
-
-  --sha
-  --git/sha
-    Override the :git/sha in the :deps map. If no SHA or tag is provided, the
-    latest tag from the default branch of :git/url will be used.
-
-  --latest-sha
-    Override the :git/sha in the :deps map with the latest SHA from the
-    default branch of :git/url.")))
-
-(defn- deps-new-set-classpath
-  "Sets the java.class.path property.
-
-  This is required by org.corfield.new/create. In Clojure it's set by default,
-  but in Babashka it must be set explicitly."
-  []
-  (let [classpath ((requiring-resolve 'babashka.classpath/get-classpath))]
-    (System/setProperty "java.class.path" classpath)))
-
-(defn- deps-new-add-template-deps
-  "Adds template deps at runtime."
-  [template-deps]
-  ((requiring-resolve 'babashka.deps/add-deps) {:deps template-deps}))
-
-(defn run-deps-new
-  "Runs org.corfield.new/create using the provided CLI options.
-
-  To support the dry run feature, side-effects should be described in the plan
-  provided by deps-new-plan. This function's job is to execute side-effects
-  using the plan to provide repeatability."
-  [{:keys [opts]}]
-  (if (:help opts)
-    (print-new-help)
-    (do
-      (require 'org.corfield.new)
-      (let [plan (deps-new-plan opts)
-            {:keys [template-deps create-opts]} plan]
-        (if (:dry-run opts)
-          (do (prn plan) nil)
-          (do
-            (when template-deps (deps-new-add-template-deps template-deps))
-            (when bb? (deps-new-set-classpath))
-            (deps-new-create create-opts)
-            nil))))))
 
 (defn print-help [_]
   (println (str/trim "
@@ -663,7 +429,7 @@ license
     {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :cmds-opts [:license]}
-    {:cmds ["new"] :fn run-deps-new :cmds-opts [:template :name :target-dir]}
+    {:cmds ["new"] :fn new/run-deps-new :cmds-opts [:template :name :target-dir]}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
     {:cmds [] :fn (fn [{:keys [opts] :as m}]
