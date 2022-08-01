@@ -101,6 +101,17 @@
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil new")))))
 
+(deftest new-name-only-test
+  (let [target-dir (str (fs/temp-dir) "/my-scratch")]
+    (spit (test-file "deps.edn") "{}")
+    (let [edn (run-new-command ":name" "my-scratch"
+                               ":target-dir" target-dir
+                               ":dry-run" "true")]
+      (is (= {:create-opts {:template "scratch"
+                            :target-dir target-dir
+                            :name "my-scratch"}}
+             edn)))))
+
 (deftest new-scratch-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (spit (test-file "deps.edn") "{}")
