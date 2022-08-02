@@ -8,8 +8,8 @@
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.2.0"}
                         org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :git/sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
-                        org.corfield/deps-new {:git/url "https://github.com/borkdude/deps-new"
-                                               :git/sha "76259a27c57dba4530671a3d18c610ed904297d7"}
+                        org.corfield/deps-new {:git/url "https://github.com/rads/deps-new"
+                                               :git/sha "d81f8f533017bea1bf08d482ad9a21bb9fb617be"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
                         {:mvn/version "0.3.33"}}})
@@ -176,6 +176,22 @@
 (def create-opts-deny-list
   [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
 
+(defn- cli-opts->create-opts
+  "Returns options for org.corfield.new/create based on the cli-opts.
+
+  If no template is provided, the scratch template is filled in.
+
+  When using the scratch template, we also provide the :scratch create-opt as
+  a default. This changes the default scratch.clj file and namespace to match
+  the :name option instead."
+  [cli-opts]
+  (let [no-template (not (:template cli-opts))
+        scratch-template (= (str (:template cli-opts)) "scratch")]
+    (merge (when (or no-template scratch-template)
+             {:template "scratch"
+              :scratch (:name cli-opts)})
+           (apply dissoc cli-opts create-opts-deny-list))))
+
 (defn- deps-new-plan
   "Returns a plan for calling org.corfield.new/create.
 
@@ -185,8 +201,7 @@
   :create-opts   - This map contains the options that will be passed to the
                    create function."
   [cli-opts]
-  (let [create-opts (merge {:template "scratch"}
-                           (apply dissoc cli-opts create-opts-deny-list))
+  (let [create-opts (cli-opts->create-opts cli-opts)
         tpl-deps (when (and bb? (not (built-in-template? (:template create-opts))))
                    (template-deps (:template create-opts) cli-opts))]
     (merge (when tpl-deps {:template-deps tpl-deps})
