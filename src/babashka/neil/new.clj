@@ -104,6 +104,22 @@
 (def create-opts-deny-list
   [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
 
+(defn- cli-opts->create-opts
+  "Returns options for org.corfield.new/create based on the cli-opts.
+
+  If no template is provided, the scratch template is filled in.
+
+  When using the scratch template, we also provide the :scratch create-opt as
+  a default. This changes the default scratch.clj file and namespace to match
+  the :name option instead."
+  [cli-opts]
+  (let [no-template (not (:template cli-opts))
+        scratch-template (= (str (:template cli-opts)) "scratch")]
+    (merge (when (or no-template scratch-template)
+             {:template "scratch"
+              :scratch (:name cli-opts)})
+           (apply dissoc cli-opts create-opts-deny-list))))
+
 (defn- deps-new-plan
   "Returns a plan for calling org.corfield.new/create.
 
@@ -113,8 +129,7 @@
   :create-opts   - This map contains the options that will be passed to the
                    create function."
   [cli-opts]
-  (let [create-opts (merge {:template "scratch"}
-                           (apply dissoc cli-opts create-opts-deny-list))
+  (let [create-opts (cli-opts->create-opts cli-opts)
         tpl-deps (when (and bb? (not (built-in-template? (:template create-opts))))
                    (template-deps (:template create-opts) cli-opts))]
     (merge (when tpl-deps {:template-deps tpl-deps})

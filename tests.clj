@@ -104,12 +104,13 @@
 (deftest new-name-only-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (spit (test-file "deps.edn") "{}")
-    (let [edn (run-new-command ":name" "my-scratch"
+    (let [edn (run-new-command ":name" "foo/my-scratch"
                                ":target-dir" target-dir
                                ":dry-run" "true")]
       (is (= {:create-opts {:template "scratch"
+                            :scratch "foo/my-scratch"
                             :target-dir target-dir
-                            :name "my-scratch"}}
+                            :name "foo/my-scratch"}}
              edn)))))
 
 (deftest new-scratch-test
@@ -118,8 +119,10 @@
     (let [edn (run-new-command "scratch" "my-scratch"
                                ":target-dir" target-dir
                                ":dry-run" "true"
-                               ":overwrite" "true")]
+                               ":overwrite" "true"
+                               ":scratch" "foo/my-scratch")]
       (is (= {:create-opts {:template "scratch"
+                            :scratch "foo/my-scratch"
                             :overwrite true
                             :target-dir target-dir
                             :name "my-scratch"}}
