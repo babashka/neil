@@ -1,6 +1,7 @@
 (ns tests
   (:require
    [babashka.fs :as fs]
+   [babashka.deps :as deps]
    [babashka.process :refer [check process tokenize]]
    [babashka.tasks :as tasks]
    [clojure.edn :as edn]
@@ -160,6 +161,14 @@
                (slurp (fs/file (str target-dir "/src/scratch.clj")))))
         (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
                (slurp (fs/file (str target-dir "/deps.edn")))))))))
+
+(deftest clj-neil-new-test
+  (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
+                                         {:dir "tests-clj"
+                                          :out :string
+                                          :err :string})]
+    (when (seq err) (throw (ex-info err {})))
+    (is (str/starts-with? out "Usage: neil new "))))
 
 (when (= *file* (System/getProperty "babashka.file"))
   (t/run-tests *ns*))

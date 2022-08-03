@@ -8,8 +8,7 @@
 (deps/add-deps '{:deps {borkdude/rewrite-edn {:mvn/version "0.2.0"}
                         org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :git/sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
-                        org.corfield/deps-new {:git/url "https://github.com/rads/deps-new"
-                                               :git/sha "d81f8f533017bea1bf08d482ad9a21bb9fb617be"}
+                        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
                         {:mvn/version "0.3.33"}}})

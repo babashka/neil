@@ -1,0 +1,3 @@
+{:aliases
+ {:neil {:deps {io.github.babashka/neil {:local/root ".."}}
+         :main-opts ["-m" "babashka.neil"]}}}
