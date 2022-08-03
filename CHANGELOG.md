@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.1.40
+
+- Support `neil dep search --help`
+- Upgrade deps
+
 ## 0.1.39
 
 - Minor improvements for `new`
