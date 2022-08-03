@@ -1,7 +1,8 @@
 (ns tests
   (:require
    [babashka.fs :as fs]
-   [babashka.process :refer [check process sh tokenize]]
+   [babashka.deps :as deps]
+   [babashka.process :refer [check process tokenize]]
    [babashka.tasks :as tasks]
    [clojure.edn :as edn]
    [clojure.string :as str]
@@ -155,7 +156,10 @@
                (slurp (fs/file (str target-dir "/deps.edn")))))))))
 
 (deftest clj-neil-new-test
-  (let [{:keys [out err]} (sh "clojure -M:neil new --help" {:dir "tests-clj"})]
+  (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
+                                         {:dir "tests-clj"
+                                          :out :string
+                                          :err :string})]
     (when (seq err) (throw (ex-info err {})))
     (is (str/starts-with? out "Usage: neil new "))))
 
