@@ -76,6 +76,9 @@ dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
     Run neil add dep --help to see all options.
 
+  search: Search Clojars for a string in any attribute of an artifact.
+    Run neil dep search --help to see all options.
+
 new:
   Create a project using deps-new
     Run neil new --help to see all options.

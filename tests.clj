@@ -44,6 +44,13 @@
          (count (run-dep-versions 'hiccup/hiccup :limit 3)))
       "We're able to find exactly 3 hiccup versions"))
 
+(deftest dep-search-help-test
+  (doseq [cmd ["./neil dep search"
+               "./neil dep search --help"
+               "./neil dep search foo --help"]]
+    (let [{:keys [out]} @(process cmd {:out :string})]
+      (is (str/starts-with? out "Usage: neil dep search ")))))
+
 (deftest dep-search-test
   (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
   (is (not-empty (run-dep-subcommand "search" "hiccups")))
