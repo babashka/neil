@@ -9,7 +9,8 @@
                           neil (slurp "src/babashka/neil.clj")]
                       (spit "neil" (str/join "\n" [prelude
                                                    curl git new
-                                                   neil])))
+                                                   neil]))
+                      (fs/set-posix-file-permissions "neil" "rwxr-xr-x"))
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
