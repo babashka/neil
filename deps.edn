@@ -1,5 +1,5 @@
-{:deps {babashka/babashka.curl {:mvn/version "0.1.0"}
-        babashka/fs {:mvn/version "0.1.1"}
+{:deps {babashka/babashka.curl {:mvn/version "0.1.2"}
+        babashka/fs {:mvn/version "0.1.6"}
         rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
         org.babashka/cli {:mvn/version "0.3.33"}
