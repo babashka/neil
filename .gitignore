@@ -5,3 +5,4 @@
 /.direnv/
 .clj-kondo/babashka
 .clj-kondo/funcool
+/neil
