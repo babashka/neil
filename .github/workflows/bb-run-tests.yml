@@ -6,18 +6,10 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-
-      - name: Install Java
-        uses: actions/setup-java@v3
-        with:
-          distribution: temurin
-          java-version: 11
-
-      # Ensure we've got babashka installed
+      # First ensure we've got babashka installed
       - run: curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
       - run: chmod +x ./install
       - run: ./install
-
       # Then run the tests
       - run: bb run tests
       - name: Run Emacs tests for neil.el
