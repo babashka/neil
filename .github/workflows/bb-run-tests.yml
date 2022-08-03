@@ -6,10 +6,36 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
-      # First ensure we've got babashka installed
+
+      - name: Install Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: temurin
+          java-version: 11
+
+      - name: Install Clojure
+        uses: DeLaGuardo/setup-clojure@7.0
+        with:
+          cli: 1.11.1.1149
+
+      - name: Cache dependencies
+        id: cache-deps
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.m2
+            ~/.gitlibs
+          key: ${{ runner.os }}-${{ hashFiles('deps.edn') }}
+
+      - name: Download dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
+        run: clojure -P
+
+      # Ensure we've got babashka installed
       - run: curl -sLO https://raw.githubusercontent.com/babashka/babashka/master/install
       - run: chmod +x ./install
       - run: ./install
+
       # Then run the tests
       - run: bb run tests
       - name: Run Emacs tests for neil.el
