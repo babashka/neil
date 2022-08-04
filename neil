@@ -2,13 +2,13 @@
 ;; -*- mode: clojure -*-
 
 (def deps
- '{org.babashka/neil {:git/url "https://github.com/babashka/neil.git"
-                      :git/tag "v0.1.41" :git/sha "77288d4"}
-   org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
-                            :git/sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}})
+  '{org.babashka/neil {:git/url "https://github.com/babashka/neil.git"
+                       :git/tag "v0.1.41" :git/sha "77288d4"}
+    org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
+                             :git/sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}})
 
 (require '[babashka.deps :as deps])
 (deps/add-deps {:deps deps})
 
 (when (= *file* (System/getProperty "babashka.file"))
- ((requiring-resolve 'babashka.neil/-main)))
+  ((requiring-resolve 'babashka.neil/-main)))
