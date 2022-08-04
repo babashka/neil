@@ -1,4 +1,6 @@
-{:tasks {:requires ([babashka.fs :as fs]
+{:paths ["src"]
+ :deps {org.babashka/neil {:local/root "."}}
+ :tasks {:requires ([babashka.fs :as fs]
                     [clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
@@ -6,9 +8,10 @@
                           curl (slurp "src/babashka/neil/curl.clj")
                           git (slurp "src/babashka/neil/git.clj")
                           new (slurp "src/babashka/neil/new.clj")
+                          test (slurp "src/babashka/neil/test.cljc")
                           neil (slurp "src/babashka/neil.clj")]
                       (spit "neil" (str/join "\n" [prelude
-                                                   curl git new
+                                                   curl git new test
                                                    neil])))
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
