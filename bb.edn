@@ -3,7 +3,7 @@
  :tasks {:requires ([clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
-         update-readme {:task (let [help (:out (shell {:out :string} "./neil"))]
+         update-readme {:task (let [help (:out (shell {:out :string} "./neil-local"))]
                                (without-escaping
                                 (->> (p/render (slurp "README.template.md")
                                                {:help (str/trim help)

@@ -15,7 +15,7 @@
 
 (defn neil [arg & args]
   (let [tmp-file (test-file "deps.edn")]
-    (apply tasks/shell "./neil"
+    (apply tasks/shell "./neil-local"
            (concat (tokenize arg) [:deps-file tmp-file] args))
     (let [s (slurp tmp-file)]
       {:raw s
@@ -32,7 +32,7 @@
     (is (= ["-m" "nrepl.cmdline" "--interactive" "--color"] main-opts))))
 
 (defn run-dep-subcommand [subcommand & args]
-  (-> (process (concat ["./neil" "dep" subcommand] args) {:out :string})
+  (-> (process (concat ["./neil-local" "dep" subcommand] args) {:out :string})
       check :out str/split-lines))
 
 (defn run-dep-versions [lib & args]
@@ -46,9 +46,9 @@
       "We're able to find exactly 3 hiccup versions"))
 
 (deftest dep-search-help-test
-  (doseq [cmd ["./neil dep search"
-               "./neil dep search --help"
-               "./neil dep search foo --help"]]
+  (doseq [cmd ["./neil-local dep search"
+               "./neil-local dep search --help"
+               "./neil-local dep search foo --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil dep search ")))))
 
@@ -69,7 +69,7 @@
 
 (defn run-license [filename subcommand & [args]]
   (let [args (or args "")]
-    (-> (process (concat ["./neil" "license" subcommand]
+    (-> (process (concat ["./neil-local" "license" subcommand]
                    (tokenize args) (when filename [:file filename])) {:out :string})
       check :out str/split-lines)))
 
@@ -97,15 +97,15 @@
             (run-license out-file "add" "nonExistentLicense"))))))
 
 (defn run-new-command [& args]
-  (-> @(process (concat ["./neil" "new"] args) {:out :string})
+  (-> @(process (concat ["./neil-local" "new"] args) {:out :string})
       :out
       edn/read-string))
 
 (deftest new-help-test
-  (doseq [cmd ["./neil new"
-               "./neil new --help"
-               "./neil new scratch --help"
-               "./neil new scratch my-scratch --help"]]
+  (doseq [cmd ["./neil-local new"
+               "./neil-local new --help"
+               "./neil-local new scratch --help"
+               "./neil-local new scratch my-scratch --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil new")))))
 

@@ -1,0 +1,6 @@
+#!/usr/bin/env bb
+;; -*- mode: clojure -*-
+
+(load-file "neil")
+(deps/merge-deps '{:deps {org.babashka/neil {:local/root "."}}})
+((requiring-resolve 'babashka.neil/-main))
