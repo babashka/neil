@@ -1,20 +1,9 @@
 {:paths ["src"]
  :deps {org.babashka/neil {:local/root "."}}
- :tasks {:requires ([babashka.fs :as fs]
-                    [clojure.string :as str]
+ :tasks {:requires ([clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
-         gen-script (let [prelude (slurp "prelude")
-                          curl (slurp "src/babashka/neil/curl.clj")
-                          git (slurp "src/babashka/neil/git.clj")
-                          new (slurp "src/babashka/neil/new.clj")
-                          test (slurp "src/babashka/neil/test.cljc")
-                          neil (slurp "src/babashka/neil.clj")]
-                      (spit "neil" (str/join "\n" [prelude
-                                                   curl git new test
-                                                   neil])))
-         update-readme {:depends [gen-script]
-                        :task (let [help (:out (shell {:out :string} "./neil"))]
+         update-readme {:task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
                                 (->> (p/render (slurp "README.template.md")
                                                {:help (str/trim help)
@@ -33,8 +22,7 @@
                                                    (re-pattern "\\(def version \\\"[0-9\\.]+\\\"\\)")
                                                    (str "(def version \"" version "\")"))]
                         (spit "src/babashka/neil.clj" newsource))
-         tests {:depends [gen-script]
-                :task (do (load-file "tests.clj")
+         tests {:task (do (load-file "tests.clj")
                           (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
                             (when (pos? (+ error fail))
                               (throw (ex-info "Tests failed" {:babashka/exit 1})))))}
