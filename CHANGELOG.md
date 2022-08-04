@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.41
+
+- Add `neil test`
+
 ## 0.1.40
 
 - Support `neil dep search --help`
