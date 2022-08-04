@@ -224,7 +224,7 @@ See
 for the brew Formula. You can install this formula locally with:
 
 ```
-$ brew reinstall --build-from-source ./neil.rb`
+$ brew reinstall --build-from-source ./neil.rb
 ```
 
 ## License
