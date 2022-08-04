@@ -6,6 +6,7 @@
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
+   [babashka.neil.test :as neil-test]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
    [clojure.string :as str]))
@@ -118,14 +119,14 @@
                   alias-kw)
         existing-aliases (get-in edn [:aliases])
         alias-node (r/parse-string
-                     (str (when (seq existing-aliases) "\n ")
-                          alias
-                          " ;; added by neil"))]
+                    (str (when (seq existing-aliases) "\n ")
+                         alias
+                         " ;; added by neil"))]
     (if-not (get existing-aliases alias)
       (let [s (-> (if-not (seq existing-aliases)
-                    ; If there are no existing aliases, we assoc an empty map
-                    ; before updating to prevent borkdude.rewrite-edn/update
-                    ; from removing the newline preceding the :aliases key.
+                                        ; If there are no existing aliases, we assoc an empty map
+                                        ; before updating to prevent borkdude.rewrite-edn/update
+                                        ; from removing the newline preceding the :aliases key.
                     (r/assoc edn-nodes :aliases {})
                     edn-nodes)
                   (r/update :aliases
@@ -134,8 +135,8 @@
                                     alias-nodes (r/parse-string s)
                                     aliases' (r/assoc aliases alias-node alias-nodes)]
                                 (if-not (seq existing-aliases)
-                                  ; If there are no existing aliases, add an
-                                  ; explicit newline after the :aliases key.
+                                        ; If there are no existing aliases, add an
+                                        ; explicit newline after the :aliases key.
                                   (r/parse-string (str "\n" (indent (str aliases') 1)))
                                   aliases'))))
 
@@ -243,33 +244,33 @@
   (if (:help opts)
     (print-help cmd)
     (do
-     (if-not (fs/exists? "build.clj")
-       (spit "build.clj" (build-file opts))
-       (println "[neil] Project build.clj already exists."))
-     (ensure-deps-file opts)
-     (let [ba (build-alias opts)]
-       (when (= ::update (add-alias opts :build (:s ba)))
-         (println "[neil] Updating tools build to newest git tag + sha.")
-         (let [edn-string (edn-string opts)
-               edn (edn/read-string edn-string)
-               build-alias (get-in edn [:aliases :build :deps 'io.github.clojure/tools.build])
-               [tag-key sha-key]
-               (cond (and
-                      (:tag build-alias)
-                      (:sha build-alias))
-                     [:tag :sha]
-                     (and
-                      (:git/tag build-alias)
-                      (:git/sha build-alias))
-                     [:git/tag :git/sha])]
-           (when (and tag-key sha-key)
-             (let [nodes (edn-nodes edn-string)
-                   nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build tag-key]
-                                     (:tag ba))
-                   nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
-                                     (:sha ba))
-                   s (str (str/trim (str nodes)) "\n")]
-               (spit (:deps-file opts) s)))))))))
+      (if-not (fs/exists? "build.clj")
+        (spit "build.clj" (build-file opts))
+        (println "[neil] Project build.clj already exists."))
+      (ensure-deps-file opts)
+      (let [ba (build-alias opts)]
+        (when (= ::update (add-alias opts :build (:s ba)))
+          (println "[neil] Updating tools build to newest git tag + sha.")
+          (let [edn-string (edn-string opts)
+                edn (edn/read-string edn-string)
+                build-alias (get-in edn [:aliases :build :deps 'io.github.clojure/tools.build])
+                [tag-key sha-key]
+                (cond (and
+                       (:tag build-alias)
+                       (:sha build-alias))
+                      [:tag :sha]
+                      (and
+                       (:git/tag build-alias)
+                       (:git/sha build-alias))
+                      [:git/tag :git/sha])]
+            (when (and tag-key sha-key)
+              (let [nodes (edn-nodes edn-string)
+                    nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build tag-key]
+                                      (:tag ba))
+                    nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
+                                      (:sha ba))
+                    s (str (str/trim (str nodes)) "\n")]
+                (spit (:deps-file opts) s)))))))))
 
 (defn print-dep-add-help []
   (println "Usage: neil add dep [lib] [options]")
@@ -411,6 +412,9 @@ new:
     neil new scratch foo --overwrite
     neil new io.github.rads/neil-new-test-template foo2 --latest-sha
 
+test:
+  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
+
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
@@ -464,32 +468,40 @@ license
         (println (ex-message e))
         (System/exit 1)))))
 
+(defn neil-test [{:keys [opts]}]
+  (neil-test/neil-test opts))
+
 (defn print-version [_]
   (println "neil" version))
 
 (defn -main [& _args]
   (cli/dispatch
-   [{:cmds ["add" "dep"] :fn dep-add :cmds-opts [:lib]}
+   [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
     {:cmds ["add" "test"] :fn add-cognitect-test-runner}
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
     {:cmds ["add" "nrepl"] :fn add-nrepl}
-    {:cmds ["dep" "versions"] :fn dep-versions :cmds-opts [:lib]}
-    {:cmds ["dep" "add"] :fn dep-add :cmds-opts [:lib]}
-    {:cmds ["dep" "search"] :fn dep-search :cmds-opts [:search-term]}
-    {:cmds ["license" "list"] :fn license-search :cmds-opts [:search-term]}
-    {:cmds ["license" "search"] :fn license-search :cmds-opts [:search-term]}
-    {:cmds ["license" "add"] :fn add-license :cmds-opts [:license]}
-    {:cmds ["new"] :fn new/run-deps-new :cmds-opts [:template :name :target-dir]}
+    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
+    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
+    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
+    {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
+    {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
+    {:cmds ["license" "add"] :fn add-license :args->opts [:license]}
+    {:cmds ["new"] :fn new/run-deps-new :args->opts [:template :name :target-dir]}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
+    {:cmds ["test"] :fn neil-test
+     ;; TODO: babashka CLI doesn't support :coerce option directly here
+     :spec neil-test/neil-test-spec
+     :alias neil-test/neil-test-aliases}
     {:cmds [] :fn (fn [{:keys [opts] :as m}]
                     (if (:version opts)
                       (print-version m)
                       (print-help m)))}]
    *command-line-args*
    {:spec spec
-    :exec-args {:deps-file "deps.edn"}}))
+    :exec-args {:deps-file "deps.edn"}})
+  nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
   (-main))
