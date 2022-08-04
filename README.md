@@ -248,7 +248,6 @@ Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 ## Roadmap
 
 - Add `bb.edn`-related features for invoking `test` and `build` tasks
-- Consider `neil test :only foo.bar` which invokes `clojure -M:test -n foo.bar`
 - Option to add `cljs-test-runner`
 
 ## Contributing
@@ -268,6 +267,6 @@ $ brew reinstall --build-from-source ./neil.rb`
 
 ## License
 
-Copyright © 2021 Michiel Borkent
+Copyright © 2022 Michiel Borkent
 
 Distributed under the MIT License. See LICENSE.
