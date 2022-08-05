@@ -158,7 +158,7 @@
       (testing "template output"
         (run ":dry-run" "false")
         (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
-               (slurp (fs/file (str target-dir "/src/my_scratch/scratch.clj")))))
+               (slurp (fs/file (str target-dir "/src/scratch.clj")))))
         (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
                (slurp (fs/file (str target-dir "/deps.edn")))))))))
 
