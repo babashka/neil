@@ -4,6 +4,6 @@
 (require '[babashka.fs :as fs])
 
 (load-file (str (fs/parent *file*) "/neil"))
-(deps/merge-deps '{:deps {org.babashka/neil {:local/root "."}}})
+(deps/add-deps '{:deps {org.babashka/neil {:local/root "."}}})
 
 ((requiring-resolve 'babashka.neil/-main))
