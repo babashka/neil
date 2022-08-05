@@ -28,7 +28,7 @@
                        :default "deps.edn"}
            :limit {:coerce :long}})
 
-(def version "0.1.41")
+(def version "0.1.42")
 
 (def windows? (fs/windows?))
 
