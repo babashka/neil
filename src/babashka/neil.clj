@@ -153,10 +153,9 @@
                               (str/replace "." fs/file-separator)
                               (str ".clj"))
                 test-path (fs/file "test" test-path)]
-            (fs/create-dirs (fs/parent test-path))
-            (when (and
-                   (not (fs/exists? "test"))
-                   (not (fs/exists? test-path)))
+            (when (or (not (fs/exists? "test"))
+                      (zero? (count (fs/list-dir "test"))))
+              (fs/create-dirs (fs/parent test-path))
               (spit test-path
                     (format "(ns %s
   (:require [clojure.test :as t :refer [deftest is testing]]))
