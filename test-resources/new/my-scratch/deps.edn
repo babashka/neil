@@ -1,2 +1,4 @@
 {:paths ["src"]
- :deps  {}}
+ :deps  {}
+ :aliases
+ {:neil {:project {:name my-scratch/my-scratch}}}}
