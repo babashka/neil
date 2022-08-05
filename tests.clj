@@ -159,8 +159,8 @@
         (run ":dry-run" "false")
         (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
                (slurp (fs/file (str target-dir "/src/scratch.clj")))))
-        (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
-               (slurp (fs/file (str target-dir "/deps.edn")))))))))
+        (is (= (edn/read-string (slurp (fs/file "test-resources/new/my-scratch/deps.edn")))
+               (edn/read-string (slurp (fs/file (str target-dir "/deps.edn"))))))))))
 
 (deftest clj-neil-new-test
   (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
