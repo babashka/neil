@@ -232,6 +232,14 @@
   (b/jar {:class-dir class-dir
           :jar-file jar-file}))
 
+(defn install [_]
+  (jar {})
+  (b/install {:basis basis
+              :lib lib
+              :version version
+              :jar-file jar-file
+              :class-dir class-dir}))
+
 (defn uber [_]
   (clean nil)
   (b/copy-dir {:src-dirs [\"src\" \"resources\"]
