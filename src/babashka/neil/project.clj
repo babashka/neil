@@ -44,5 +44,5 @@
 (defn coerce-project-name [pn]
   (let [sym (symbol pn)]
     (if (qualified-symbol? sym)
-      pn
+      sym
       (symbol (str pn) (str pn)))))
