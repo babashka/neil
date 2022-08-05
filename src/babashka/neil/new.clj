@@ -2,6 +2,7 @@
   {:no-doc true}
   (:require
    [babashka.neil.git :as git]
+   [babashka.neil.project :as proj]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]))
@@ -204,11 +205,14 @@ options can be used to control the add-deps behavior:
     (do
       (require 'org.corfield.new)
       (let [plan (deps-new-plan opts)
-            {:keys [template-deps create-opts]} plan]
+            {:keys [template-deps create-opts]} plan
+            project-name (symbol (:name create-opts))
+            dir (or (:target-dir create-opts)
+                    (name project-name))]
         (if (:dry-run opts)
           (do (prn plan) nil)
           (do
             (when template-deps (deps-new-add-template-deps template-deps))
             (when bb? (deps-new-set-classpath))
             (deps-new-create create-opts)
-            nil))))))
+            (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name))))))))

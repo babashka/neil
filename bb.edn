@@ -9,9 +9,11 @@
                           git (slurp "src/babashka/neil/git.clj")
                           new (slurp "src/babashka/neil/new.clj")
                           test (slurp "src/babashka/neil/test.cljc")
+                          project (slurp "src/babashka/neil/project.clj")
+                          rewrite (slurp "src/babashka/neil/rewrite.clj")
                           neil (slurp "src/babashka/neil.clj")]
                       (spit "neil" (str/join "\n" [prelude
-                                                   curl git new test
+                                                   curl git rewrite project new test
                                                    neil])))
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]

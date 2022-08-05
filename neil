@@ -69,10 +69,67 @@
        (filter #(= (:name %) tag))
        first))
 
+(ns babashka.neil.rewrite
+  (:require [clojure.string :as str]))
+
+(defn indent [s n]
+  (let [spaces (apply str (repeat n " "))
+        lines (str/split-lines s)]
+    (str/join "\n" (map (fn [s]
+                          (if (str/blank? s) s
+                              (str spaces s))) lines))))
+
+(defn clean-trailing-whitespace [s]
+  (str/join "\n" (map str/trimr (str/split-lines s))))
+
+(ns babashka.neil.project
+  (:require
+   [babashka.fs :as fs]
+   [borkdude.rewrite-edn :as r]
+   [clojure.edn :as edn]))
+
+(defn resolve-deps-file [dir deps-file]
+  (if dir
+    (fs/file dir deps-file)
+    deps-file))
+
+(defn ensure-neil-project [{:keys [dir deps-file]}]
+  (let [deps-file (resolve-deps-file dir deps-file)
+        deps-edn (slurp deps-file)
+        edn (edn/read-string deps-edn)]
+    (when-not (some-> edn :aliases :neil :project)
+      (let [existing-aliases (:aliases edn)
+            edn-nodes (r/parse-string deps-edn)
+            edn-nodes (cond-> edn-nodes
+                        (not (:aliases edn))
+                        (r/assoc :aliases (r/parse-string "\n  {}"))
+                        (contains? existing-aliases :neil)
+                        (r/assoc-in [:aliases :neil] (r/parse-string "\n  {}"))
+                        (not (some-> edn :aliases :neil :project))
+                        (r/assoc-in [:aliases :neil :project]
+                                    {}))]
+        (spit deps-file (str edn-nodes))))))
+
+(defn assoc-project-meta!
+  "Updates deps-file's :neil :project `k` with `v`"
+  [{:keys [dir deps-file k v]
+    :as opts}]
+  (ensure-neil-project opts)
+  (let [deps-file (resolve-deps-file dir deps-file)
+        deps-edn (slurp deps-file)
+        nodes (r/parse-string deps-edn)
+        nodes (r/assoc-in nodes [:aliases :neil :project k] v)]
+    (spit deps-file (str nodes))))
+
+(defn project-name [{:keys [deps-file]}]
+  (-> (edn/read-string (slurp deps-file))
+      :aliases :neil :project :name))
+
 (ns babashka.neil.new
   {:no-doc true}
   (:require
    [babashka.neil.git :as git]
+   [babashka.neil.project :as proj]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]))
@@ -275,14 +332,17 @@ options can be used to control the add-deps behavior:
     (do
       (require 'org.corfield.new)
       (let [plan (deps-new-plan opts)
-            {:keys [template-deps create-opts]} plan]
+            {:keys [template-deps create-opts]} plan
+            project-name (symbol (:name create-opts))
+            dir (or (:target-dir create-opts)
+                    (name project-name))]
         (if (:dry-run opts)
           (do (prn plan) nil)
           (do
             (when template-deps (deps-new-add-template-deps template-deps))
             (when bb? (deps-new-set-classpath))
             (deps-new-create create-opts)
-            nil))))))
+            (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name))))))))
 
 (ns babashka.neil.test
   (:require
@@ -351,6 +411,8 @@ options can be used to control the add-deps behavior:
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
+   [babashka.neil.project :as proj]
+   [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
@@ -445,16 +507,6 @@ options can be used to control the add-deps behavior:
  :main-opts [\"-m\" \"cognitect.test-runner\"]
  :exec-fn cognitect.test-runner.api/test}")
 
-(defn indent [s n]
-  (let [spaces (apply str (repeat n " "))
-        lines (str/split-lines s)]
-    (str/join "\n" (map (fn [s]
-                          (if (str/blank? s) s
-                              (str spaces s))) lines))))
-
-(defn clean-trailing-whitespace [s]
-  (str/join "\n" (map str/trimr (str/split-lines s))))
-
 (defn add-alias [opts alias-kw alias-contents]
   (ensure-deps-file opts)
   (let [edn-string (edn-string opts)
@@ -476,17 +528,17 @@ options can be used to control the add-deps behavior:
                     edn-nodes)
                   (r/update :aliases
                             (fn [aliases]
-                              (let [s (indent alias-contents 1)
+                              (let [s (rw/indent alias-contents 1)
                                     alias-nodes (r/parse-string s)
                                     aliases' (r/assoc aliases alias-node alias-nodes)]
                                 (if-not (seq existing-aliases)
                                         ; If there are no existing aliases, add an
                                         ; explicit newline after the :aliases key.
-                                  (r/parse-string (str "\n" (indent (str aliases') 1)))
+                                  (r/parse-string (str "\n" (rw/indent (str aliases') 1)))
                                   aliases'))))
 
                   str)
-            s (clean-trailing-whitespace s)
+            s (rw/clean-trailing-whitespace s)
             s (str s "\n")]
         (spit (:deps-file opts) s))
       (do (println (format "[neil] Project deps.edn already contains alias %s" (str alias ".")))
@@ -497,7 +549,27 @@ options can be used to control the add-deps behavior:
 (defn add-cognitect-test-runner [{:keys [opts] :as cmd}]
   (if (:help opts)
     (print-help cmd)
-    (add-alias opts :test cognitect-test-runner-alias)))
+    (do (add-alias opts :test cognitect-test-runner-alias)
+
+        (when-let [pn (proj/project-name opts)]
+          (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
+                test-path (-> (str test-ns)
+                              (str/replace "-" "_")
+                              (str/replace "." fs/file-separator)
+                              (str ".clj"))
+                test-path (fs/file "test" test-path)]
+            (fs/create-dirs (fs/parent test-path))
+            (when (and
+                   (not (fs/exists? "test"))
+                   (not (fs/exists? test-path)))
+              (spit test-path
+                    (format "(ns %s
+  (:require [clojure.test :as t :refer [deftest is testing]]))
+
+(deftest %s-test
+  (testing \"TODO: fix\"
+    (is (= :foo :bar))))
+" test-ns (name pn)))))))))
 
 (def kaocha-alias
   "
@@ -519,28 +591,33 @@ options can be used to control the add-deps behavior:
     (print-help cmd)
     (add-alias opts :nrepl (nrepl-alias))))
 
-(defn build-alias [opts]
+(defn build-alias [_opts]
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
         s (format "
-{:deps {io.github.clojure/tools.build {:git/tag \"%s\" :git/sha \"%s\"}{{deps-deploy}}}
+{:deps {io.github.clojure/tools.build {:git/tag \"%s\" :git/sha \"%s\"}
+        slipset/deps-deploy {:mvn/version \"0.2.0\"}}
  :ns-default build}"
                   tag sha)]
-    {:s (str/replace s "{{deps-deploy}}"
-                     (if (:deps-deploy opts)
-                       "\n        slipset/deps-deploy {:mvn/version \"0.2.0\"}"
-                       ""))
+    {:s s
      :tag tag
      :sha sha}))
 
 (defn build-file
-  [opts]
+  [_opts]
   (let [base "(ns build
-  (:require [clojure.tools.build.api :as b]))
+  (:require [clojure.tools.build.api :as b]
+            [clojure.edn :as edn]))
 
-(def lib 'my/lib1)
-(def version (format \"1.2.%s\" (b/git-count-revs nil)))
+(def project (-> (edn/read-string (slurp \"deps.edn\"))
+                 :aliases :neil :project))
+(def lib (or (:name project) 'my/lib1))
+
+;; use neil project set version 1.2.0 to update the version in deps.edn
+
+(def version (or (:version project)
+                 \"1.2.0\"))
 (def class-dir \"target/classes\")
 (def basis (b/create-basis {:project \"deps.edn\"}))
 (def uber-file (format \"target/%s-%s-standalone.jar\" (name lib) version))
@@ -570,10 +647,7 @@ options can be used to control the add-deps behavior:
   (b/uber {:class-dir class-dir
            :uber-file uber-file
            :basis basis}))
-"]
-    (if (:deps-deploy opts)
-      (str base
-           "
+
 (defn deploy [opts]
   (jar opts)
   ((requiring-resolve 'deps-deploy.deps-deploy/deploy)
@@ -582,8 +656,9 @@ options can be used to control the add-deps behavior:
                        :pom-file (b/pom-path {:lib lib :class-dir class-dir})}
                     opts))
   opts)
-")
-      base)))
+
+"]
+    base))
 
 (defn add-build [{:keys [opts] :as cmd}]
   (if (:help opts)
@@ -740,8 +815,6 @@ add
   dep    Alias for `neil dep add`.
   test   adds cognitect test runner to :test alias.
   build  adds tools.build build.clj file and :build alias.
-    Options:
-    --deps-deploy Adds deps-deploy as dependency and deploy task in build.clj
   kaocha adds kaocha test runner to :koacha alias.
   nrepl  adds nrepl server to :nrepl alias.
 
@@ -832,7 +905,13 @@ license
     {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :args->opts [:license]}
-    {:cmds ["new"] :fn new/run-deps-new :args->opts [:template :name :target-dir]}
+    {:cmds ["new"] :fn new/run-deps-new
+     :args->opts [:template :name :target-dir]
+     :spec {:name {:coerce :symbol
+                   :validate {:pred qualified-symbol?
+                              :ex-msg
+                              (fn [_]
+                                (str "Name must be a fully qualified symbol"))}}}}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
