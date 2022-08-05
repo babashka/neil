@@ -116,9 +116,9 @@
                                ":target-dir" target-dir
                                ":dry-run" "true")]
       (is (= {:create-opts {:template "scratch"
-                            :scratch "foo/my-scratch"
+                            :scratch 'foo/my-scratch
                             :target-dir target-dir
-                            :name "foo/my-scratch"}}
+                            :name 'foo/my-scratch}}
              edn)))))
 
 (deftest new-scratch-test
