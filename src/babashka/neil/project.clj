@@ -40,3 +40,9 @@
 (defn project-name [{:keys [deps-file]}]
   (-> (edn/read-string (slurp deps-file))
       :aliases :neil :project :name))
+
+(defn coerce-project-name [pn]
+  (let [sym (symbol pn)]
+    (if (qualified-symbol? sym)
+      pn
+      (symbol (str pn) (str pn)))))

@@ -502,11 +502,7 @@ license
     {:cmds ["license" "add"] :fn add-license :args->opts [:license]}
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
-     :spec {:name {:coerce :symbol
-                   :validate {:pred qualified-symbol?
-                              :ex-msg
-                              (fn [_]
-                                (str "Name must be a fully qualified symbol"))}}}}
+     :spec {:name {:coerce proj/coerce-project-name}}}
     {:cmds ["version"] :fn print-version}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
