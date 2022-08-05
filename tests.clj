@@ -1,7 +1,7 @@
 (ns tests
   (:require
-   [babashka.fs :as fs]
    [babashka.deps :as deps]
+   [babashka.fs :as fs]
    [babashka.process :refer [check process tokenize]]
    [babashka.tasks :as tasks]
    [clojure.edn :as edn]
@@ -116,15 +116,15 @@
                                ":target-dir" target-dir
                                ":dry-run" "true")]
       (is (= {:create-opts {:template "scratch"
-                            :scratch "foo/my-scratch"
+                            :scratch 'foo/my-scratch
                             :target-dir target-dir
-                            :name "foo/my-scratch"}}
+                            :name 'foo/my-scratch}}
              edn)))))
 
 (deftest new-scratch-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
     (spit (test-file "deps.edn") "{}")
-    (let [edn (run-new-command "scratch" "my-scratch"
+    (let [edn (run-new-command "scratch" "foo/my-scratch"
                                ":target-dir" target-dir
                                ":dry-run" "true"
                                ":overwrite" "true"
@@ -133,7 +133,7 @@
                             :scratch "foo/my-scratch"
                             :overwrite true
                             :target-dir target-dir
-                            :name "my-scratch"}}
+                            :name 'foo/my-scratch}}
              edn)))))
 
 (deftest new-remote-test
@@ -153,14 +153,14 @@
                 :create-opts {:template "io.github.rads/neil-new-test-template"
                               :target-dir target-dir
                               :overwrite true
-                              :name "my-scratch"}}
+                              :name 'my-scratch/my-scratch}}
                (run ":dry-run" "true"))))
       (testing "template output"
         (run ":dry-run" "false")
         (is (= (slurp (fs/file "test-resources/new/my-scratch/src/scratch.clj"))
                (slurp (fs/file (str target-dir "/src/scratch.clj")))))
-        (is (= (slurp (fs/file "test-resources/new/my-scratch/deps.edn"))
-               (slurp (fs/file (str target-dir "/deps.edn")))))))))
+        (is (= (edn/read-string (slurp (fs/file "test-resources/new/my-scratch/deps.edn")))
+               (edn/read-string (slurp (fs/file (str target-dir "/deps.edn"))))))))))
 
 (deftest clj-neil-new-test
   (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
