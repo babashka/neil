@@ -4,7 +4,11 @@
  ;; The prefix var is a placeholder for package managers such as Homebrew.
 (def prefix nil)
 
-(babashka.deps/add-deps
-  {:deps {'org.babashka/neil {:local/root (str prefix "neil.jar")}}})
+(def root
+  (str (or prefix
+           (str ((requiring-resolve 'babashka.fs/parent) *file*) "/"))
+       "neil.jar"))
+
+(babashka.deps/add-deps {:deps {'org.babashka/neil {:local/root root}}})
 
 ((requiring-resolve 'babashka.neil/-main))
