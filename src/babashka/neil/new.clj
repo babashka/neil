@@ -212,7 +212,12 @@ options can be used to control the add-deps behavior:
         (if (:dry-run opts)
           (do (prn plan) nil)
           (do
-            (when template-deps (deps-new-add-template-deps template-deps))
-            (when bb? (deps-new-set-classpath))
+            (if template-deps
+              (deps-new-add-template-deps template-deps)
+              ;; FIXME: @rads: Why is this needed?
+              (deps-new-add-template-deps
+                '{io.github.seancorfield/deps-new
+                  {:git/tag "v0.4.13" :git/sha "879c4eb"}}))
+            (deps-new-set-classpath)
             (deps-new-create create-opts)
             (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name))))))))
