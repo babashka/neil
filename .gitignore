@@ -5,3 +5,5 @@
 /.direnv/
 .clj-kondo/babashka
 .clj-kondo/funcool
+/neil.jar
+/neil.zip

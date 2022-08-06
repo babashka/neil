@@ -1,22 +1,29 @@
 {:paths ["src"]
- :deps {org.babashka/neil {:local/root "."}}
- :tasks {:requires ([babashka.fs :as fs]
-                    [clojure.string :as str]
+ :deps {org.babashka/neil {:local/root "."}
+        io.github.borkdude/gh-release-artifact {:git/sha "cf082df46a648178d1904e9cbcb787d8136a35c6"}}
+ :tasks {:init (do (defn version [] (str/trim (slurp "version.txt"))))
+         :requires ([clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
-         gen-script (let [prelude (slurp "prelude")
-                          curl (slurp "src/babashka/neil/curl.clj")
-                          git (slurp "src/babashka/neil/git.clj")
-                          new (slurp "src/babashka/neil/new.clj")
-                          test (slurp "src/babashka/neil/test.cljc")
-                          project (slurp "src/babashka/neil/project.clj")
-                          rewrite (slurp "src/babashka/neil/rewrite.clj")
-                          neil (slurp "src/babashka/neil.clj")]
-                      (spit "neil" (str/join "\n" [prelude
-                                                   curl git rewrite project new test
-                                                   neil])))
-         update-readme {:depends [gen-script]
-                        :task (let [help (:out (shell {:out :string} "./neil"))]
+         package-jar {:doc "Prepare jar for packages"
+                      :task (do
+                              (println "Producing uberjar")
+                              (shell "bb --config .build/uberjar.edn
+                                      uberjar neil.jar -m babashka.neil"))}
+         upload-release {:doc "Upload jar to release"
+                         :depends [package-jar]
+                         :requires ([borkdude.gh-release-artifact :as ghr])
+                         :task (do
+                                 (shell "zip neil.zip neil.jar neil")
+                                 (ghr/overwrite-asset {:org "rads"
+                                                       :repo "neil"
+                                                       :file "neil.zip"
+                                                       :draft false
+                                                       :tag (str "v" (version))}))}
+         tag {:doc "Create and push tag"
+              :task (do (shell "git tag" (str "v" (version)))
+                        (shell "git push --atomic" "origin" "main" (str "v" (version))))}
+         update-readme {:task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
                                 (->> (p/render (slurp "README.template.md")
                                                {:help (str/trim help)
@@ -35,7 +42,7 @@
                                                    (re-pattern "\\(def version \\\"[0-9\\.]+\\\"\\)")
                                                    (str "(def version \"" version "\")"))]
                         (spit "src/babashka/neil.clj" newsource))
-         tests {:depends [gen-script]
+         tests {:depends [package-jar]
                 :task (do (load-file "tests.clj")
                           (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
                             (when (pos? (+ error fail))
