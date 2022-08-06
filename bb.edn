@@ -8,7 +8,7 @@
          package-jar {:doc "Prepare jar for packages"
                       :task (do
                               (println "Producing uberjar")
-                              (shell "bb --config .build/uberjar.edn
+                              (shell "bb --config .build/uberjar.edn --deps-root .
                                       uberjar neil.jar -m babashka.neil"))}
          upload-release {:doc "Upload jar to release"
                          :depends [package-jar]
