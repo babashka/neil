@@ -5,7 +5,7 @@
             [pod.babashka.fswatcher :as fw]
             [taoensso.timbre :as log]))
 
-(def watch-paths ["prelude" "src"])
+(def watch-paths ["bb.edn" "prelude" "src"])
 
 (defn- build-event? [{:keys [type path] :as _watch-event}]
   (and (not (#{:chmod} type))
