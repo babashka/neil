@@ -17,8 +17,8 @@
     (is (nil? out))))
 
 (defn read-deps-edn-version []
-  (get-in (edn/read-string (slurp (test-file "deps.edn")))
-          version/version-path))
+  (-> (edn/read-string (slurp (test-file "deps.edn")))
+      version/current-version))
 
 (deftest bump-test
   (fs/delete-tree test-dir)

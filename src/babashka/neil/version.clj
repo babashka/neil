@@ -1,7 +1,6 @@
 (ns babashka.neil.version
   (:require [babashka.fs :as fs]
-            [babashka.neil.common :as common]
-            [borkdude.rewrite-edn :as r]
+            [babashka.neil.project :as proj]
             [babashka.process :refer [sh]]
             [clojure.edn :as edn]
             [clojure.pprint :as pprint]
@@ -13,11 +12,8 @@ Usage: neil version [major|minor|patch] [version]
 
 Bump the :version key in the project config.")))
 
-(def version-path
-  [:aliases common/project-alias :project :version])
-
 (defn current-version [deps-map]
-  (get-in deps-map version-path))
+  (get-in deps-map [:aliases :neil :project :version]))
 
 (defn override-version [k {:keys [major minor patch]}]
   (case k
@@ -30,7 +26,7 @@ Bump the :version key in the project config.")))
 
 (def zero-version {:major 0 :minor 0 :patch 0})
 
-(defn save-version-bump [deps-nodes deps-map sub-command override]
+(defn save-version-bump [deps-map sub-command override opts]
   (let [prev-v (current-version deps-map)
         next-v (if override
                  (do
@@ -41,7 +37,8 @@ Bump the :version key in the project config.")))
                    (merge zero-version
                           (override-version sub-command (assoc prev-v sub-command override))))
                  (bump-version sub-command (or prev-v zero-version)))]
-    (r/assoc-in deps-nodes version-path next-v)))
+    (proj/assoc-project-meta! {:deps-file (:deps-file opts) :k :version :v next-v})
+    next-v))
 
 (def valid-version-keys
   #{:major :minor :patch})
@@ -88,13 +85,10 @@ Bump the :version key in the project config.")))
   (let [git-tag-version-enabled (git-tag-version-enabled? opts)]
     (when git-tag-version-enabled
       (assert-clean-working-directory opts))
-    (common/ensure-deps-file opts)
+    (proj/ensure-neil-project opts)
     (let [deps-map (edn/read-string (slurp (:deps-file opts)))
-          deps-nodes (-> opts common/edn-string common/edn-nodes)
           override (when (second args) (Integer/parseInt (second args)))
-          deps-nodes' (save-version-bump deps-nodes deps-map sub-command override)
-          after (current-version (edn/read-string (str deps-nodes')))]
-      (spit (:deps-file opts) (str deps-nodes'))
+          after (save-version-bump deps-map sub-command override opts)]
       (when git-tag-version-enabled
         (git-add opts)
         (git-commit after opts)
