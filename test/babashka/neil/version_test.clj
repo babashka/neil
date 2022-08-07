@@ -12,31 +12,22 @@
   (fs/delete-tree test-dir)
   (spit (test-file "deps.edn") "{}")
   (let [{:keys [out]} (neil "version")]
-    (is (= {:project {:version nil}} out))))
+    (is (nil? out))))
 
 (deftest bump-test
   (fs/delete-tree test-dir)
   (spit (test-file "deps.edn") "{}")
   (ensure-git-repo)
   (let [{:keys [out]} (neil "version minor")]
-    (is (= {:before {:project {:version nil}}
-            :after {:project {:version {:major 0 :minor 1 :patch 0}}}}
-           out)))
+    (is (= {:major 0 :minor 1 :patch 0} out)))
   (let [{:keys [out]} (neil "version patch")]
-    (is (= {:before {:project {:version {:major 0 :minor 1 :patch 0}}}
-            :after {:project {:version {:major 0 :minor 1 :patch 1}}}}
-           out)))
+    (is (= {:major 0 :minor 1 :patch 1} out)))
   (let [{:keys [out]} (neil "version minor 3")]
-    (is (= {:before {:project {:version {:major 0 :minor 1 :patch 1}}}
-            :after {:project {:version {:major 0 :minor 3 :patch 0}}}}
-           out)))
+    (is (= {:major 0 :minor 3 :patch 0} out)))
   (let [{:keys [out]} (neil "version major")]
-    (is (= {:before {:project {:version {:major 0 :minor 3 :patch 0}}}
-            :after {:project {:version {:major 1 :minor 0 :patch 0}}}}
-           out)))
+    (is (= {:major 1 :minor 0 :patch 0} out)))
   (let [{:keys [out]} (neil "version")]
-    (is (= {:project {:version {:major 1 :minor 0 :patch 0}}}
-           out))))
+    (is (= {:major 1 :minor 0 :patch 0} out))))
 
 (comment
   (clojure.test/run-tests))

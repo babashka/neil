@@ -93,19 +93,17 @@ Bump the :version key in the project config.")))
           deps-nodes (-> opts common/edn-string common/edn-nodes)
           override (when (second args) (Integer/parseInt (second args)))
           deps-nodes' (save-version-bump deps-nodes deps-map sub-command override)
-          before {:project {:version (current-version deps-map)}}
-          after-v (current-version (edn/read-string (str deps-nodes')))
-          after {:project {:version after-v}}]
+          after (current-version (edn/read-string (str deps-nodes')))]
       (spit (:deps-file opts) (str deps-nodes'))
       (when git-tag-version-enabled
         (git-add opts)
-        (git-commit after-v opts)
-        (git-tag after-v opts))
-      (pprint/pprint {:before before :after after}))))
+        (git-commit after opts)
+        (git-tag after opts))
+      (pprint/pprint after))))
 
 (defn print-version [opts]
   (let [deps-map (edn/read-string (slurp (:deps-file opts)))]
-    (pprint/pprint {:project {:version (current-version deps-map)}})))
+    (pprint/pprint (current-version deps-map))))
 
 (defn run-root-command [opts]
   (print-version opts))
