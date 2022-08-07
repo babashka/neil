@@ -57,7 +57,6 @@ Bump the :version key in the project config.")))
 
 (defn git-clean-working-directory? [opts]
   (let [{:keys [out err] :as x} (sh "git status --porcelain" (git-opts opts))]
-    (println "*********************" "running git status --porcelain")
     (clojure.pprint/pprint {`git-clean-working-directory? x})
     (and (str/blank? err) (str/blank? out))))
 
@@ -79,7 +78,7 @@ Bump the :version key in the project config.")))
 (defn assert-clean-working-directory [opts]
   (when (and (not (git-clean-working-directory? opts))
              (not (:force opts)))
-    (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
+    #_(throw (ex-info "Requires clean working directory unless --force is provided" {}))))
 
 (defn git-tag-version-enabled? [opts]
   (and (git-repo? opts)
