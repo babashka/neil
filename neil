@@ -502,7 +502,8 @@ Bump the :version key in the project config.")))
   (str/blank? (:err (sh "git status --porcelain" (git-opts opts)))))
 
 (defn git-clean-working-directory? [opts]
-  (let [{:keys [out err]} (sh "git status --porcelain" (git-opts opts))]
+  (let [{:keys [out err] :as x} (sh "git status --porcelain" (git-opts opts))]
+    (clojure.pprint/pprint {`git-clean-working-directory? x})
     (and (str/blank? err) (str/blank? out))))
 
 (defn version-map->str [{:keys [major minor patch qualifier]}]
