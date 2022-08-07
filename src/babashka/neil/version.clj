@@ -28,10 +28,13 @@ Bump the :version key in the project config.")))
   (let [prev-v (current-version deps-map)
         next-v (if override
                  (do
-                   (when (<= override (:patch prev-v))
-                     (throw (ex-info "Invalid patch number" {:prev (:patch prev-v)
-                                                             :next override})))
-                   (merge {:major 0 :minor 0} prev-v {:patch override}))
+                   (when (<= override (get prev-v sub-command))
+                     (throw (ex-info (format "Invalid %s number provided" (name sub-command))
+                                     {:current prev-v
+                                      :input {sub-command override}})))
+                   (merge {:major 0 :minor 0 :patch 0}
+                          prev-v
+                          {sub-command override}))
                  (if prev-v
                    (bump-version sub-command prev-v)
                    {:major 0 :minor 0 :patch 1}))]
@@ -44,8 +47,7 @@ Bump the :version key in the project config.")))
   (common/ensure-deps-file opts)
   (let [deps-map (edn/read-string (slurp (:deps-file opts)))
         deps-nodes (-> opts common/edn-string common/edn-nodes)
-        override (when (and (#{:patch} sub-command) (second args))
-                   (Integer/parseInt (second args)))
+        override (when (second args) (Integer/parseInt (second args)))
         deps-nodes' (save-version-bump deps-nodes deps-map sub-command override)
         before {:project {:version (current-version deps-map)}}
         after {:project {:version (current-version (edn/read-string (str deps-nodes')))}}]
