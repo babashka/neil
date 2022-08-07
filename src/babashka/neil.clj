@@ -3,12 +3,14 @@
   (:require
    [babashka.cli :as cli]
    [babashka.fs :as fs]
+   [babashka.neil.common :as common]
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
+   [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
    [clojure.string :as str]))
@@ -69,31 +71,6 @@
          :docs
          (map :v))))
 
-(def deps-template
-  (str/triml "
-{:deps {}
- :aliases {}}
-"))
-
-(def bb-template
-  (str/triml "
-{:deps {}
- :tasks
- {
- }}
-"))
-
-(defn ensure-deps-file [opts]
-  (let [target (:deps-file opts)]
-    (when-not (fs/exists? target)
-      (spit target (if (= "bb.edn" target)
-                     bb-template
-                     deps-template)))))
-
-(defn edn-string [opts] (slurp (:deps-file opts)))
-
-(defn edn-nodes [edn-string] (r/parse-string edn-string))
-
 (def cognitect-test-runner-alias
   "
 {:extra-paths [\"test\"]
@@ -103,9 +80,9 @@
  :exec-fn cognitect.test-runner.api/test}")
 
 (defn add-alias [opts alias-kw alias-contents]
-  (ensure-deps-file opts)
-  (let [edn-string (edn-string opts)
-        edn-nodes (edn-nodes edn-string)
+  (common/ensure-deps-file opts)
+  (let [edn-string (common/edn-string opts)
+        edn-nodes (common/edn-nodes edn-string)
         edn (edn/read-string edn-string)
         alias (or (:alias opts)
                   alias-kw)
@@ -269,11 +246,11 @@
       (if-not (fs/exists? "build.clj")
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
-      (ensure-deps-file opts)
+      (common/ensure-deps-file opts)
       (let [ba (build-alias opts)]
         (when (= ::update (add-alias opts :build (:s ba)))
           (println "[neil] Updating tools build to newest git tag + sha.")
-          (let [edn-string (edn-string opts)
+          (let [edn-string (common/edn-string opts)
                 edn (edn/read-string edn-string)
                 build-alias (get-in edn [:aliases :build :deps 'io.github.clojure/tools.build])
                 [tag-key sha-key]
@@ -286,7 +263,7 @@
                        (:git/sha build-alias))
                       [:git/tag :git/sha])]
             (when (and tag-key sha-key)
-              (let [nodes (edn-nodes edn-string)
+              (let [nodes (common/edn-nodes edn-string)
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build tag-key]
                                       (:tag ba))
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
@@ -305,9 +282,9 @@
   (if (:help opts)
     (print-dep-add-help)
     (do
-      (ensure-deps-file opts)
-      (let [edn-string (edn-string opts)
-            edn-nodes (edn-nodes edn-string)
+      (common/ensure-deps-file opts)
+      (let [edn-string (common/edn-string opts)
+            edn-nodes (common/edn-nodes edn-string)
             lib (:lib opts)
             lib (symbol lib)
             explicit-git? (or (:sha opts)
@@ -510,7 +487,7 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn print-version}
+    {:cmds ["version"] :fn neil-version/neil-version}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
