@@ -6,8 +6,7 @@
         org.babashka/cli {:mvn/version "0.3.33"}
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
-        org.corfield/deps-new {:git/url "https://github.com/rads/deps-new"
-                               :git/sha "d81f8f533017bea1bf08d482ad9a21bb9fb617be"}}
+        com.taoensso/timbre {:mvn/version "5.2.1"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases {:test ;; added by neil
            {:extra-paths ["test"]
