@@ -3,6 +3,7 @@
             [clojure.edn :as edn]
             [clojure.test :as t]))
 
+(load-file (str (fs/parent *file*) "/../../../prelude"))
 (load-file (str (fs/parent *file*) "/../../../tests.clj"))
 
 (def test-namespaces
