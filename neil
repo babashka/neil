@@ -464,11 +464,14 @@ Bump the :version key in the project config.")))
 (defn current-version [deps-map]
   (get-in deps-map version-path))
 
-(defn bump-version [k {:keys [major minor patch]}]
+(defn override-version [k {:keys [major minor patch]}]
   (case k
-    :major {:major (inc major) :minor 0 :patch 0}
-    :minor {:major major :minor (inc minor) :patch 0}
-    :patch {:major major :minor minor :patch (inc patch)}))
+    :major {:major major :minor 0 :patch 0}
+    :minor {:major major :minor minor :patch 0}
+    :patch {:major major :minor minor :patch patch}))
+
+(defn bump-version [k opts]
+  (override-version k (update opts k inc)))
 
 (def zero-version {:major 0 :minor 0 :patch 0})
 
@@ -481,8 +484,7 @@ Bump the :version key in the project config.")))
                                      {:current prev-v
                                       :input {sub-command override}})))
                    (merge zero-version
-                          prev-v
-                          {sub-command override}))
+                          (override-version sub-command (assoc prev-v sub-command override))))
                  (bump-version sub-command (or prev-v zero-version)))]
     (r/assoc-in deps-nodes version-path next-v)))
 
