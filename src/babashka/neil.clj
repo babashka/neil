@@ -91,9 +91,9 @@
                      bb-template
                      deps-template)))))
 
-(defn edn-nodes [edn-string] (r/parse-string edn-string))
-
 (defn edn-string [opts] (slurp (:deps-file opts)))
+
+(defn edn-nodes [edn-string] (r/parse-string edn-string))
 
 (def cognitect-test-runner-alias
   "
