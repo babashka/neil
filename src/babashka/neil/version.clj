@@ -9,8 +9,7 @@
 
 (defn print-version-help []
   (println (str/trim "
-Usage: neil version [major|minor|patch]
-       neil version patch [version]
+Usage: neil version [major|minor|patch] [version]
 
 Bump the :version key in the project config.")))
 
