@@ -470,6 +470,8 @@ Bump the :version key in the project config.")))
     :minor {:major major :minor (inc minor) :patch 0}
     :patch {:major major :minor minor :patch (inc patch)}))
 
+(def zero-version {:major 0 :minor 0 :patch 0})
+
 (defn save-version-bump [deps-nodes deps-map sub-command override]
   (let [prev-v (current-version deps-map)
         next-v (if override
@@ -478,12 +480,10 @@ Bump the :version key in the project config.")))
                      (throw (ex-info (format "Invalid %s number provided" (name sub-command))
                                      {:current prev-v
                                       :input {sub-command override}})))
-                   (merge {:major 0 :minor 0 :patch 0}
+                   (merge zero-version
                           prev-v
                           {sub-command override}))
-                 (if prev-v
-                   (bump-version sub-command prev-v)
-                   {:major 0 :minor 0 :patch 1}))]
+                 (bump-version sub-command (or prev-v zero-version)))]
     (r/assoc-in deps-nodes version-path next-v)))
 
 (def valid-version-keys
