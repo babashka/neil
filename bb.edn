@@ -1,9 +1,13 @@
-{:paths ["src"]
+{:paths ["src" "dev"]
+ :pods {org.babashka/fswatcher {:version "0.0.3"}}
  :deps {org.babashka/neil {:local/root "."}}
  :tasks {:requires ([babashka.fs :as fs]
                     [clojure.string :as str]
                     [selmer.parser :as p]
                     [selmer.util :refer [without-escaping]])
+         dev {:doc "Starts watcher to auto-build neil script"
+              :requires ([babashka.neil.dev :as dev])
+              :task (dev/dev)}
          gen-script (let [prelude (slurp "prelude")
                           curl (slurp "src/babashka/neil/curl.clj")
                           git (slurp "src/babashka/neil/git.clj")
