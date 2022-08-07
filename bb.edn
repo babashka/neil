@@ -1,4 +1,4 @@
-{:paths ["src" "dev"]
+{:paths ["src" "dev" "test"]
  :pods {org.babashka/fswatcher {:version "0.0.3"}}
  :deps {org.babashka/neil {:local/root "."}}
  :tasks {:requires ([babashka.fs :as fs]
@@ -40,10 +40,8 @@
                                                    (str "(def version \"" version "\")"))]
                         (spit "src/babashka/neil.clj" newsource))
          tests {:depends [gen-script]
-                :task (do (load-file "tests.clj")
-                          (let [{:keys [error fail]} (clojure.test/run-tests 'tests)]
-                            (when (pos? (+ error fail))
-                              (throw (ex-info "Tests failed" {:babashka/exit 1})))))}
+                :requires ([babashka.neil.test-runner])
+                :task (exec 'babashka.neil.test-runner/run-tests)}
          tests-emacs {:extra-paths ["."]
                       :requires ([tests-emacs :as te])
                       :task (te/run-tests)}
