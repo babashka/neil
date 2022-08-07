@@ -19,6 +19,7 @@
   (fs/delete-tree test-dir)
   (spit (test-file "deps.edn") "{}")
   (ensure-git-repo)
+  (clojure.pprint/pprint (map str (file-seq (fs/file test-dir))))
   (let [{:keys [out]} (neil "version minor")]
     (is (= {:before {:project {:version nil}}
             :after {:project {:version {:major 0 :minor 1 :patch 0}}}}
