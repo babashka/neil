@@ -13,6 +13,41 @@
                         #_{:local/root "/Users/borkdude/dev/cli"}
                         {:mvn/version "0.3.33"}}})
 
+(ns babashka.neil.common
+  (:require
+    [borkdude.rewrite-edn :as r]
+    [clojure.string :as str]
+    [babashka.fs :as fs]))
+
+(def project-alias :neil)
+
+(def deps-template
+  (str/triml "
+{:deps {}
+ :aliases {}}
+"))
+
+(def bb-template
+  (str/triml "
+{:deps {}
+ :tasks
+ {
+ }}
+"))
+
+(defn ensure-deps-file [opts]
+  (let [target (:deps-file opts)]
+    (when-not (fs/exists? target)
+      (spit target (if (= "bb.edn" target)
+                     bb-template
+                     deps-template)))))
+
+(defn edn-nodes [edn-string]
+  (r/parse-string edn-string))
+
+(defn edn-string [opts]
+  (slurp (:deps-file opts)))
+
 (ns babashka.neil.curl
   {:no-doc true}
   (:require
@@ -409,17 +444,88 @@ options can be used to control the add-deps behavior:
               (println "[neil] First execute: neil add test")))
           (println "[neil] Not inside a deps.edn project."))))))
 
+(ns babashka.neil.version
+  (:require [babashka.neil.common :as common]
+            [borkdude.rewrite-edn :as r]
+            [clojure.edn :as edn]
+            [clojure.pprint :as pprint]
+            [clojure.string :as str]))
+
+(defn print-version-help []
+  (println (str/trim "
+Usage: neil version [major|minor|patch]
+       neil version patch [version]
+
+Bump the :version key in the project config.")))
+
+(def version-path
+  [:aliases common/project-alias :project :version])
+
+(defn current-version [deps-map]
+  (get-in deps-map version-path))
+
+(defn bump-version [k {:keys [major minor patch]}]
+  (case k
+    :major {:major (inc major) :minor 0 :patch 0}
+    :minor {:major major :minor (inc minor) :patch 0}
+    :patch {:major major :minor minor :patch (inc patch)}))
+
+(defn save-version-bump [deps-nodes deps-map sub-command override]
+  (let [prev-v (current-version deps-map)
+        next-v (if override
+                 (do
+                   (when (<= override (:patch prev-v))
+                     (throw (ex-info "Invalid patch number" {:prev (:patch prev-v)
+                                                             :next override})))
+                   (merge {:major 0 :minor 0} prev-v {:patch override}))
+                 (if prev-v
+                   (bump-version sub-command prev-v)
+                   {:major 0 :minor 0 :patch 1}))]
+    (r/assoc-in deps-nodes version-path next-v)))
+
+(def valid-version-keys
+  #{:major :minor :patch})
+
+(defn run-sub-command [sub-command opts args]
+  (common/ensure-deps-file opts)
+  (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+        deps-nodes (-> opts common/edn-string common/edn-nodes)
+        override (when (and (#{:patch} sub-command) (second args))
+                   (Integer/parseInt (second args)))
+        deps-nodes' (save-version-bump deps-nodes deps-map sub-command override)
+        before {:project {:version (current-version deps-map)}}
+        after {:project {:version (current-version (edn/read-string (str deps-nodes')))}}]
+    (spit (:deps-file opts) (str deps-nodes'))
+    (pprint/pprint {:before before :after after})))
+
+(defn print-version [opts]
+  (let [deps-map (edn/read-string (slurp (:deps-file opts)))]
+    (pprint/pprint {:project {:version (current-version deps-map)}})))
+
+(defn run-root-command [opts]
+  (print-version opts))
+
+(defn neil-version
+  [{:keys [opts args]}]
+  (if (:help opts)
+    (print-version-help)
+    (if-let [sub-command (valid-version-keys (some-> args first keyword))]
+      (run-sub-command sub-command opts args)
+      (run-root-command opts))))
+
 (ns babashka.neil
   {:no-doc true}
   (:require
    [babashka.cli :as cli]
    [babashka.fs :as fs]
+   [babashka.neil.common :as common]
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
+   [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
    [clojure.string :as str]))
@@ -480,31 +586,6 @@ options can be used to control the add-deps behavior:
          :docs
          (map :v))))
 
-(def deps-template
-  (str/triml "
-{:deps {}
- :aliases {}}
-"))
-
-(def bb-template
-  (str/triml "
-{:deps {}
- :tasks
- {
- }}
-"))
-
-(defn ensure-deps-file [opts]
-  (let [target (:deps-file opts)]
-    (when-not (fs/exists? target)
-      (spit target (if (= "bb.edn" target)
-                     bb-template
-                     deps-template)))))
-
-(defn edn-string [opts] (slurp (:deps-file opts)))
-
-(defn edn-nodes [edn-string] (r/parse-string edn-string))
-
 (def cognitect-test-runner-alias
   "
 {:extra-paths [\"test\"]
@@ -514,9 +595,9 @@ options can be used to control the add-deps behavior:
  :exec-fn cognitect.test-runner.api/test}")
 
 (defn add-alias [opts alias-kw alias-contents]
-  (ensure-deps-file opts)
-  (let [edn-string (edn-string opts)
-        edn-nodes (edn-nodes edn-string)
+  (common/ensure-deps-file opts)
+  (let [edn-string (common/edn-string opts)
+        edn-nodes (common/edn-nodes edn-string)
         edn (edn/read-string edn-string)
         alias (or (:alias opts)
                   alias-kw)
@@ -680,11 +761,11 @@ options can be used to control the add-deps behavior:
       (if-not (fs/exists? "build.clj")
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
-      (ensure-deps-file opts)
+      (common/ensure-deps-file opts)
       (let [ba (build-alias opts)]
         (when (= ::update (add-alias opts :build (:s ba)))
           (println "[neil] Updating tools build to newest git tag + sha.")
-          (let [edn-string (edn-string opts)
+          (let [edn-string (common/edn-string opts)
                 edn (edn/read-string edn-string)
                 build-alias (get-in edn [:aliases :build :deps 'io.github.clojure/tools.build])
                 [tag-key sha-key]
@@ -697,7 +778,7 @@ options can be used to control the add-deps behavior:
                        (:git/sha build-alias))
                       [:git/tag :git/sha])]
             (when (and tag-key sha-key)
-              (let [nodes (edn-nodes edn-string)
+              (let [nodes (common/edn-nodes edn-string)
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build tag-key]
                                       (:tag ba))
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
@@ -716,9 +797,9 @@ options can be used to control the add-deps behavior:
   (if (:help opts)
     (print-dep-add-help)
     (do
-      (ensure-deps-file opts)
-      (let [edn-string (edn-string opts)
-            edn-nodes (edn-nodes edn-string)
+      (common/ensure-deps-file opts)
+      (let [edn-string (common/edn-string opts)
+            edn-nodes (common/edn-nodes edn-string)
             lib (:lib opts)
             lib (symbol lib)
             explicit-git? (or (:sha opts)
@@ -921,7 +1002,7 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn print-version}
+    {:cmds ["version"] :fn neil-version/neil-version}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
