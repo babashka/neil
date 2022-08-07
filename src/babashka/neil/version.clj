@@ -57,6 +57,7 @@ Bump the :version key in the project config.")))
 
 (defn git-clean-working-directory? [opts]
   (let [{:keys [out err] :as x} (sh "git status --porcelain" (git-opts opts))]
+    (println "*********************" "running git status --porcelain")
     (clojure.pprint/pprint {`git-clean-working-directory? x})
     (and (str/blank? err) (str/blank? out))))
 
