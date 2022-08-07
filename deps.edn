@@ -5,13 +5,13 @@
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
         org.babashka/cli {:mvn/version "0.3.33"}
         cheshire/cheshire {:mvn/version "5.11.0"}
-        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
-        com.taoensso/timbre {:mvn/version "5.2.1"}}
+        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases {:test ;; added by neil
            {:extra-paths ["test"]
             :extra-deps {io.github.cognitect-labs/test-runner
-                         {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
+                         {:git/tag "v0.5.0" :git/sha "b3fd0d2"}
+                         com.taoensso/timbre {:mvn/version "5.2.1"}}
             :main-opts ["-m" "cognitect.test-runner"]
             :exec-fn cognitect.test-runner.api/test}
            :neil {:project {}}}}

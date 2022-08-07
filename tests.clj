@@ -163,7 +163,7 @@
                (edn/read-string (slurp (fs/file (str target-dir "/deps.edn"))))))))))
 
 (deftest clj-neil-new-test
-  (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
+  (let [{:keys [out err]} @(deps/clojure ["-M:test:neil" "new" "--help"]
                                          {:dir "tests-clj"
                                           :out :string
                                           :err :string})]
