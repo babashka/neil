@@ -976,6 +976,10 @@ new:
 test:
   Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
 
+version:
+  Bump the :version key in the project config.
+    Run neil version --help to see all options.
+
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
