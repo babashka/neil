@@ -42,8 +42,8 @@ Then invoke `clj -M:neil`.
 ### Manual
 
 - Install [babashka](https://github.com/babashka/babashka#installation)
-- Download the `neil` script to somewhere on your `PATH`. In Windows, also
-  download the `neil.bat` script and place it in the `PATH`.
+- Download the [`neil`](https://raw.githubusercontent.com/babashka/neil/main/neil) script to somewhere on your `PATH`. In Windows, also
+  download the [`neil.bat`](https://raw.githubusercontent.com/babashka/neil/main/neil.bat) script and place it in the `PATH`.
 
 ## Status
 
