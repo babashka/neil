@@ -60,15 +60,17 @@
                           (neil "version tag"))))
   (testing "Create commit and tag"
     (git-add ".")
-    (neil "version tag")
-    (let [v "v0.1.0"]
+    (let [{:keys [out]} (neil "version tag")
+          v "0.1.0"]
+      (is (= (str "v" v) out)
+          "Tag is printed as output")
       (is (= 2 (git-commit-count))
           "New commit created")
-      (is (= v (git-describe))
+      (is (= (str "v" v) (git-describe))
           "Tag points to new commit")
-      (is (= v (git-show))
+      (is (= (str "v" v) (git-show))
           "Latest commit message is same as version")
-      (is (= v (git-tag v))
+      (is (= (str "v" v) (git-tag (str "v" v)))
           "Latest annotated tag message is same as version"))))
 
 (deftest set-test

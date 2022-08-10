@@ -438,7 +438,9 @@ Bump the :version key in the project config.")))
 (defn current-version [deps-map]
   (let [v (get-in deps-map [:aliases :neil :project :version])]
     (if (string? v)
-      (parse-semver-string v)
+      (if-let [parsed (parse-semver-string v)]
+        parsed
+        v)
       v)))
 
 (defn override-version [k {:keys [major minor patch]}]
@@ -609,7 +611,7 @@ Bump the :version key in the project config.")))
             v (current-version deps-map)]
         (git-commit v opts)
         (git-tag v opts)
-        (prn (version-map->str v))
+        (println (version-map->str v))
         nil))))
 
 (defn tag-arg [args]
