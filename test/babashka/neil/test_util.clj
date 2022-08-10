@@ -57,10 +57,13 @@
 
 (defn neil [cli-args & {:keys [out] :or {out :edn}}]
   (let [deps-file (str (test-file "deps.edn"))
-        cli-args' (concat (process/tokenize cli-args) [:deps-file deps-file])
+        cli-args' (concat (if (string? cli-args)
+                            (process/tokenize cli-args)
+                            cli-args)
+                          [:deps-file deps-file])
         log-stream (StringWriter.)]
     (binding [log/*config* (merge log/*config* (test-logging-config log-stream))
               *command-line-args* cli-args']
       (let [s (with-out-str (tasks/exec `neil-main/-main))]
         (print (str log-stream))
-        {:out (if (#{:edn} out) (edn/read-string s) s)}))))
+        {:out (if (#{:edn} out) (edn/read-string s) (str/trim s))}))))

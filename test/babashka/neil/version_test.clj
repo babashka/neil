@@ -9,7 +9,7 @@
 
 (deftest version-option-test
   (let [{:keys [out]} (neil "--version" :out :string)]
-    (is (re-seq #"^neil \d+\.\d+\.\d+(-\w+)?\n$" out))))
+    (is (re-seq #"^neil \d+\.\d+\.\d+(-\w+)?$" out))))
 
 (deftest root-test
   (fs/delete-tree test-dir)
@@ -19,7 +19,7 @@
 
 (defn read-deps-edn-version []
   (-> (edn/read-string (slurp (test-file "deps.edn")))
-      version/current-version))
+      (get-in [:aliases :neil :project :version])))
 
 (deftest bump-test
   (fs/delete-tree test-dir)
@@ -70,6 +70,19 @@
           "Latest commit message is same as version")
       (is (= v (git-tag v))
           "Latest annotated tag message is same as version"))))
+
+(deftest set-test
+  (fs/delete-tree test-dir)
+  (spit (test-file "deps.edn") "{}")
+  (ensure-git-repo)
+  (let [{:keys [out]} (neil "version minor")
+        v {:major 0 :minor 1 :patch 0}]
+    (is (= v out))
+    (is (= v (read-deps-edn-version))))
+  (let [v "2022.8.1"
+        {:keys [out]} (neil ["version" "set" v] {:out :string})]
+    (is (= v out))
+    (is (= v (read-deps-edn-version)))))
 
 (comment
   (clojure.test/run-tests))

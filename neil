@@ -419,12 +419,27 @@ options can be used to control the add-deps behavior:
 
 (defn print-version-help []
   (println (str/trim "
-Usage: neil version [major|minor|patch] [version]
+Usage: neil version [set|major|minor|patch] [version]
+       neil version tag
 
 Bump the :version key in the project config.")))
 
+(def semver-regex #"^v?(\d+)\.(\d+)\.(\d+)(-(\w+))?$")
+
+(defn parse-semver-string [s]
+  (when s
+    (let [[[_ major minor patch _ qualifier]] (re-seq semver-regex s)]
+      (when (and major minor patch)
+        (merge {:major (Integer/parseInt major)
+                :minor (Integer/parseInt minor)
+                :patch (Integer/parseInt patch)}
+               (when qualifier {:qualifier qualifier}))))))
+
 (defn current-version [deps-map]
-  (get-in deps-map [:aliases :neil :project :version]))
+  (let [v (get-in deps-map [:aliases :neil :project :version])]
+    (if (string? v)
+      (parse-semver-string v)
+      v)))
 
 (defn override-version [k {:keys [major minor patch]}]
   (case k
@@ -438,7 +453,7 @@ Bump the :version key in the project config.")))
 (def zero-version {:major 0 :minor 0 :patch 0})
 
 (defn save-version-bump [deps-map sub-command override opts]
-  (let [prev-v (current-version deps-map)
+  (let [prev-v (or (current-version deps-map) zero-version)
         next-v (if override
                  (do
                    (when (<= override (get prev-v sub-command))
@@ -490,9 +505,12 @@ Bump the :version key in the project config.")))
            (remove #(re-seq #"^\?" (:status %)))
            empty?))
 
-(defn version-map->str [{:keys [major minor patch qualifier]}]
-  (str (str/join "." [major minor patch])
-       (when qualifier (str "-" qualifier))))
+(defn version-map->str [x]
+  (if (string? x)
+    x
+    (let [{:keys [minor major patch qualifier]} x]
+      (str (str/join "." [major minor patch])
+           (when qualifier (str "-" qualifier))))))
 
 (defn git-add [opts]
   (sh "git add deps.edn"
@@ -502,17 +520,13 @@ Bump the :version key in the project config.")))
   (let [s (str "v" (version-map->str version))
         cmd ["git" "commit" "-m" s]
         {:keys [out err]} (sh cmd (git-opts opts))]
-    (when (seq err) (throw (ex-info err {})))
-    (when (:verbose opts)
-      (print out))))
+    (when (seq err) (throw (ex-info err {})))))
 
 (defn git-tag [version opts]
   (let [s (str "v" (version-map->str version))
         cmd ["git" "tag" "-a" s "-m" s]
         {:keys [out err]} (sh cmd (git-opts opts))]
-    (when (seq err) (throw (ex-info err {})))
-    (when (:verbose opts)
-      (print out))))
+    (when (seq err) (throw (ex-info err {})))))
 
 (defn assert-clean-working-directory [opts]
   (when (and (not (git-clean-working-directory? (git-status opts)))
@@ -530,18 +544,20 @@ Bump the :version key in the project config.")))
   (valid-version-keys (some-> args first keyword)))
 
 (defn run-bump-command [opts args]
-  (let [git-tag-version-enabled (git-tag-version-enabled? opts)]
-    (when git-tag-version-enabled
-      (assert-clean-working-directory opts))
-    (proj/ensure-neil-project opts)
-    (let [deps-map (edn/read-string (slurp (:deps-file opts)))
-          override (when (second args) (Integer/parseInt (second args)))
-          after (save-version-bump deps-map (bump-arg args) override opts)]
+  (if-not (<= 1 (count args) 2)
+    (print-version-help)
+    (let [git-tag-version-enabled (git-tag-version-enabled? opts)]
       (when git-tag-version-enabled
-        (git-add opts)
-        (git-commit after opts)
-        (git-tag after opts))
-      (pprint/pprint after))))
+        (assert-clean-working-directory opts))
+      (proj/ensure-neil-project opts)
+      (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+            override (when (second args) (Integer/parseInt (second args)))
+            after (save-version-bump deps-map (bump-arg args) override opts)]
+        (when git-tag-version-enabled
+          (git-add opts)
+          (git-commit after opts)
+          (git-tag after opts))
+        (pprint/pprint after)))))
 
 (defn print-version [opts]
   (let [deps-map (edn/read-string (slurp (:deps-file opts)))]
@@ -576,23 +592,66 @@ Bump the :version key in the project config.")))
       (throw (ex-info "Requires at least one staged file unless --force is provided"
                       {})))))
 
-(defn run-tag-command [opts _args]
-  (assert-no-unstaged-files opts)
-  (assert-at-least-one-staged-file opts)
-  (let [deps-map (edn/read-string (slurp (:deps-file opts)))
-        v (current-version deps-map)]
-    (git-commit v opts)
-    (git-tag v opts)
-    (prn v)
-    nil))
+(defn run-tag-command [opts args]
+  (if-not (= (count args) 1)
+    (print-version-help)
+    (do
+      (assert-no-unstaged-files opts)
+      (assert-at-least-one-staged-file opts)
+      (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+            v (current-version deps-map)]
+        (git-commit v opts)
+        (git-tag v opts)
+        (prn v)
+        nil))))
 
 (defn tag-arg [args]
   (#{:tag} (some-> args first keyword)))
+
+(defn set-version [override opts]
+  (proj/assoc-project-meta! {:deps-file (:deps-file opts) :k :version :v override})
+  override)
+
+(defn strictly-increasing-version? [prev-v next-v]
+  (or (< (:major prev-v) (:major next-v))
+      (and (<= (:major prev-v) (:major next-v))
+           (< (:minor prev-v) (:minor next-v)))
+      (and (<= (:major prev-v) (:major next-v))
+           (<= (:minor prev-v) (:minor next-v))
+           (< (:patch prev-v) (:patch next-v)))))
+
+(defn assert-strictly-increasing-version [prev-v next-v]
+  (when-not (strictly-increasing-version? prev-v next-v)
+    (throw (ex-info "Versions in SemVer format must be strictly increasing"
+                    {:current prev-v :input next-v}))))
+
+(defn run-set-command [opts args]
+  (if-not (= (count args) 2)
+    (print-version-help)
+    (let [git-tag-version-enabled (git-tag-version-enabled? opts)]
+      (when git-tag-version-enabled
+        (assert-clean-working-directory opts))
+      (proj/ensure-neil-project opts)
+      (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+            override (second args)
+            _ (when-let [semver (parse-semver-string override)]
+                (assert-strictly-increasing-version (current-version deps-map) semver))
+            after (set-version override opts)]
+        (when git-tag-version-enabled
+          (git-add opts)
+          (git-commit after opts)
+          (git-tag after opts))
+        (println after)
+        nil))))
+
+(defn set-arg [args]
+  (#{:set} (some-> args first keyword)))
 
 (defn neil-version
   [{:keys [opts args]}]
   (cond
     (:help opts) (print-version-help)
+    (set-arg args) (run-set-command opts args)
     (bump-arg args) (run-bump-command opts args)
     (tag-arg args) (run-tag-command opts args)
     :else (run-root-command opts)))
