@@ -44,16 +44,40 @@ Bump the :version key in the project config.")))
   #{:major :minor :patch})
 
 (defn git-opts [opts]
-  (let [root (str (fs/parent (:deps-file opts)))]
-    (when (seq root)
-      {:dir root})))
+  (when (:deps-file opts)
+    (let [root (str (fs/parent (:deps-file opts)))]
+      (when (seq root)
+        {:dir root}))))
+
+(defn parse-git-status [line]
+  (let [[[_ status path]] (re-seq #"^(.{2}) (.+)$" line)]
+    {:status status :path path}))
+
+(comment (parse-git-status "X  f"))
+
+(defn git-status [opts]
+  (let [cmd "git status --porcelain=v1"
+        {:keys [out err] :as x} (sh cmd (git-opts opts))]
+    (if-not (str/blank? err)
+      {:err err}
+      {:statuses (if (str/blank? out)
+                   '()
+                   (map parse-git-status (str/split-lines out)))})))
+
+(comment (git-status nil))
+
+(defn resolve-git-repo [opts]
+  (if (:deps-file opts)
+    (fs/file (fs/parent (:deps-file opts)) ".git")
+    (fs/file ".git")))
 
 (defn git-repo? [opts]
-  (str/blank? (:err (sh "git status --porcelain" (git-opts opts)))))
+  (fs/exists? (resolve-git-repo opts)))
 
-(defn git-clean-working-directory? [opts]
-  (let [{:keys [out err]} (sh "git status --porcelain" (git-opts opts))]
-    (and (str/blank? err) (str/blank? out))))
+(defn git-clean-working-directory? [git-status-result]
+  (some->> (:statuses git-status-result)
+           (remove #(re-seq #"^\?" (:status %)))
+           empty?))
 
 (defn version-map->str [{:keys [major minor patch qualifier]}]
   (str (str/join "." [major minor patch])
@@ -64,31 +88,44 @@ Bump the :version key in the project config.")))
       (assoc (git-opts opts) :err :inherit)))
 
 (defn git-commit [version opts]
-  (sh ["git" "commit" "-m" (version-map->str version)]
-      (assoc (git-opts opts) :err :inherit)))
+  (let [s (str "v" (version-map->str version))
+        cmd ["git" "commit" "-m" s]
+        {:keys [out err]} (sh cmd (git-opts opts))]
+    (when (seq err) (throw (ex-info err {})))
+    (when (:verbose opts)
+      (print out))))
 
 (defn git-tag [version opts]
-  (sh ["git" "tag" (str "v" (version-map->str version))]
-      (assoc (git-opts opts) :err :inherit)))
+  (let [s (str "v" (version-map->str version))
+        cmd ["git" "tag" "-a" s "-m" s]
+        {:keys [out err]} (sh cmd (git-opts opts))]
+    (when (seq err) (throw (ex-info err {})))
+    (when (:verbose opts)
+      (print out))))
 
 (defn assert-clean-working-directory [opts]
-  (when (and (not (git-clean-working-directory? opts))
+  (when (and (not (git-clean-working-directory? (git-status opts)))
              (not (:force opts)))
     (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
 
 (defn git-tag-version-enabled? [opts]
-  (and (git-repo? opts)
+  (and (git-repo? (git-status opts))
        (not (false? (:git-tag-version opts)))
-       (not (:no-git-tag-version opts))))
+       (not (false? (:tag opts)))
+       (not (:no-git-tag-version opts))
+       (not (:no-tag opts))))
 
-(defn run-sub-command [sub-command opts args]
+(defn bump-arg [args]
+  (valid-version-keys (some-> args first keyword)))
+
+(defn run-bump-command [opts args]
   (let [git-tag-version-enabled (git-tag-version-enabled? opts)]
     (when git-tag-version-enabled
       (assert-clean-working-directory opts))
     (proj/ensure-neil-project opts)
     (let [deps-map (edn/read-string (slurp (:deps-file opts)))
           override (when (second args) (Integer/parseInt (second args)))
-          after (save-version-bump deps-map sub-command override opts)]
+          after (save-version-bump deps-map (bump-arg args) override opts)]
       (when git-tag-version-enabled
         (git-add opts)
         (git-commit after opts)
@@ -102,10 +139,49 @@ Bump the :version key in the project config.")))
 (defn run-root-command [opts]
   (print-version opts))
 
+(defn git-unstaged-files [git-status-result]
+  (->> (:statuses git-status-result)
+       (filter #(re-seq #"^ " (:status %)))
+       (map :path)))
+
+(defn git-staged-files [git-status-result]
+  (->> (:statuses git-status-result)
+       (filter #(re-seq #"^[ARMD]" (:status %)))
+       (map :path)))
+
+(comment
+  (def gs (git-status nil))
+  (clojure.pprint/pprint (git-unstaged-files gs)))
+
+(defn assert-no-unstaged-files [opts]
+  (let [unstaged-files (git-unstaged-files (git-status opts))]
+    (when (and (seq unstaged-files) (not (:force opts)))
+      (throw (ex-info "Requires all files to be staged unless --force is provided"
+                      {:unstaged-files unstaged-files})))))
+
+(defn assert-at-least-one-staged-file [opts]
+  (let [staged-files (git-staged-files (git-status opts))]
+    (when (and (empty? staged-files) (not (:force opts)))
+      (throw (ex-info "Requires at least one staged file unless --force is provided"
+                      {})))))
+
+(defn run-tag-command [opts _args]
+  (assert-no-unstaged-files opts)
+  (assert-at-least-one-staged-file opts)
+  (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+        v (current-version deps-map)]
+    (git-commit v opts)
+    (git-tag v opts)
+    (prn v)
+    nil))
+
+(defn tag-arg [args]
+  (#{:tag} (some-> args first keyword)))
+
 (defn neil-version
   [{:keys [opts args]}]
-  (if (:help opts)
-    (print-version-help)
-    (if-let [sub-command (valid-version-keys (some-> args first keyword))]
-      (run-sub-command sub-command opts args)
-      (run-root-command opts))))
+  (cond
+    (:help opts) (print-version-help)
+    (bump-arg args) (run-bump-command opts args)
+    (tag-arg args) (run-tag-command opts args)
+    :else (run-root-command opts)))
