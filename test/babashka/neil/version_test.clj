@@ -15,7 +15,7 @@
   (fs/delete-tree test-dir)
   (spit (test-file "deps.edn") "{}")
   (let [{:keys [out]} (neil "version")]
-    (is (nil? out))))
+    (is (= "nil" out))))
 
 (defn read-deps-edn-version []
   (-> (edn/read-string (slurp (test-file "deps.edn")))
@@ -26,24 +26,24 @@
   (spit (test-file "deps.edn") "{}")
   (ensure-git-repo)
   (let [{:keys [out]} (neil "version minor")
-        v {:major 0 :minor 1 :patch 0}]
-    (is (= v out))
+        v "0.1.0"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
   (let [{:keys [out]} (neil "version patch")
-        v {:major 0 :minor 1 :patch 1}]
-    (is (= v out))
+        v "0.1.1"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
   (let [{:keys [out]} (neil "version minor 3")
-        v {:major 0 :minor 3 :patch 0}]
-    (is (= v out))
+        v "0.3.0"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
   (let [{:keys [out]} (neil "version major")
-        v {:major 1 :minor 0 :patch 0}]
-    (is (= v out))
+        v "1.0.0"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
   (let [{:keys [out]} (neil "version")
-        v {:major 1 :minor 0 :patch 0}]
-    (is (= v out))
+        v "1.0.0"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version)))))
 
 (deftest tag-test
@@ -76,12 +76,12 @@
   (spit (test-file "deps.edn") "{}")
   (ensure-git-repo)
   (let [{:keys [out]} (neil "version minor")
-        v {:major 0 :minor 1 :patch 0}]
-    (is (= v out))
+        v "0.1.0"]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
   (let [v "2022.8.1"
-        {:keys [out]} (neil ["version" "set" v] {:out :string})]
-    (is (= v out))
+        {:keys [out]} (neil ["version" "set" v])]
+    (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version)))))
 
 (comment

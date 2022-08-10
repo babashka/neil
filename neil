@@ -452,17 +452,30 @@ Bump the :version key in the project config.")))
 
 (def zero-version {:major 0 :minor 0 :patch 0})
 
+(defn version-map->str [x & {:keys [prefix] :or {prefix true}}]
+  (when x
+    (if (string? x)
+      (if-let [parsed (parse-semver-string x)]
+        (version-map->str parsed)
+        x)
+      (let [{:keys [minor major patch qualifier]} x]
+        (str (when prefix "v")
+             (str/join "." [major minor patch])
+             (when qualifier (str "-" qualifier)))))))
+
 (defn save-version-bump [deps-map sub-command override opts]
   (let [prev-v (or (current-version deps-map) zero-version)
-        next-v (if override
-                 (do
-                   (when (<= override (get prev-v sub-command))
-                     (throw (ex-info (format "Invalid %s number provided" (name sub-command))
-                                     {:current prev-v
-                                      :input {sub-command override}})))
-                   (merge zero-version
-                          (override-version sub-command (assoc prev-v sub-command override))))
-                 (bump-version sub-command (or prev-v zero-version)))]
+        next-v (version-map->str
+                 (if override
+                   (do
+                     (when (<= override (get prev-v sub-command))
+                       (throw (ex-info (format "Invalid %s number provided" (name sub-command))
+                                       {:current prev-v
+                                        :input {sub-command override}})))
+                     (merge zero-version
+                            (override-version sub-command (assoc prev-v sub-command override))))
+                   (bump-version sub-command (or prev-v zero-version)))
+                 :prefix false)]
     (proj/assoc-project-meta! {:deps-file (:deps-file opts) :k :version :v next-v})
     next-v))
 
@@ -505,25 +518,18 @@ Bump the :version key in the project config.")))
            (remove #(re-seq #"^\?" (:status %)))
            empty?))
 
-(defn version-map->str [x]
-  (if (string? x)
-    x
-    (let [{:keys [minor major patch qualifier]} x]
-      (str (str/join "." [major minor patch])
-           (when qualifier (str "-" qualifier))))))
-
 (defn git-add [opts]
   (sh "git add deps.edn"
       (assoc (git-opts opts) :err :inherit)))
 
 (defn git-commit [version opts]
-  (let [s (str "v" (version-map->str version))
+  (let [s (version-map->str version)
         cmd ["git" "commit" "-m" s]
         {:keys [out err]} (sh cmd (git-opts opts))]
     (when (seq err) (throw (ex-info err {})))))
 
 (defn git-tag [version opts]
-  (let [s (str "v" (version-map->str version))
+  (let [s (version-map->str version)
         cmd ["git" "tag" "-a" s "-m" s]
         {:keys [out err]} (sh cmd (git-opts opts))]
     (when (seq err) (throw (ex-info err {})))))
@@ -557,11 +563,12 @@ Bump the :version key in the project config.")))
           (git-add opts)
           (git-commit after opts)
           (git-tag after opts))
-        (pprint/pprint after)))))
+        (println (version-map->str after))
+        nil))))
 
 (defn print-version [opts]
   (let [deps-map (edn/read-string (slurp (:deps-file opts)))]
-    (pprint/pprint (current-version deps-map))))
+    (println (version-map->str (current-version deps-map)))))
 
 (defn run-root-command [opts]
   (print-version opts))
@@ -602,7 +609,7 @@ Bump the :version key in the project config.")))
             v (current-version deps-map)]
         (git-commit v opts)
         (git-tag v opts)
-        (prn v)
+        (prn (version-map->str v))
         nil))))
 
 (defn tag-arg [args]
@@ -641,7 +648,7 @@ Bump the :version key in the project config.")))
           (git-add opts)
           (git-commit after opts)
           (git-tag after opts))
-        (println after)
+        (println (version-map->str after))
         nil))))
 
 (defn set-arg [args]

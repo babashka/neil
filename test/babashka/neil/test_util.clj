@@ -55,7 +55,7 @@
                  :fn #(binding [*out* log-stream]
                         (println (force (:output_ %))))}}})
 
-(defn neil [cli-args & {:keys [out] :or {out :edn}}]
+(defn neil [cli-args & {:keys [out] :or {out :string}}]
   (let [deps-file (str (test-file "deps.edn"))
         cli-args' (concat (if (string? cli-args)
                             (process/tokenize cli-args)
