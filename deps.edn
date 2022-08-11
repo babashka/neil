@@ -1,4 +1,5 @@
-{:deps {babashka/babashka.curl {:mvn/version "0.1.2"}
+{:paths ["src"]
+ :deps {babashka/babashka.curl {:mvn/version "0.1.2"}
         babashka/fs {:mvn/version "0.1.6"}
         babashka/process {:mvn/version "0.1.7"}
         rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}

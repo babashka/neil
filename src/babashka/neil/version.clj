@@ -4,6 +4,7 @@
             [babashka.process :refer [sh]]
             [clojure.edn :as edn]
             [clojure.pprint :as pprint]
+            [babashka.neil.meta :as meta]
             [clojure.string :as str]))
 
 (defn print-version-help []
@@ -157,12 +158,12 @@ Bump the :version key in the project config.")))
         (println (version-map->str after))
         nil))))
 
-(defn print-version [opts]
-  (let [deps-map (edn/read-string (slurp (:deps-file opts)))]
-    (println (version-map->str (current-version deps-map)))))
-
 (defn run-root-command [opts]
-  (print-version opts))
+  (let [deps-map (edn/read-string (slurp (:deps-file opts)))
+        project-version (or (version-map->str (current-version deps-map)
+                                              :prefix false)
+                            :version-not-set)]
+    (prn {:neil meta/version :project project-version})))
 
 (defn git-unstaged-files [git-status-result]
   (->> (:statuses git-status-result)
@@ -211,12 +212,13 @@ Bump the :version key in the project config.")))
   override)
 
 (defn strictly-increasing-version? [prev-v next-v]
-  (or (< (:major prev-v) (:major next-v))
-      (and (<= (:major prev-v) (:major next-v))
-           (< (:minor prev-v) (:minor next-v)))
-      (and (<= (:major prev-v) (:major next-v))
-           (<= (:minor prev-v) (:minor next-v))
-           (< (:patch prev-v) (:patch next-v)))))
+  (let [prev-v' (or prev-v zero-version)]
+    (or (< (:major prev-v') (:major next-v))
+        (and (<= (:major prev-v') (:major next-v))
+             (< (:minor prev-v') (:minor next-v)))
+        (and (<= (:major prev-v') (:major next-v))
+             (<= (:minor prev-v') (:minor next-v))
+             (< (:patch prev-v') (:patch next-v))))))
 
 (defn assert-strictly-increasing-version [prev-v next-v]
   (when-not (strictly-increasing-version? prev-v next-v)
