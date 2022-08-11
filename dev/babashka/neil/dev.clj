@@ -8,8 +8,9 @@
 (def watch-paths ["bb.edn" "prelude" "src"])
 
 (defn- build-event? [{:keys [type path] :as _watch-event}]
-  (and (not (#{:chmod} type))
-       (not (str/ends-with? path "~"))))
+  (or (#{::start} type)
+      (and (not (#{:chmod} type))
+           (not (str/ends-with? path "~")))))
 
 (defn- start-builder [build-events]
   (async/go-loop [i 1]
@@ -29,4 +30,5 @@
     (log/info [:start-dev])
     (start-builder build-events)
     (start-watchers watch-paths build-events)
+    (async/put! build-events {:type ::start})
     (deref (promise))))
