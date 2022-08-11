@@ -9,13 +9,16 @@
 
 (deftest version-option-test
   (let [{:keys [out]} (neil "--version" :out :string)]
-    (is (re-seq #"^neil \d+\.\d+\.\d+(-\w+)?$" out))))
+    (is (= "neil :version-not-set" out))))
 
 (deftest root-test
   (fs/delete-tree test-dir)
   (spit (test-file "deps.edn") "{}")
-  (let [{:keys [out]} (neil "version")]
-    (is (= "nil" out))))
+  (let [{:keys [out]} (neil "version" :out :edn)]
+    (is (= {:neil :version-not-set :project :version-not-set} out)))
+  (spit (test-file "deps.edn") (pr-str {:aliases {:neil {:project {:version "1.0.0"}}}}))
+  (let [{:keys [out]} (neil "version" :out :edn)]
+    (is (= {:neil :version-not-set :project "1.0.0"} out))))
 
 (defn read-deps-edn-version []
   (-> (edn/read-string (slurp (test-file "deps.edn")))
@@ -41,10 +44,8 @@
         v "1.0.0"]
     (is (= (str "v" v) out))
     (is (= v (read-deps-edn-version))))
-  (let [{:keys [out]} (neil "version")
-        v "1.0.0"]
-    (is (= (str "v" v) out))
-    (is (= v (read-deps-edn-version)))))
+  (let [{:keys [out]} (neil "version" :out :edn)]
+    (is (= {:neil :version-not-set :project "1.0.0"} out))))
 
 (deftest tag-test
   (fs/delete-tree test-dir)
