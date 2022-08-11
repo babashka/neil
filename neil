@@ -545,7 +545,7 @@ Bump the :version key in the project config.")))
     (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
 
 (defn git-tag-version-enabled? [opts]
-  (and (git-repo? (git-status opts))
+  (and (git-repo? opts)
        (not (false? (:git-tag-version opts)))
        (not (false? (:tag opts)))
        (not (:no-git-tag-version opts))
