@@ -33,7 +33,7 @@
   (let [build-xf (filter build-event?)
         build-events (async/chan (async/sliding-buffer 1) build-xf)]
     (log/info [:start-dev])
-    (build-once {:type ::startup-build})
     (start-watchers watch-paths build-events)
+    (build-once {:type ::startup-build})
     (start-builder build-events)
     (deref (promise))))
