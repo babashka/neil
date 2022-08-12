@@ -302,7 +302,7 @@
              :order [:lib :version :sha :latest-sha :deps/root :as :alias :deps-file]})))
 
 (defn dep-add [{:keys [opts]}]
-  (if (:help opts)
+  (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
     (do
       (ensure-deps-file opts)
