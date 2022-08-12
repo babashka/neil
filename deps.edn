@@ -7,10 +7,13 @@
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}}
  :tools/usage {:ns-default babashka.neil.api}
- :aliases {:test ;; added by neil
-           {:extra-paths ["test"]
-            :extra-deps {io.github.cognitect-labs/test-runner
-                         {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
-            :main-opts ["-m" "cognitect.test-runner"]
-            :exec-fn cognitect.test-runner.api/test}
-           :neil {:project {}}}}
+ :aliases
+ {:neil
+  {:project {:version "0.1.43"}}
+
+  :test ;; added by neil
+  {:extra-paths ["test"]
+   :extra-deps {io.github.cognitect-labs/test-runner
+                {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
+   :main-opts ["-m" "cognitect.test-runner"]
+   :exec-fn cognitect.test-runner.api/test}}}
