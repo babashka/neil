@@ -16,7 +16,7 @@
 (defn build-once [event]
   (let [i (swap! build-number inc)]
     (log/info (into [:start-build i event]))
-    (sh "bb gen-script")
+    (sh "bb gen-script" {:err :inherit})
     (log/info (into [:end-build i event]))))
 
 (defn- start-builder [build-events]
