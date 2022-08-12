@@ -102,10 +102,10 @@
 
 (def bb? (System/getProperty "babashka.version"))
 
-(def create-opts-deny-list
+(def creation-opts-deny-list
   [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
 
-(defn- cli-opts->create-opts
+(defn- cli-opts->creation-opts
   "Returns options for org.corfield.new/create based on the cli-opts.
 
   If no template is provided, the scratch template is filled in.
@@ -119,7 +119,7 @@
     (merge (when (or no-template scratch-template)
              {:template "scratch"
               :scratch (:name cli-opts)})
-           (apply dissoc cli-opts create-opts-deny-list))))
+           (apply dissoc cli-opts creation-opts-deny-list))))
 
 (defn- deps-new-plan
   "Returns a plan for calling org.corfield.new/create.
@@ -127,17 +127,17 @@
   :template-deps - These deps will be added with babashka.deps/add-deps before
                    calling the create function.
 
-  :create-opts   - This map contains the options that will be passed to the
+  :creation-opts   - This map contains the options that will be passed to the
                    create function."
   [cli-opts]
-  (let [create-opts (cli-opts->create-opts cli-opts)
-        tpl-deps (when (and bb? (not (built-in-template? (:template create-opts))))
-                   (template-deps (:template create-opts) cli-opts))]
+  (let [creation-opts (cli-opts->creation-opts cli-opts)
+        tpl-deps (when (and bb? (not (built-in-template? (:template creation-opts))))
+                   (template-deps (:template creation-opts) cli-opts))]
     (merge (when tpl-deps {:template-deps tpl-deps})
-           {:create-opts create-opts})))
+           {:creation-opts creation-opts})))
 
-(defn- deps-new-create [create-opts]
-  ((requiring-resolve 'org.corfield.new/create) create-opts))
+(defn- deps-new-create [creation-opts]
+  ((requiring-resolve 'org.corfield.new/create) creation-opts))
 
 (defn print-new-help []
   (println (str/trim "
@@ -205,14 +205,14 @@ options can be used to control the add-deps behavior:
     (do
       (require 'org.corfield.new)
       (let [plan (deps-new-plan opts)
-            {:keys [template-deps create-opts]} plan
-            project-name (symbol (:name create-opts))
-            dir (or (:target-dir create-opts)
+            {:keys [template-deps creation-opts]} plan
+            project-name (symbol (:name creation-opts))
+            dir (or (:target-dir creation-opts)
                     (name project-name))]
         (if (:dry-run opts)
           (do (prn plan) nil)
           (do
             (when template-deps (deps-new-add-template-deps template-deps))
             (when bb? (deps-new-set-classpath))
-            (deps-new-create create-opts)
+            (deps-new-create creation-opts)
             (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name))))))))

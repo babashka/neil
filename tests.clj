@@ -115,7 +115,7 @@
     (let [edn (run-new-command ":name" "foo/my-scratch"
                                ":target-dir" target-dir
                                ":dry-run" "true")]
-      (is (= {:create-opts {:template "scratch"
+      (is (= {:creation-opts {:template "scratch"
                             :scratch 'foo/my-scratch
                             :target-dir target-dir
                             :name 'foo/my-scratch}}
@@ -129,7 +129,7 @@
                                ":dry-run" "true"
                                ":overwrite" "true"
                                ":scratch" "foo/my-scratch")]
-      (is (= {:create-opts {:template "scratch"
+      (is (= {:creation-opts {:template "scratch"
                             :scratch "foo/my-scratch"
                             :overwrite true
                             :target-dir target-dir
@@ -150,7 +150,7 @@
                                 {:git/url "https://github.com/rads/neil-new-test-template"
                                  :git/tag "1.0.0"
                                  :git/sha "e7954c34146fcdc4ab54fa4690bec3ceb9247d05"}}
-                :create-opts {:template "io.github.rads/neil-new-test-template"
+                :creation-opts {:template "io.github.rads/neil-new-test-template"
                               :target-dir target-dir
                               :overwrite true
                               :name 'my-scratch/my-scratch}}
