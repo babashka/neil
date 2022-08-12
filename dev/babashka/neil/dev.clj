@@ -8,17 +8,22 @@
 (def watch-paths ["bb.edn" "prelude" "src" "dev"])
 
 (defn- build-event? [{:keys [type path] :as _watch-event}]
-  (or (#{::start} type)
-      (and (not (#{:chmod} type))
-           (not (str/ends-with? path "~")))))
+  (and (not (#{:chmod} type))
+       (not (str/ends-with? path "~"))))
+
+(def build-number (atom 0))
+
+(defn build-once [event]
+  (let [i (swap! build-number inc)]
+    (log/info (into [:start-build i event]))
+    (sh "bb gen-script")
+    (log/info (into [:end-build i event]))))
 
 (defn- start-builder [build-events]
-  (async/go-loop [i 1]
+  (async/go-loop []
     (let [event (<! build-events)]
-      (log/info [:start-build i event])
-      (sh "bb gen-script")
-      (log/info [:end-build i event])
-      (recur (inc i)))))
+      (build-once event)
+      (recur))))
 
 (defn- start-watchers [watch-paths build-events]
   (doseq [p watch-paths]
@@ -28,7 +33,7 @@
   (let [build-xf (filter build-event?)
         build-events (async/chan (async/sliding-buffer 1) build-xf)]
     (log/info [:start-dev])
-    (start-builder build-events)
+    (build-once {:type ::startup-build})
     (start-watchers watch-paths build-events)
-    (async/put! build-events {:type ::start})
+    (start-builder build-events)
     (deref (promise))))
