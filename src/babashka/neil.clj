@@ -422,7 +422,7 @@ add
 
 dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
-    Run neil add dep --help to see all options.
+    Run neil dep add --help to see all options.
 
 new:
   Create a project using deps-new
