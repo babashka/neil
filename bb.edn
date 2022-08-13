@@ -8,37 +8,15 @@
          dev {:doc "Starts watcher to auto-build neil script"
               :requires ([babashka.neil.dev :as dev])
               :task (dev/dev)}
-         gen-script (let [prelude (slurp "prelude")
-                          curl (slurp "src/babashka/neil/curl.clj")
-                          git (slurp "src/babashka/neil/git.clj")
-                          new (slurp "src/babashka/neil/new.clj")
-                          test (slurp "src/babashka/neil/test.cljc")
-                          project (slurp "src/babashka/neil/project.clj")
-                          rewrite (slurp "src/babashka/neil/rewrite.clj")
-                          neil (slurp "src/babashka/neil.clj")]
-                      (spit "neil" (str/join "\n" [prelude
-                                                   curl git rewrite project new test
-                                                   neil])))
+         gen-script {:doc "Build the neil script"
+                     :requires ([babashka.neil.gen-script :as gen-script])
+                     :task (gen-script/gen-script)}
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
                                 (->> (p/render (slurp "README.template.md")
-                                               {:help (str/trim help)
-                                                :version (slurp "version.txt")})
+                                               {:help (str/trim help)})
                                      (spit "README.md"))))}
-         bump-version {:task (let [version (-> (slurp "version.txt")
-                                               str/trim)
-                                   [major minor patch] (str/split version (re-pattern "\\."))
-                                   version (str/join "." [major minor (inc (Integer/parseInt patch))])]
-                               (spit "version.txt" version)
-                               version)}
-         sync-version (let [version (-> (slurp "version.txt") str/trim)
-                            oldsource (slurp "src/babashka/neil.clj")
-                            newsource (str/replace oldsource
-                                                   ;; Regex literals like #"\(def version \"[0-9\.]+\"\)" are not supported in bb.edn
-                                                   (re-pattern "\\(def version \\\"[0-9\\.]+\\\"\\)")
-                                                   (str "(def version \"" version "\")"))]
-                        (spit "src/babashka/neil.clj" newsource))
          tests {:depends [gen-script]
                 :requires ([babashka.neil.test-runner])
                 :task (exec 'babashka.neil.test-runner/run-tests)}

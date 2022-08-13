@@ -5,6 +5,7 @@
    [babashka.fs :as fs]
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
+   [babashka.neil.meta :as meta]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
@@ -27,8 +28,6 @@
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
            :limit {:coerce :long}})
-
-(def version "0.1.43")
 
 (def windows? (fs/windows?))
 
@@ -302,7 +301,7 @@
              :order [:lib :version :sha :latest-sha :deps/root :as :alias :deps-file]})))
 
 (defn dep-add [{:keys [opts]}]
-  (if (:help opts)
+  (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
     (do
       (ensure-deps-file opts)
@@ -434,7 +433,7 @@ add
 
 dep
   add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
-    Run neil add dep --help to see all options.
+    Run neil dep add --help to see all options.
 
 new:
   Create a project using deps-new
@@ -504,7 +503,7 @@ license
   (neil-test/neil-test opts))
 
 (defn print-version [_]
-  (println "neil" version))
+  (println "neil" meta/version))
 
 (defn -main [& _args]
   (cli/dispatch
