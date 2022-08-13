@@ -430,10 +430,6 @@ new:
   Create a project using deps-new
     Run neil new --help to see all options.
 
-  Examples:
-    neil new scratch foo --overwrite
-    neil new io.github.rads/neil-new-test-template foo2 --latest-sha
-
 test:
   Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
 

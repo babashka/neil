@@ -177,7 +177,11 @@ options can be used to control the add-deps behavior:
 
   --latest-sha
     Override the :git/sha in the :deps map with the latest SHA from the
-    default branch of :git/url.")))
+    default branch of :git/url.
+
+Examples:
+  neil new scratch foo --overwrite
+  neil new io.github.rads/neil-new-test-template foo2 --latest-sha")))
 
 (defn- deps-new-set-classpath
   "Sets the java.class.path property.
