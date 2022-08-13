@@ -10,6 +10,7 @@
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
+   [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
    [clojure.string :as str]))
@@ -490,9 +491,6 @@ license
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
-(defn print-version [_]
-  (println "neil" meta/version))
-
 (defn -main [& _args]
   (cli/dispatch
    [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
@@ -509,7 +507,7 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn print-version}
+    {:cmds ["version"] :fn neil-version/neil-version}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
@@ -517,7 +515,7 @@ license
      :alias neil-test/neil-test-aliases}
     {:cmds [] :fn (fn [{:keys [opts] :as m}]
                     (if (:version opts)
-                      (print-version m)
+                      (neil-version/print-version)
                       (print-help m)))}]
    *command-line-args*
    {:spec spec
