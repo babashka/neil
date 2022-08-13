@@ -23,7 +23,8 @@
         test (slurp "src/babashka/neil/test.cljc")
         project (slurp "src/babashka/neil/project.clj")
         rewrite (slurp "src/babashka/neil/rewrite.clj")
+        version (slurp "src/babashka/neil/version.clj")
         neil (slurp "src/babashka/neil.clj")]
     (spit "neil" (str/join "\n" [prelude meta-str
-                                 curl git rewrite project new test
+                                 curl git rewrite project new test version
                                  neil]))))
