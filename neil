@@ -440,25 +440,13 @@ options can be used to control the add-deps behavior:
 Usage: neil version [set|major|minor|patch] [version]
        neil version tag
 
-WARNING: The `neil version` v2 command is under development and not ready for
-         end users right now.
-
 Bump the :version key in the project config.")))
-
-(defn run-v2-command [opts]
-  (if (:help opts)
-    (print-help)
-    (run-root-command opts)))
 
 (defn print-version []
   (println "neil" meta/version))
 
 (defn neil-version [{:keys [opts]}]
-  ; NOTE: The v2 logic will become the new default behavior when the new
-  ;       `neil version` is ready for release. This will be removed later on.
-  (if (:v2 opts)
-    (run-v2-command opts)
-    (print-version)))
+  (run-root-command opts))
 
 (ns babashka.neil
   {:no-doc true}
