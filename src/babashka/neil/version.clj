@@ -3,15 +3,13 @@
             [babashka.neil.meta :as meta]
             [babashka.neil.project :as proj]
             [clojure.edn :as edn]
-            [clojure.spec.alpha :as s]
             [clojure.string :as str]))
 
-(s/def ::project-version
-  (s/or :version-not-set #{:version-not-set}
-        :string string?))
+(defn project-version? [x]
+  (or (string? x) (#{:version-not-set} x)))
 
 (defn assert-valid-project-version [project-version deps-file]
-  (when-not (s/valid? ::project-version project-version)
+  (when-not (project-version? project-version)
     (throw (ex-info "Project version must be a string, e.g. \"1.0.0\""
                     {:deps-file (str (fs/canonicalize deps-file))
                      :project {:version project-version}}))))
