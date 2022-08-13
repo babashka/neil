@@ -446,7 +446,9 @@ Bump the :version key in the project config.")))
   (println "neil" meta/version))
 
 (defn neil-version [{:keys [opts]}]
-  (run-root-command opts))
+  (if (:help opts)
+    (print-help)
+    (run-root-command opts)))
 
 (ns babashka.neil
   {:no-doc true}
@@ -957,7 +959,7 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn neil-version/neil-version}
+    {:cmds ["version"] :fn neil-version/neil-version :aliases {:h :help}}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here

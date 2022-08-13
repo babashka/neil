@@ -33,4 +33,6 @@ Bump the :version key in the project config.")))
   (println "neil" meta/version))
 
 (defn neil-version [{:keys [opts]}]
-  (run-root-command opts))
+  (if (:help opts)
+    (print-help)
+    (run-root-command opts)))

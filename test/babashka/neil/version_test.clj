@@ -1,6 +1,7 @@
 (ns babashka.neil.version-test
   (:require [babashka.neil.meta :as meta]
             [babashka.neil.test-util :refer [neil set-deps-edn! reset-test-dir]]
+            [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
   (:import (clojure.lang ExceptionInfo)))
 
@@ -10,6 +11,13 @@
   (with-redefs [meta/version "1.0.0"]
     (let [{:keys [out]} (neil "--version" :out :string)]
       (is (= "neil 1.0.0" out)))))
+
+(deftest help-test
+  (set-deps-edn! {})
+  (doseq [cmd ["version --help"
+               "version -h"]]
+    (let [{:keys [out]} (neil cmd :out :string)]
+      (is (str/starts-with? out "Usage: neil version [set|major|minor|patch] ")))))
 
 (deftest root-test
   (with-redefs [meta/version "1.0.0"]
