@@ -5,7 +5,6 @@
    [babashka.fs :as fs]
    [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
-   [babashka.neil.meta :as meta]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
