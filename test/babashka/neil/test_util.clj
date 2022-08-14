@@ -1,7 +1,7 @@
 (ns babashka.neil.test-util
   (:require [babashka.fs :as fs]
             [babashka.neil :as neil-main]
-            [babashka.process :as process]
+            [babashka.process :as process :refer [sh]]
             [babashka.tasks :as tasks]
             [clojure.edn :as edn]
             [clojure.string :as str]))
