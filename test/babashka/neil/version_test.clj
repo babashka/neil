@@ -5,7 +5,6 @@
                                              test-dir test-file]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
-
   (:import (clojure.lang ExceptionInfo)))
 
 (deftest version-option-test
