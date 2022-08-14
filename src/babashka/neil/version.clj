@@ -16,8 +16,8 @@
   (and (nat-int? major)
        (nat-int? minor)
        (nat-int? patch)
-       (if pre-release (string? pre-release) true)
-       (if build (string? build) true)))
+       (if (some? pre-release) (string? pre-release) true)
+       (if (some? build) (string? build) true)))
 
 (def semver-regex
   "Source: https://semver.org/"
