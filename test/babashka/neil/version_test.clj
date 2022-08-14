@@ -64,8 +64,7 @@
     (let [v "0.1.0"]
       (set-deps-edn! {:aliases {:neil {:project {:version v}}}})
       (git/add ["deps.edn"] git-opts)
-      (let [{:keys [out]} (neil "version tag")
-            v "0.1.0"]
+      (let [{:keys [out]} (neil "version tag")]
         (is (= (str "v" v) out)
             "Tag is printed as output")
         (is (= 2 (git/commit-count git-opts))
