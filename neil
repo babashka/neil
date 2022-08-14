@@ -765,6 +765,7 @@ Bump the :version key in the project config.")))
             edn-nodes (edn-nodes edn-string)
             lib (:lib opts)
             lib (symbol lib)
+            alias (:alias opts)
             explicit-git? (or (:sha opts)
                               (:latest-sha opts))
             [version git?] (if explicit-git?
@@ -784,24 +785,39 @@ Bump the :version key in the project config.")))
                       (or (:git/url opts)
                           (str "https://github.com/" (git/clean-github-lib lib))))
             as (or (:as opts) lib)
-            ;; force newline
-            edn-nodes (-> edn-nodes (r/assoc-in [:deps as] nil) str r/parse-string)
+            existing-aliases (-> edn-string edn/read-string :aliases)
+            path (if alias
+                   [:aliases
+                    alias
+                    (if (get-in existing-aliases [alias :deps]):deps :extra-deps)
+                    as]
+                   [:deps as])
+            nl-path (if (and alias
+                             (not (contains? existing-aliases alias)))
+                      [:aliases alias]
+                      path)
+            ;; force newline in
+            ;; [:deps as] if no alias
+            ;; [:aliases alias] if alias DNE
+            ;; [:aliases alias :deps as] if :deps present
+            ;; [:aliases alias :extra-deps as] if alias exists
+            edn-nodes (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string)
             nodes (cond
                     mvn?
-                    (r/assoc-in edn-nodes [:deps as]
+                    (r/assoc-in edn-nodes path
                                 {:mvn/version version})
                     git?
                     ;; multiple steps to force newlines
                     (-> edn-nodes
                         (r/assoc-in
-                         [:deps as :git/url] git-url)
+                         (conj path :git/url) git-url)
                         str
                         r/parse-string
                         (r/assoc-in
-                         [:deps as :git/sha] version)))
+                         (conj path :git/sha) version)))
             nodes (if-let [root (and git? (:deps/root opts))]
                     (-> nodes
-                        (r/assoc-in [:deps as :deps/root] root))
+                        (r/assoc-in (conj path :deps/root) root))
                     nodes)
             s (str (str/trim (str nodes)) "\n")]
         (spit (:deps-file opts) s)))))
