@@ -333,7 +333,7 @@
             path (if alias
                    [:aliases
                     alias
-                    (if (get-in existing-aliases [alias :deps]):deps :extra-deps)
+                    (if (get-in existing-aliases [alias :deps]) :deps :extra-deps)
                     as]
                    [:deps as])
             nl-path (if (and alias
