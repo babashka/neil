@@ -12,11 +12,12 @@
 (defn raw-string-version-map? [{:keys [raw-string]}]
   (string? raw-string))
 
-(defn semver-version-map? [{:keys [major minor patch qualifier]}]
+(defn semver-version-map? [{:keys [major minor patch pre-release build]}]
   (and (nat-int? major)
        (nat-int? minor)
        (nat-int? patch)
-       (if qualifier (string? qualifier) true)))
+       (if pre-release (string? pre-release) true)
+       (if build (string? build) true)))
 
 (def semver-regex
   "Source: https://semver.org/"
