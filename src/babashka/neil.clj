@@ -329,10 +329,13 @@
                       (or (:git/url opts)
                           (str "https://github.com/" (git/clean-github-lib lib))))
             as (or (:as opts) lib)
-            path (if alias
-                   [:aliases alias :extra-deps as]
-                   [:deps as])
             existing-aliases (-> edn-string edn/read-string :aliases)
+            path (if alias
+                   [:aliases
+                    alias
+                    (if (get-in existing-aliases [alias :deps]):deps :extra-deps)
+                    as]
+                   [:deps as])
             nl-path (if (and alias
                              (not (contains? existing-aliases alias)))
                       [:aliases alias]
@@ -340,6 +343,7 @@
             ;; force newline in
             ;; [:deps as] if no alias
             ;; [:aliases alias] if alias DNE
+            ;; [:aliases alias :deps as] if :deps present
             ;; [:aliases alias :extra-deps as] if alias exists
             edn-nodes (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string)
             nodes (cond
