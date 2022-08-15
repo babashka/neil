@@ -1,4 +1,4 @@
-name: bb run tests
+name: bb run tests-emacs
 on: [push, pull_request]
 jobs:
   Testing:
@@ -10,4 +10,8 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
-      - run: bb run tests
+      - name: Install emacs
+        uses: purcell/setup-emacs@master
+        with:
+          version: 28.1
+      - run: bb run tests-emacs
