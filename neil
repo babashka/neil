@@ -36,7 +36,9 @@
 
 (ns babashka.neil.git
   {:no-doc true}
-  (:require [babashka.neil.curl :refer [curl-get-json]]
+  (:require [babashka.fs :as fs]
+            [babashka.neil.curl :refer [curl-get-json]]
+            [babashka.process :refer [sh]]
             [clojure.string :as str]))
 
 (defn default-branch [lib]
@@ -70,6 +72,75 @@
   (->> (list-github-tags lib)
        (filter #(= (:name %) tag))
        first))
+
+(defn parse-status [line]
+  (let [[[_ status path]] (re-seq #"^(.{2}) (.+)$" line)]
+    {:status status :path path}))
+
+(defn status [git-opts]
+  (let [cmd "git status --porcelain=v1"
+        {:keys [out err]} (sh cmd git-opts)]
+    (if-not (str/blank? err)
+      {:err err}
+      {:statuses (if (str/blank? out)
+                   '()
+                   (map parse-status (str/split-lines out)))})))
+
+(defn commit [message git-opts]
+  (let [cmd ["git" "commit" "-m" message]
+        {:keys [err]} (sh cmd git-opts)]
+    (when (seq err) (throw (ex-info err {})))))
+
+(defn tag [message git-opts]
+  (let [cmd ["git" "tag" "-a" message "-m" message]
+        {:keys [err]} (sh cmd git-opts)]
+    (when (seq err) (throw (ex-info err {})))))
+
+(defn unstaged-files [status-result]
+  (->> (:statuses status-result)
+       (filter #(re-seq #"^ " (:status %)))
+       (map :path)))
+
+(defn staged-files [status-result]
+  (->> (:statuses status-result)
+       (filter #(re-seq #"^[ARMD]" (:status %)))
+       (map :path)))
+
+(defn resolve-repo [deps-file]
+  (if deps-file
+    (fs/file (fs/parent deps-file) ".git")
+    (fs/file ".git")))
+
+(defn repo? [deps-file]
+  (fs/exists? (resolve-repo deps-file)))
+
+(defn commit-count [git-opts]
+  (-> (sh "git rev-list --count HEAD" git-opts)
+      :out
+      str/trim
+      Integer/parseInt))
+
+(defn ensure-repo [git-opts]
+  (sh "git init -b main" git-opts)
+  (sh "git config user.name 'Neil Tests'" git-opts)
+  (sh "git config user.email '<>'" git-opts)
+  (sh "git add ." git-opts)
+  (sh "git commit -m 'First commit'" git-opts))
+
+(defn tag-contents [tag git-opts]
+  (let [cmd ["git" "for-each-ref" (str "refs/tags/" tag)
+             "--format" "%(contents)"]
+        {:keys [out]} (sh cmd git-opts)]
+    (not-empty (str/trim out))))
+
+(defn add [files git-opts]
+  (sh (concat ["git" "add"] files) git-opts))
+
+(defn describe [git-opts]
+  (not-empty (str/trim (:out (sh ["git" "describe"] git-opts)))))
+
+(defn show [git-opts]
+  (not-empty (str/trim (:out (sh ["git" "show" "-s" "--format=%B"] git-opts)))))
 
 (ns babashka.neil.rewrite
   (:require [clojure.string :as str]))
@@ -417,27 +488,127 @@ Examples:
 
 (ns babashka.neil.version
   (:require [babashka.fs :as fs]
+            [babashka.neil.git :as git]
             [babashka.neil.meta :as meta]
             [babashka.neil.project :as proj]
             [clojure.edn :as edn]
             [clojure.string :as str]))
 
-(defn project-version? [x]
+(defn not-set-version-map? [{:keys [version-not-set]}]
+  version-not-set)
+
+(defn raw-string-version-map? [{:keys [raw-string]}]
+  (string? raw-string))
+
+(defn semver-version-map? [{:keys [major minor patch pre-release build] :as m}]
+  (and (nat-int? major)
+       (nat-int? minor)
+       (nat-int? patch)
+       (if (contains? m :pre-release) (string? pre-release) true)
+       (if (contains? m :build) (string? build) true)))
+
+(def semver-regex
+  "Source: https://semver.org/"
+  (->> ["^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)"
+        "(?:-((?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*)"
+        "(?:\\.(?:0|[1-9]\\d*|\\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?"
+        "(?:\\+([0-9a-zA-Z-]+(?:\\.[0-9a-zA-Z-]+)*))?$"]
+       (apply str)
+       re-pattern))
+
+(defn parse-semver-string [s]
+  (when s
+    (let [[[_ major minor patch pre-release build]] (re-seq semver-regex s)]
+      (when (and major minor patch)
+        (merge {:major (Integer/parseInt major)
+                :minor (Integer/parseInt minor)
+                :patch (Integer/parseInt patch)}
+               (when pre-release {:pre-release pre-release})
+               (when build {:build build}))))))
+
+(defn- str->version-map [s]
+  (cond
+    (#{:version-not-set} s) {:version-not-set true}
+    (string? s) (or (parse-semver-string s) {:raw-string s})
+    :else (throw (ex-info "Invalid version string" {:version-string s}))))
+
+(defn- semver-version-map->str [version-map str-opts]
+  (let [{:keys [minor major patch qualifier]} version-map]
+    (str (when (:prefix str-opts) "v")
+         (str/join "." [major minor patch])
+         (when qualifier (str "-" qualifier)))))
+
+(defn version-map->str [version-map & {:as str-opts}]
+  (cond
+    (raw-string-version-map? version-map)
+    (:raw-string version-map)
+
+    (semver-version-map? version-map)
+    (semver-version-map->str version-map str-opts)
+
+    (not-set-version-map? version-map)
+    :version-not-set
+
+    :else
+    (throw (ex-info "Invalid version map" {:version-map version-map}))))
+
+(defn git-opts [opts]
+  (when (:deps-file opts)
+    (let [root (str (fs/parent (:deps-file opts)))]
+      (when (seq root)
+        {:dir root}))))
+
+(defn assert-no-unstaged-files [opts]
+  (let [unstaged-files (git/unstaged-files (git/status (git-opts opts)))]
+    (when (and (seq unstaged-files) (not (:force opts)))
+      (throw (ex-info "Requires all files to be staged unless --force is provided"
+                      {:unstaged-files unstaged-files})))))
+
+(defn assert-at-least-one-staged-file [opts]
+  (let [staged-files (git/staged-files (git/status (git-opts opts)))]
+    (when (and (empty? staged-files) (not (:force opts)))
+      (throw (ex-info "Requires at least one staged file unless --force is provided"
+                      {})))))
+
+(defn assert-git-repo [{:keys [deps-file dir]}]
+  (when-not (git/repo? deps-file)
+    (throw (ex-info "Requires git repo" {:deps-file (str (fs/canonicalize deps-file))
+                                         :dir dir}))))
+
+(defn deps-edn->project-version-string [deps-edn]
+  (get-in deps-edn [:aliases :neil :project :version] :version-not-set))
+
+(defn project-version-string? [x]
   (or (string? x) (#{:version-not-set} x)))
 
-(defn assert-valid-project-version [project-version deps-file]
-  (when-not (project-version? project-version)
+(defn assert-valid-project-version-string [project-version-string deps-file]
+  (when-not (project-version-string? project-version-string)
     (throw (ex-info "Project version must be a string, e.g. \"1.0.0\""
                     {:deps-file (str (fs/canonicalize deps-file))
-                     :project {:version project-version}}))))
+                     :project {:version project-version-string}}))))
+
+(defn run-tag-command [{:keys [dir deps-file] :as opts}]
+  (let [deps-file (proj/resolve-deps-file dir deps-file)
+        deps-edn (some-> deps-file slurp edn/read-string)
+        project-version-string (deps-edn->project-version-string deps-edn)
+        _ (assert-valid-project-version-string project-version-string deps-file)
+        project-version-map (str->version-map project-version-string)
+        prefixed-version (version-map->str project-version-map :prefix true)]
+    (assert-git-repo opts)
+    (assert-no-unstaged-files opts)
+    (assert-at-least-one-staged-file opts)
+    (git/commit prefixed-version (git-opts opts))
+    (git/tag prefixed-version (git-opts opts))
+    (println prefixed-version)))
 
 (defn run-root-command [{:keys [dir deps-file]}]
   (let [deps-file (proj/resolve-deps-file dir deps-file)
         deps-edn (some-> deps-file slurp edn/read-string)
-        project-version (get-in deps-edn [:aliases :neil :project :version]
-                                :version-not-set)]
-    (assert-valid-project-version project-version deps-file)
-    (prn {:neil meta/version :project project-version})))
+        project-version-string (deps-edn->project-version-string deps-edn)
+        _ (assert-valid-project-version-string project-version-string deps-file)
+        project-version-map (str->version-map project-version-string)]
+    (prn {:neil meta/version
+          :project (version-map->str project-version-map :prefix false)})))
 
 (defn print-help []
   (println (str/trim "
@@ -449,10 +620,14 @@ Bump the :version key in the project config.")))
 (defn print-version []
   (println "neil" meta/version))
 
-(defn neil-version [{:keys [opts]}]
-  (if (:help opts)
-    (print-help)
-    (run-root-command opts)))
+(defn neil-version
+  ([parse-args] (neil-version :root parse-args))
+  ([command {:keys [opts] :as _parse-args}]
+   (if (:help opts)
+     (print-help)
+     (case command
+       :root (run-root-command opts)
+       :tag (run-tag-command opts)))))
 
 (ns babashka.neil
   {:no-doc true}
@@ -977,7 +1152,12 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn neil-version/neil-version :aliases {:h :help}}
+    {:cmds ["version" "tag"]
+     :fn (partial neil-version/neil-version :tag)
+     :aliases {:h :help}}
+    {:cmds ["version"]
+     :fn neil-version/neil-version
+     :aliases {:h :help}}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here

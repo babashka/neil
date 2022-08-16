@@ -1,6 +1,8 @@
 (ns babashka.neil.version-test
-  (:require [babashka.neil.meta :as meta]
-            [babashka.neil.test-util :refer [neil set-deps-edn! reset-test-dir]]
+  (:require [babashka.neil.git :as git]
+            [babashka.neil.meta :as meta]
+            [babashka.neil.test-util :refer [neil set-deps-edn! reset-test-dir
+                                             test-dir test-file]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
   (:import (clojure.lang ExceptionInfo)))
@@ -39,6 +41,40 @@
         (set-deps-edn! {:aliases {:neil {:project {:version v}}}})
         (let [{:keys [out]} (neil "version" :out :edn)]
           (is (= {:neil "1.0.0" :project v} out)))))))
+
+(def git-opts
+  {:dir test-dir
+   :err :inherit})
+
+(deftest tag-test
+  (reset-test-dir)
+  (set-deps-edn! {})
+  (git/ensure-repo git-opts)
+  (is (= 1 (git/commit-count git-opts)))
+  (testing "Assert at least one staged file"
+    (is (thrown-with-msg? ExceptionInfo #"Requires at least one staged file"
+                          (neil "version tag" :out :string))))
+  (testing "Assert all files staged"
+    (set-deps-edn! {:deps {}})
+    (spit (test-file "b") "b")
+    (git/add ["b"] git-opts)
+    (is (thrown-with-msg? ExceptionInfo #"Requires all files to be staged"
+                          (neil "version tag" :out :string))))
+  (testing "Create commit and tag"
+    (let [v "0.1.0"]
+      (set-deps-edn! {:aliases {:neil {:project {:version v}}}})
+      (git/add ["deps.edn"] git-opts)
+      (let [{:keys [out]} (neil "version tag")]
+        (is (= (str "v" v) out)
+            "Tag is printed as output")
+        (is (= 2 (git/commit-count git-opts))
+            "New commit created")
+        (is (= (str "v" v) (git/describe git-opts))
+            "Tag points to new commit")
+        (is (= (str "v" v) (git/show git-opts))
+            "Latest commit message is same as version")
+        (is (= (str "v" v) (git/tag-contents (str "v" v) git-opts))
+            "Latest annotated tag message is same as version")))))
 
 (comment
   (clojure.test/run-tests))
