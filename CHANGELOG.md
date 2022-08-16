@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- Introduce `neil dep upgrade` API for updating existing dependencies
+- Introduce `neil dep upgrade` API for upgrading existing dependencies
 
 ## 0.1.43
 
