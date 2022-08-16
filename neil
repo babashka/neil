@@ -79,7 +79,7 @@
 
 (defn status [git-opts]
   (let [cmd "git status --porcelain=v1"
-        {:keys [out err] :as x} (sh cmd git-opts)]
+        {:keys [out err]} (sh cmd git-opts)]
     (if-not (str/blank? err)
       {:err err}
       {:statuses (if (str/blank? out)
@@ -620,18 +620,14 @@ Bump the :version key in the project config.")))
 (defn print-version []
   (println "neil" meta/version))
 
-(defn tag-command? [args]
-  (#{:tag} (some-> args first keyword)))
-
-(defn root-command? [args]
-  (empty? args))
-
-(defn neil-version [{:keys [args opts]}]
-  (cond
-    (:help opts) (print-help)
-    (tag-command? args) (run-tag-command opts)
-    (root-command? args) (run-root-command opts)
-    :else (print-help)))
+(defn neil-version
+  ([parse-args] (neil-version :root parse-args))
+  ([command {:keys [opts] :as _parse-args}]
+   (if (:help opts)
+     (print-help)
+     (case command
+       :root (run-root-command opts)
+       :tag (run-tag-command opts)))))
 
 (ns babashka.neil
   {:no-doc true}
@@ -1156,7 +1152,12 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn neil-version/neil-version :aliases {:h :help}}
+    {:cmds ["version" "tag"]
+     :fn (partial neil-version/neil-version :tag)
+     :aliases {:h :help}}
+    {:cmds ["version"]
+     :fn neil-version/neil-version
+     :aliases {:h :help}}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here

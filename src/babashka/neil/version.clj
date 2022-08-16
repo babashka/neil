@@ -132,15 +132,11 @@ Bump the :version key in the project config.")))
 (defn print-version []
   (println "neil" meta/version))
 
-(defn tag-command? [args]
-  (#{:tag} (some-> args first keyword)))
-
-(defn root-command? [args]
-  (empty? args))
-
-(defn neil-version [{:keys [args opts]}]
-  (cond
-    (:help opts) (print-help)
-    (tag-command? args) (run-tag-command opts)
-    (root-command? args) (run-root-command opts)
-    :else (print-help)))
+(defn neil-version
+  ([parse-args] (neil-version :root parse-args))
+  ([command {:keys [opts] :as _parse-args}]
+   (if (:help opts)
+     (print-help)
+     (case command
+       :root (run-root-command opts)
+       :tag (run-tag-command opts)))))

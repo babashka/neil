@@ -521,7 +521,12 @@ license
     {:cmds ["new"] :fn new/run-deps-new
      :args->opts [:template :name :target-dir]
      :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version"] :fn neil-version/neil-version :aliases {:h :help}}
+    {:cmds ["version" "tag"]
+     :fn (partial neil-version/neil-version :tag)
+     :aliases {:h :help}}
+    {:cmds ["version"]
+     :fn neil-version/neil-version
+     :aliases {:h :help}}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
