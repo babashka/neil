@@ -446,6 +446,7 @@ will return libraries with 'test framework' in their description.")))
   (if (:lib opts)
     ;; upgrade single dependency
     (let [lib (:lib opts)
+          lib (symbol lib)
           current (-> (edn-string opts)
                       edn/read-string
                       :deps
