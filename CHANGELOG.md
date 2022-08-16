@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Introduce `neil dep upgrade` API for updating existing dependencies
+
 ## 0.1.43
 
 - Save project name in `:aliases {:neil {:project {:name ...}}}`
