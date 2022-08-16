@@ -897,8 +897,6 @@ will return libraries with 'test framework' in their description.")))
   ;;
   ;; 1. We don't care about alpha versions and stuff like that, we just do what
   ;;    `neil dep add` does.
-  #_
-  (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
   (let [current-deps (-> (edn-string opts)
                          edn/read-string
                          :deps)
@@ -908,8 +906,7 @@ will return libraries with 'test framework' in their description.")))
                                           (latest-mvn-version lib))]))
                          (filter (fn [[_lib new-version]]
                                    (some? new-version)))
-                         (into {}))
-        ]
+                         (into {}))]
     (doseq [[lib currentv] current-deps]
       (let [latest (get latest-deps lib)]
         (when (and latest
