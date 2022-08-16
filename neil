@@ -875,7 +875,7 @@ will return libraries with 'test framework' in their description.")))
                  :description (pr-str (:description search-result)))))))
 
 (defn dep-upgrade [{:keys [opts]}]
-  ;; Outline:
+  ;; Outline / plan:
   ;;
   ;; 1. look for existing dependencies in deps.edn
   ;; 2. pull the latest version for each dep
@@ -892,51 +892,21 @@ will return libraries with 'test framework' in their description.")))
   ;; There's plenty of example code in the other functions. This is also stuff
   ;; we can fix incrementally later. Getting something working is probably the
   ;; best first step.
+  ;;
+  ;; Current status:
+  ;;
+  ;; 1. We don't care about alpha versions and stuff like that, we just do what
+  ;;    `neil dep add` does.
   (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
-  (let [#_#_
-        latest-version (fn [lib]
-                         (->> (or (seq (clojars-versions lib opts))
-                                  (seq (mvn-versions lib opts))
-                                  [])
-                              last))
-        current-deps (-> (edn-string opts)
+  (let [current-deps (-> (edn-string opts)
                          edn/read-string
-                         :deps)
-        #_#_
-        alternative-deps (->> current-deps
-                              (pmap (fn [[lib _current-version]]
-                                      (let [latest-version (->> (or (seq (clojars-versions lib opts))
-                                                                    (seq (mvn-versions lib opts))
-                                                                    [])
-                                                                ;; remove alpha and beta versions
-                                                                ;; not 100 % sure about desired behavior here, but I think people in general
-                                                                ;; want "latest stable"
-                                                                (filter (fn [s]
-                                                                          (re-matches #"[0-9\.]+" s)))
-                                                                last)]
-                                        [lib latest-version])))
-                              (into {}))]
-    #_
-    (doseq [[lib currentv] current-deps]
-      (prn [lib currentv (or (mvn-versions lib opts)
-                             (clojars-versions lib opts))]))
-    ;; (prn (clojars-versions 'hiccup/hiccup {}))
-    #_#_#_
-    (println "latest mvn version")
-    (prn (latest-mvn-version 'org.clojure/clojure))
-    (println "latest mvn version done")
+                         :deps)]
     (doseq [[lib currentv] current-deps]
       (let [latest (or (latest-clojars-version lib)
                        (latest-mvn-version lib))]
         (when (and latest
                    (not= currentv {:mvn/version latest}))
-          (println :lib lib :version (:mvn/version currentv) :latest latest))
-        )
-      #_
-      (prn [lib currentv (or (mvn-versions lib opts)
-                             (clojars-versions lib opts))]))
-    )
-  )
+          (println :lib lib :version (:mvn/version currentv) :latest latest))))))
 
 (defn print-help [_]
   (println (str/trim "
