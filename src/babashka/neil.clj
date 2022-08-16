@@ -437,7 +437,8 @@ will return libraries with 'test framework' in their description.")))
   ;; we can fix incrementally later. Getting something working is probably the
   ;; best first step.
   (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
-  (let [latest-version (fn [lib]
+  (let [#_#_
+        latest-version (fn [lib]
                          (->> (or (seq (clojars-versions lib opts))
                                   (seq (mvn-versions lib opts))
                                   [])
