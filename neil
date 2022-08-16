@@ -893,6 +893,50 @@ will return libraries with 'test framework' in their description.")))
   ;; we can fix incrementally later. Getting something working is probably the
   ;; best first step.
   (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
+  (let [latest-version (fn [lib]
+                         (->> (or (seq (clojars-versions lib opts))
+                                  (seq (mvn-versions lib opts))
+                                  [])
+                              last))
+        current-deps (-> (edn-string opts)
+                         edn/read-string
+                         :deps)
+        #_#_
+        alternative-deps (->> current-deps
+                              (pmap (fn [[lib _current-version]]
+                                      (let [latest-version (->> (or (seq (clojars-versions lib opts))
+                                                                    (seq (mvn-versions lib opts))
+                                                                    [])
+                                                                ;; remove alpha and beta versions
+                                                                ;; not 100 % sure about desired behavior here, but I think people in general
+                                                                ;; want "latest stable"
+                                                                (filter (fn [s]
+                                                                          (re-matches #"[0-9\.]+" s)))
+                                                                last)]
+                                        [lib latest-version])))
+                              (into {}))]
+    #_
+    (doseq [[lib currentv] current-deps]
+      (prn [lib currentv (or (mvn-versions lib opts)
+                             (clojars-versions lib opts))]))
+    ;; (prn (clojars-versions 'hiccup/hiccup {}))
+    #_#_#_
+    (println "latest mvn version")
+    (prn (latest-mvn-version 'org.clojure/clojure))
+    (println "latest mvn version done")
+    (doseq [[lib currentv] current-deps]
+      (let [latest (or (latest-clojars-version lib)
+                       (latest-mvn-version lib))]
+        (when (and latest
+                   (not= currentv {:mvn/version latest}))
+          (println :lib lib :version (:mvn/version currentv) :latest latest)
+          )
+
+        )
+      #_
+      (prn [lib currentv (or (mvn-versions lib opts)
+                             (clojars-versions lib opts))]))
+    )
   )
 
 (defn print-help [_]
