@@ -1,4 +1,4 @@
-name: clj-kondo
+name: bb run lint
 on: [push, pull_request]
 jobs:
   Testing:
@@ -9,5 +9,6 @@ jobs:
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
+          bb: latest
           clj-kondo: latest
-      - run: clj-kondo --lint .
+      - run: bb run lint
