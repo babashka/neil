@@ -897,6 +897,7 @@ will return libraries with 'test framework' in their description.")))
   ;;
   ;; 1. We don't care about alpha versions and stuff like that, we just do what
   ;;    `neil dep add` does.
+  #_
   (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
   (let [current-deps (-> (edn-string opts)
                          edn/read-string
@@ -913,7 +914,12 @@ will return libraries with 'test framework' in their description.")))
       (let [latest (get latest-deps lib)]
         (when (and latest
                    (not= currentv {:mvn/version latest}))
-          (println :lib lib :version (:mvn/version currentv) :latest latest))))))
+          (if (:dry-run opts)
+            (println :lib lib :version (:mvn/version currentv) :latest latest)
+            (dep-add {:opts (-> opts
+                                (assoc :lib lib)
+                                (assoc :version latest))})))))))
+
 
 (defn print-help [_]
   (println (str/trim "
