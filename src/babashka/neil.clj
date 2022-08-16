@@ -420,6 +420,8 @@ will return libraries with 'test framework' in their description.")))
                  :description (pr-str (:description search-result)))))))
 
 (defn dep-upgrade [{:keys [opts]}]
+  ;; (prn opts)
+
   ;; Outline / plan:
   ;;
   ;; 1. look for existing dependencies in deps.edn
@@ -442,7 +444,6 @@ will return libraries with 'test framework' in their description.")))
   ;;
   ;; 1. We don't care about alpha versions and stuff like that, we just do what
   ;;    `neil dep add` does.
-  (println opts)
   (if (:lib opts)
     ;; upgrade single dependency
     (let [lib (:lib opts)
