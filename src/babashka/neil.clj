@@ -27,7 +27,8 @@
            :deps-file {:ref "<file>"
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
-           :limit {:coerce :long}})
+           :limit {:coerce :long}
+           :dry-run {:coerce :boolean}})
 
 (def windows? (fs/windows?))
 
@@ -441,25 +442,50 @@ will return libraries with 'test framework' in their description.")))
   ;;
   ;; 1. We don't care about alpha versions and stuff like that, we just do what
   ;;    `neil dep add` does.
-  (let [current-deps (-> (edn-string opts)
-                         edn/read-string
-                         :deps)
-        latest-deps (->> (keys current-deps)
-                         (pmap (fn [lib]
-                                 [lib (or (latest-clojars-version lib)
-                                          (latest-mvn-version lib))]))
-                         (filter (fn [[_lib new-version]]
-                                   (some? new-version)))
-                         (into {}))]
-    (doseq [[lib currentv] current-deps]
-      (let [latest (get latest-deps lib)]
-        (when (and latest
-                   (not= currentv {:mvn/version latest}))
-          (if (:dry-run opts)
-            (println :lib lib :version (:mvn/version currentv) :latest latest)
-            (dep-add {:opts (-> opts
-                                (assoc :lib lib)
-                                (assoc :version latest))})))))))
+  (println opts)
+  (if (:lib opts)
+    ;; upgrade single dependency
+    (let [lib (:lib opts)
+          current (-> (edn-string opts)
+                      edn/read-string
+                      :deps
+                      (get lib))
+          latest (or (latest-clojars-version lib)
+                     (latest-mvn-version lib))]
+      (cond (not current) (binding [*out* *err*]
+                            (println "Local dependency not found:" lib)
+                            (println "Use `neil dep add` to add dependencies.")
+                            (System/exit 1))
+            (not latest) (binding [*out* *err*]
+                           (println "No remote version found for" lib)
+                           (System/exit 1))
+            :else
+            (when (not= current latest)
+              (if (:dry-run opts)
+                (println :lib lib :version (:mvn/version current) :latest latest)
+                (dep-add {:opts (-> opts
+                                    (assoc :lib lib)
+                                    (assoc :version latest))})))))
+    ;; upgrade multiple dependencies
+    (let [current-deps (-> (edn-string opts)
+                           edn/read-string
+                           :deps)
+          latest-deps (->> (keys current-deps)
+                           (pmap (fn [lib]
+                                   [lib (or (latest-clojars-version lib)
+                                            (latest-mvn-version lib))]))
+                           (filter (fn [[_lib new-version]]
+                                     (some? new-version)))
+                           (into {}))]
+      (doseq [[lib current] current-deps]
+        (let [latest (get latest-deps lib)]
+          (when (and latest
+                     (not= current {:mvn/version latest}))
+            (if (:dry-run opts)
+              (println :lib lib :version (:mvn/version current) :latest latest)
+              (dep-add {:opts (-> opts
+                                  (assoc :lib lib)
+                                  (assoc :version latest))}))))))))
 
 
 (defn print-help [_]
