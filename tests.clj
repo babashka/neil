@@ -25,6 +25,17 @@
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
+(deftest add-dep-alias-test
+  (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo" :alias :lint)]
+    (is (-> edn :aliases :lint :extra-deps (get 'clj-kondo/clj-kondo)))))
+
+(deftest add-dep-deps-key-test
+  (let [tmp-file (test-file "deps.edn")]
+    (spit tmp-file "{:deps {} :aliases {:lint {:deps {}}}}")
+    (tasks/shell "./neil add dep clj-kondo/clj-kondo --alias lint --deps-file" tmp-file)
+    (let [edn (edn/read-string (slurp tmp-file))]
+      (is (-> edn :aliases :lint :deps (get 'clj-kondo/clj-kondo))))))
+
 (deftest add-nrepl-test
   (let [{:keys [edn]} (neil "add nrepl")
         {:keys [main-opts extra-deps]} (-> edn :aliases :nrepl)]
