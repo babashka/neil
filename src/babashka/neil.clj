@@ -444,10 +444,17 @@ will return libraries with 'test framework' in their description.")))
   (assert (:dry-run opts) "for now, only dry-run is supported. Nice for dev :)")
   (let [current-deps (-> (edn-string opts)
                          edn/read-string
-                         :deps)]
+                         :deps)
+        latest-deps (->> (keys current-deps)
+                         (pmap (fn [lib]
+                                 [lib (or (latest-clojars-version lib)
+                                          (latest-mvn-version lib))]))
+                         (filter (fn [[_lib new-version]]
+                                   (some? new-version)))
+                         (into {}))
+        ]
     (doseq [[lib currentv] current-deps]
-      (let [latest (or (latest-clojars-version lib)
-                       (latest-mvn-version lib))]
+      (let [latest (get latest-deps lib)]
         (when (and latest
                    (not= currentv {:mvn/version latest}))
           (println :lib lib :version (:mvn/version currentv) :latest latest))))))
