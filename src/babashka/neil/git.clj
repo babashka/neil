@@ -43,7 +43,7 @@
 
 (defn status [git-opts]
   (let [cmd "git status --porcelain=v1"
-        {:keys [out err] :as x} (sh cmd git-opts)]
+        {:keys [out err]} (sh cmd git-opts)]
     (if-not (str/blank? err)
       {:err err}
       {:statuses (if (str/blank? out)
