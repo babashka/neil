@@ -127,6 +127,10 @@
   (sh "git add ." git-opts)
   (sh "git commit -m 'First commit'" git-opts))
 
+(defn list-tags [git-opts]
+  (let [{:keys [out]} (sh "git tag" git-opts)]
+    (str/split-lines (str/trim out))))
+
 (defn tag-contents [tag git-opts]
   (let [cmd ["git" "for-each-ref" (str "refs/tags/" tag)
              "--format" "%(contents)"]
