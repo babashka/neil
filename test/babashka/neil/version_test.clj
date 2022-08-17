@@ -84,11 +84,7 @@
   (reset-test-dir)
   (set-deps-edn! {:aliases {:neil {:project {:version "1.0.0-alpha2"}}}})
   (git/ensure-repo git-opts)
-  (testing "Assert strictly increasing SemVer versions"
-    (let [v "1.0.0"]
-      (is (thrown-with-msg? ExceptionInfo #"Versions in SemVer format must be strictly increasing"
-                            (neil ["version" "set" v] :out :string)))))
-  (testing "Update deps.edn file with strictly increasing SemVer version"
+  (testing "Update deps.edn file with SemVer version"
     (let [v "2022.8.1"
           {:keys [out]} (neil ["version" "set" v] :out :string)]
       (is (= v (read-version-string))

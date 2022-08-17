@@ -142,27 +142,6 @@
              (not (:force opts)))
     (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
 
-(def zero-version {:major 0 :minor 0 :patch 0})
-
-(defn strictly-increasing-semver-version? [prev-v next-v]
-  (let [prev-v' (or prev-v zero-version)]
-    (or (< (:major prev-v') (:major next-v))
-        (and (<= (:major prev-v') (:major next-v))
-             (< (:minor prev-v') (:minor next-v)))
-        (and (<= (:major prev-v') (:major next-v))
-             (<= (:minor prev-v') (:minor next-v))
-             (< (:patch prev-v') (:patch next-v))))))
-
-(defn assert-strictly-increasing-semver-version [prev-v next-v]
-  (when-not (strictly-increasing-semver-version? prev-v next-v)
-    (throw (ex-info "Versions in SemVer format must be strictly increasing"
-                    {:current-version (version-map->str prev-v :prefix true)
-                     :input-version (version-map->str next-v :prefix true)}))))
-
-(defn assert-valid-version-change [prev-v next-v]
-  (when (and (semver-version-map? prev-v) (semver-version-map? next-v))
-    (assert-strictly-increasing-semver-version prev-v next-v)))
-
 (defn run-set-command [{:keys [version dir deps-file] :as opts}]
   (let [deps-file' (proj/resolve-deps-file dir deps-file)
         opts' (assoc opts :deps-file deps-file')
@@ -170,13 +149,9 @@
     (when git-tag-version-enabled
       (assert-clean-working-directory opts'))
     (proj/ensure-neil-project opts')
-    (let [deps-edn (some-> deps-file' slurp edn/read-string)
-          prev-version-string (deps-edn->project-version-string deps-edn)
-          prev-version-map (str->version-map prev-version-string)
-          next-version-map (str->version-map version)
+    (let [next-version-map (str->version-map version)
           next-version-string (version-map->str next-version-map :prefix false)
           next-prefixed-version (version-map->str next-version-map :prefix true)]
-      (assert-valid-version-change prev-version-map next-version-map)
       (set-version! next-version-string opts')
       (when git-tag-version-enabled
         (git/add ["deps.edn"] (git-opts opts'))
