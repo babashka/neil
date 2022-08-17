@@ -16,6 +16,9 @@
     (-> fs/parent (fs/create-dirs))
     (fs/delete-on-exit)))
 
+(defn read-deps-edn []
+  (edn/read-string (slurp (test-file "deps.edn"))))
+
 (defn set-deps-edn! [x]
   (spit (test-file "deps.edn") (pr-str x)))
 
