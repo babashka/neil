@@ -82,21 +82,7 @@
 ;;
 ;; I think its because the position of :dry-run has implications on the option parses.
 ;;
-#_
-(deftest dep-upgrade-test
-  #_
-  (testing "When adding a fresh dependency, there are no available upgrades"
-    (let [tmp-file (test-file "deps.edn")
-          _ (neil "dep add :lib clj-kondo/clj-kondo" :deps-file tmp-file)
-          dep-upgrade-report (with-out-str (neil "dep upgrade" :deps-file tmp-file :dry-run))]
-      (is (str/blank? (str/trim dep-upgrade-report)))))
 
-  #_
-  (testing "There are available updates to old versions of babashka/fs"
-    (let [tmp-file (test-file "deps.edn")
-          _ (neil "add dep :lib babashka/fs :version 0.1.2" :deps-file tmp-file)
-          dep-upgrade-report (with-out-str (neil "dep upgrade --dry-run" :deps-file tmp-file))]
-      (is (not (str/blank? (str/trim dep-upgrade-report)))))))
 
 (defn run-license [filename subcommand & [args]]
   (let [args (or args "")]
