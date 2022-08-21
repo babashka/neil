@@ -419,31 +419,7 @@ will return libraries with 'test framework' in their description.")))
                  :version (:version search-result)
                  :description (pr-str (:description search-result)))))))
 
-(defn dep-upgrade [{:keys [opts]}]
-  ;; (prn opts)
-
-  ;; Outline / plan:
-  ;;
-  ;; 1. look for existing dependencies in deps.edn
-  ;; 2. pull the latest version for each dep
-  ;;    - ignore versions with non-numeric IDs by default, override with
-  ;;      --allow-on-numeric-versions
-  ;; 3. if --dry-run, print the updated deps, otherwise update the deps.edn file.
-  ;;
-  ;; Potential gotchas with existing supported options:
-  ;;
-  ;;   - :target can be deps.edn or bb.edn
-  ;;   - :alias can be something other than the toplevel
-  ;;   - :deps-file can be something weird
-  ;;
-  ;; There's plenty of example code in the other functions. This is also stuff
-  ;; we can fix incrementally later. Getting something working is probably the
-  ;; best first step.
-  ;;
-  ;; Current status:
-  ;;
-  ;; 1. We don't care about alpha versions and stuff like that, we just do what
-  ;;    `neil dep add` does.
+(defn dep-upgrade [{:keys [opts] :as all}]
   (if (:lib opts)
     ;; upgrade single dependency
     (let [lib (:lib opts)
