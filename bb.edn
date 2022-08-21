@@ -1,6 +1,7 @@
 {:paths ["src" "dev" "test"]
  :pods {org.babashka/fswatcher {:version "0.0.3"}}
  :deps {org.babashka/neil {:local/root "."}}
+ :bbin/bin {neil {:main-opts ["-f" "neil"]}}
  :tasks {:requires ([babashka.fs :as fs]
                     [clojure.string :as str]
                     [selmer.parser :as p]
