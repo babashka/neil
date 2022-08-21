@@ -1,7 +1,6 @@
 (ns babashka.neil.dep-upgrade-test
   (:require
    [babashka.neil.test-util :as test-util]
-   [clojure.string :as str]
    [clojure.test :as t :refer [deftest is testing]]
    [clojure.edn :as edn]))
 
