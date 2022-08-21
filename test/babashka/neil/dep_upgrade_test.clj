@@ -2,37 +2,26 @@
   (:require
    [babashka.neil.test-util :as test-util]
    [clojure.string :as str]
-   [babashka.process :refer [process check]]
-   [clojure.test :as t :refer [deftest is testing]]))
+   [clojure.test :as t :refer [deftest is testing]]
+   [clojure.edn :as edn]))
 
 (deftest dep-upgrade-test
-  (is (= 1 1))
+  (let [test-file-path (str (test-util/test-file "deps.edn"))
+        get-dep-version (fn [dep-name] (-> test-file-path slurp edn/read-string
+                                           :deps (get dep-name) :mvn/version))]
 
-  (testing "can run without feiling on a small deps.edn file"
-    (let [tmp-file (test-util/test-file "deps.edn")
-          _ (test-util/neil "dep add :lib clj-kondo/clj-kondo" :deps-file tmp-file)
-          dep-upgrade-report (with-out-str (test-util/neil "dep upgrade" :deps-file tmp-file :dry-run true))]
-      (is (str/blank? (str/trim dep-upgrade-report)))))
+    (testing "a fresh project is up-to-date"
+      (spit test-file-path "{}")
+      (test-util/neil "dep add :lib clj-kondo/clj-kondo" :deps-file test-file-path)
+      (let [clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo)
+            _ (test-util/neil "dep upgrade" :deps-file test-file-path :dry-run true)
+            clj-kondo-version-upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (= clj-kondo-version-original clj-kondo-version-upgraded))))
 
-  #_
-
-  (testing "When adding a fresh dependency, there are no available upgrades"
-    (let [tmp-file (test-util/test-file "deps.edn")
-          _ (prn tmp-file)
-          _ 1
-          _ (test-util/neil "dep add :lib clj-kondo/clj-kondo" :deps-file tmp-file)
-          _ (-> (process '[cat "/tmp/neil/deps.edn"] {:out :string}) check :out prn)
-          #_#_
-          dep-upgrade-report (with-out-str (test-util/neil "dep upgrade" :deps-file tmp-file :dry-run))
-          dep-upgrade-report (with-out-str (test-util/neil "dep upgrade"   ))
-          _ (prn dep-upgrade-report)
-          ]
-      #_
-      (is (str/blank? (str/trim dep-upgrade-report)))))
-
-  #_
-  (testing "There are available updates to old versions of babashka/fs"
-    (let [tmp-file (test-util/test-file "deps.edn")
-          _ (test-util/neil "add dep :lib babashka/fs :version 0.1.2" :deps-file tmp-file)
-          dep-upgrade-report (with-out-str (test-util/neil "dep upgrade --dry-run" :deps-file tmp-file))]
-      (is (not (str/blank? (str/trim dep-upgrade-report)))))))
+    (testing "an old dependency can be upgraded"
+      (spit test-file-path "{}")
+      (test-util/neil "dep add :lib clj-kondo/clj-kondo :version 2022.01.01" :deps-file test-file-path)
+      (let [clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo)
+            _ (test-util/neil "dep upgrade" :deps-file test-file-path :dry-run true)
+            clj-kondo-version-upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (= clj-kondo-version-original clj-kondo-version-upgraded))))))
