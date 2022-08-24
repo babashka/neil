@@ -78,12 +78,6 @@
   (is (thrown-with-msg? Exception #"Unable to find"
         (run-dep-subcommand "search" "%22searchTermThatIsn'tFound"))))
 
-;; There's something wrong with my tests.
-;;
-;; I think its because the position of :dry-run has implications on the option parses.
-;;
-
-
 (defn run-license [filename subcommand & [args]]
   (let [args (or args "")]
     (-> (process (concat ["./neil" "license" subcommand]
