@@ -421,7 +421,7 @@ will return libraries with 'test framework' in their description.")))
 
 (defn dep-upgrade [{:keys [opts] :as all}]
   (if (:lib opts)
-    ;; upgrade single dependency
+    ;; upgrade a single dependency
     (let [lib (:lib opts)
           lib (symbol lib)
           current (-> (edn-string opts)
