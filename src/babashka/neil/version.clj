@@ -122,6 +122,43 @@
     (prn {:neil meta/version
           :project (version-map->str project-version-map :prefix false)})))
 
+(defn git-tag-version-enabled? [opts]
+  (and (git/repo? (:deps-file opts))
+       (not (false? (:git-tag-version opts)))
+       (not (false? (:tag opts)))
+       (not (:no-git-tag-version opts))
+       (not (:no-tag opts))))
+
+(defn- set-version! [v {:keys [deps-file] :as _opts}]
+  (proj/assoc-project-meta! {:deps-file deps-file :k :version :v v}))
+
+(defn git-clean-working-directory? [git-status-result]
+  (some->> (:statuses git-status-result)
+           (remove #(re-seq #"^\?" (:status %)))
+           empty?))
+
+(defn assert-clean-working-directory [opts]
+  (when (and (not (git-clean-working-directory? (git/status (git-opts opts))))
+             (not (:force opts)))
+    (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
+
+(defn run-set-command [{:keys [version dir deps-file] :as opts}]
+  (let [deps-file' (proj/resolve-deps-file dir deps-file)
+        opts' (assoc opts :deps-file deps-file')
+        git-tag-version-enabled (git-tag-version-enabled? opts')]
+    (when git-tag-version-enabled
+      (assert-clean-working-directory opts'))
+    (proj/ensure-neil-project opts')
+    (let [next-version-map (str->version-map version)
+          next-version-string (version-map->str next-version-map :prefix false)
+          next-prefixed-version (version-map->str next-version-map :prefix true)]
+      (set-version! next-version-string opts')
+      (when git-tag-version-enabled
+        (git/add ["deps.edn"] (git-opts opts'))
+        (git/commit next-prefixed-version (git-opts opts'))
+        (git/tag next-prefixed-version (git-opts opts')))
+      (println next-prefixed-version))))
+
 (defn print-help []
   (println (str/trim "
 Usage: neil version [set|major|minor|patch] [version]
@@ -139,4 +176,5 @@ Bump the :version key in the project config.")))
      (print-help)
      (case command
        :root (run-root-command opts)
-       :tag (run-tag-command opts)))))
+       :tag (run-tag-command opts)
+       :set (run-set-command opts)))))

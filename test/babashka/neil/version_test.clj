@@ -1,11 +1,15 @@
 (ns babashka.neil.version-test
   (:require [babashka.neil.git :as git]
             [babashka.neil.meta :as meta]
-            [babashka.neil.test-util :refer [neil set-deps-edn! reset-test-dir
-                                             test-dir test-file]]
+            [babashka.neil.version :as version]
+            [babashka.neil.test-util :refer [neil read-deps-edn set-deps-edn!
+                                             reset-test-dir test-dir test-file]]
             [clojure.string :as str]
             [clojure.test :refer [deftest is testing]])
   (:import (clojure.lang ExceptionInfo)))
+
+(defn- read-version-string []
+  (version/deps-edn->project-version-string (read-deps-edn)))
 
 (deftest version-option-test
   (let [{:keys [out]} (neil "--version" :out :string)]
@@ -75,6 +79,60 @@
             "Latest commit message is same as version")
         (is (= (str "v" v) (git/tag-contents (str "v" v) git-opts))
             "Latest annotated tag message is same as version")))))
+
+(deftest set-test
+  (reset-test-dir)
+  (set-deps-edn! {:aliases {:neil {:project {:version "1.0.0-alpha2"}}}})
+  (git/ensure-repo git-opts)
+  (testing "Update deps.edn file with SemVer version"
+    (let [v "2022.8.1"
+          {:keys [out]} (neil ["version" "set" v] :out :string)]
+      (is (= v (read-version-string))
+          "Version is updated in deps.edn")
+      (is (= (str "v" v) out)
+          "Tag is printed as output")
+      (is (= 2 (git/commit-count git-opts))
+          "New commit created")
+      (is (= (str "v" v) (git/describe git-opts))
+          "Tag points to new commit")
+      (is (= (str "v" v) (git/show git-opts))
+          "Latest commit message is same as version")
+      (is (= (str "v" v) (git/tag-contents (str "v" v) git-opts))
+          "Latest annotated tag message is same as version")))
+  (testing "Update deps.edn file with raw string version"
+    (let [v "2021a3"
+          {:keys [out]} (neil ["version" "set" v] :out :string)]
+      (is (= v (read-version-string))
+          "Version is updated in deps.edn")
+      (is (= v out)
+          "Tag is printed as output")
+      (is (= 3 (git/commit-count git-opts))
+          "New commit created")
+      (is (= v (git/describe git-opts))
+          "Tag points to new commit")
+      (is (= v (git/show git-opts))
+          "Latest commit message is same as version")
+      (is (= v (git/tag-contents v git-opts))
+          "Latest annotated tag message is same as version")))
+  (testing "No commit or tag when --no-tag is set"
+    (let [prev-v (read-version-string)
+          prev-commit-count (git/commit-count git-opts)
+          prev-tag-count (count (git/list-tags git-opts))]
+      (doseq [args [["--no-tag"]
+                    ["--no-git-tag-version"]
+                    ["--tag" "false"]
+                    ["--git-tag-version" "false"]]]
+        (set-deps-edn! {:aliases {:neil {:project {:version prev-v}}}})
+        (let [next-v "2021a4"
+              {:keys [out]} (neil (concat ["version" "set" next-v] args) :out :string)]
+          (is (= next-v (read-version-string))
+              "Version is updated in deps.edn")
+          (is (= next-v out)
+              "Version is printed as output")
+          (is (= prev-commit-count (git/commit-count git-opts))
+              "No commit created")
+          (is (= prev-tag-count (count (git/list-tags git-opts)))
+              "No tag created"))))))
 
 (comment
   (clojure.test/run-tests))

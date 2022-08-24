@@ -573,6 +573,10 @@ license
     {:cmds ["version" "tag"]
      :fn (partial neil-version/neil-version :tag)
      :aliases {:h :help}}
+    {:cmds ["version" "set"]
+     :fn (partial neil-version/neil-version :set)
+     :args->opts [:version]
+     :aliases {:h :help}}
     {:cmds ["version"]
      :fn neil-version/neil-version
      :aliases {:h :help}}
