@@ -179,9 +179,9 @@
             edn-nodes (r/parse-string deps-edn)
             edn-nodes (cond-> edn-nodes
                         (not (:aliases edn))
-                        (r/assoc :aliases (r/parse-string "\n  {}"))
+                        (r/assoc :aliases (r/parse-string "\n {}"))
                         (contains? existing-aliases :neil)
-                        (r/assoc-in [:aliases :neil] (r/parse-string "\n  {}"))
+                        (r/assoc-in [:aliases :neil] (r/parse-string "\n {}"))
                         (not (some-> edn :aliases :neil :project))
                         (r/assoc-in [:aliases :neil :project]
                                     {}))]
