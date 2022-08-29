@@ -22,6 +22,14 @@
          gen-script {:doc "Build the neil script"
                      :requires ([babashka.neil.gen-script :as gen-script])
                      :task (gen-script/gen-script)}
+         bump-version {:requires ([babashka.neil :as neil]
+                                  [clojure.edn :as edn])
+                       :task (let [version (-> (slurp "deps.edn") edn/read-string
+                                               :aliases :neil :project :version)
+                                   [major minor patch] (str/split version (re-pattern "\\."))
+                                   version (str/join "." [major minor (inc (Integer/parseInt patch))])]
+                               (binding [*command-line-args* ["version" "set" version "--no-tag"]]
+                                 (neil/-main)))}
          update-readme {:depends [gen-script]
                         :task (let [help (:out (shell {:out :string} "./neil"))]
                                (without-escaping
@@ -34,15 +42,16 @@
          tests-emacs {:extra-paths ["."]
                       :requires ([tests-emacs :as te])
                       :task (te/run-tests)}
-         publish {:doc "Bumps version, pushes tag"
+         publish {:requires ([clojure.edn :as edn])
+                  :doc "Bumps version, pushes tag"
                   :task
                   (do
                     (run 'tests)
                     (run 'bump-version)
-                    (run 'sync-version)
                     (run 'update-readme)
                     (shell "git add .")
-                    (let [version (slurp "version.txt")]
+                    (let [version (-> (slurp "deps.edn") edn/read-string
+                                      :aliases :neil :project :version)]
                       (shell (format "git commit -m 'Bump version %s'" version))
                       (shell (str "git tag v" version))
                       (shell "git push --atomic origin main"
