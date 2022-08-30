@@ -46,8 +46,8 @@
                   :doc "Bumps version, pushes tag"
                   :task
                   (do
-                    (run 'tests)
                     (run 'bump-version)
+                    (run 'tests)
                     (run 'update-readme)
                     (shell "git add .")
                     (let [version (-> (slurp "deps.edn") edn/read-string
