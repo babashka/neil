@@ -21,7 +21,11 @@
 (deftest help-test
   (set-deps-edn! {})
   (doseq [cmd ["version --help"
-               "version -h"]]
+               "version -h"
+               "version set -h"
+               "version major -h"
+               "version minor -h"
+               "version patch -h"]]
     (let [{:keys [out]} (neil cmd :out :string)]
       (is (str/starts-with? out "Usage: neil version [set|major|minor|patch] ")))))
 
@@ -133,6 +137,38 @@
               "No commit created")
           (is (= prev-tag-count (count (git/list-tags git-opts)))
               "No tag created"))))))
+
+(deftest bump-test
+  (reset-test-dir)
+  (set-deps-edn! {})
+  (git/ensure-repo git-opts)
+  (testing "Set initial version when no version in deps.edn"
+    (let [{:keys [out]} (neil "version minor 4 --no-tag" :out :string)
+          v "0.4.0"]
+      (is (= (str "v" v) out))
+      (is (= v (read-version-string))))
+    (set-deps-edn! {})
+    (let [{:keys [out]} (neil "version minor" :out :string)
+          v "0.1.0"]
+      (is (= (str "v" v) out))
+      (is (= v (read-version-string)))))
+  (testing "Bump patch version"
+    (let [{:keys [out]} (neil "version patch" :out :string)
+          v "0.1.1"]
+      (is (= (str "v" v) out))
+      (is (= v (read-version-string)))))
+  (testing "Set minor version"
+    (let [{:keys [out]} (neil "version minor 3" :out :string)
+          v "0.3.0"]
+      (is (= (str "v" v) out))
+      (is (= v (read-version-string)))))
+  (testing "Bump major version"
+    (let [{:keys [out]} (neil "version major" :out :string)
+          v "1.0.0"]
+      (is (= (str "v" v) out))
+      (is (= v (read-version-string)))))
+  (let [{:keys [out]} (neil "version" :out :edn)]
+    (is (= "1.0.0" (:project out)))))
 
 (comment
   (clojure.test/run-tests))

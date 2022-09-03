@@ -159,6 +159,39 @@
         (git/tag next-prefixed-version (git-opts opts')))
       (println next-prefixed-version))))
 
+(defn- assert-semver-version [version-map]
+  (when-not (semver-version-map? version-map)
+    (let [provided-version (version-map->str version-map :prefix false)]
+      (throw (ex-info "Only SemVer-style version strings can be bumped"
+                      {:provided-version provided-version})))))
+
+(defn- initial-version-map [semver-key override]
+  (assoc {:major 0 :minor 0 :patch 0} semver-key (or override 1)))
+
+(defn- bump-version [version-map semver-key override]
+  (if (not-set-version-map? version-map)
+    (initial-version-map semver-key override)
+    (do
+      (assert-semver-version version-map)
+      (let [next-version (or override (inc (get version-map semver-key)))
+            version-map' (assoc version-map semver-key next-version)
+            {:keys [major minor patch]} version-map']
+        (case semver-key
+          :major {:major major :minor 0 :patch 0}
+          :minor {:major major :minor minor :patch 0}
+          :patch {:major major :minor minor :patch patch})))))
+
+(defn run-bump-command [command {:keys [dir deps-file] :as opts}]
+  (let [deps-file (proj/resolve-deps-file dir deps-file)
+        deps-edn (some-> deps-file slurp edn/read-string)
+        project-version-string (deps-edn->project-version-string deps-edn)
+        _ (assert-valid-project-version-string project-version-string deps-file)
+        project-version-map (str->version-map project-version-string)
+        override (:version opts)
+        bumped-version-map (bump-version project-version-map command override)
+        bumped-version-str (version-map->str bumped-version-map :prefix false)]
+    (run-set-command (assoc opts :version bumped-version-str))))
+
 (defn print-help []
   (println (str/trim "
 Usage: neil version [set|major|minor|patch] [version]
@@ -177,4 +210,5 @@ Bump the :version key in the project config.")))
      (case command
        :root (run-root-command opts)
        :tag (run-tag-command opts)
-       :set (run-set-command opts)))))
+       :set (run-set-command opts)
+       (:major :minor :patch) (run-bump-command command opts)))))
