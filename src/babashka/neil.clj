@@ -528,6 +528,18 @@ license
      :fn (partial neil-version/neil-version :set)
      :args->opts [:version]
      :aliases {:h :help}}
+    {:cmds ["version" "major"]
+     :fn (partial neil-version/neil-version :major)
+     :args->opts [:version]
+     :aliases {:h :help}}
+    {:cmds ["version" "minor"]
+     :fn (partial neil-version/neil-version :minor)
+     :args->opts [:version]
+     :aliases {:h :help}}
+    {:cmds ["version" "patch"]
+     :fn (partial neil-version/neil-version :patch)
+     :args->opts [:version]
+     :aliases {:h :help}}
     {:cmds ["version"]
      :fn neil-version/neil-version
      :aliases {:h :help}}
