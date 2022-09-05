@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.46
+
+- Add `neil version` subcommands
+  - `neil version` (updated, now includes project version)
+  - `neil version set [version]`
+  - `neil version [major|minor|patch] [version]`
+  - `neil version tag`
+
 ## 0.1.43
 
 - Save project name in `:aliases {:neil {:project {:name ...}}}`
