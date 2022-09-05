@@ -686,10 +686,65 @@ Examples:
 
 (defn print-help []
   (println (str/trim "
-Usage: neil version [set|major|minor|patch] [version]
+Usage: neil version
+       neil version set [version]
+       neil version [major|minor|patch] [version]
        neil version tag
 
-Bump the :version key in the project config.")))
+Commands for managing the :version key in the deps.edn project config.
+
+By default, these commands also create Git commits and tags in the current Git
+repo to help with publishing new versions.
+
+The project version is located in the deps.edn file at the current directory at
+the path [:aliases :neil :project :version].
+
+Any string is a valid version, but only SemVer-style versions can be bumped
+using the [major|minor|patch] subcommands.
+
+## neil version
+
+  Print the current neil and project versions.
+
+  Examples:
+    neil version
+
+## neil version set [version]
+
+  Set the :version key in the project config to the provided version.
+
+  - Creates a Git commit and tag (this can be bypassed with --no-tag)
+  - Requires the working directory to be clean (this can be bypassed with --force)
+
+  Examples:
+    neil version set 0.1.0
+    neil version set 9.4.146.24-node.21 --force
+    neil version set 1.1.1q+quic --no-tag
+
+## neil version [major|minor|patch] [version]
+
+  Bump the :version key in the project config. If no specific version is provided,
+  the selected version will be incremented by one.
+
+  - Creates a Git commit and tag (this can be bypassed with --no-tag)
+  - Requires the Git working directory to be clean (this can be bypassed with --force)
+
+  Examples:
+    neil version patch
+    neil version major 3 --force
+    neil version minor --no-tag
+
+## neil version tag
+
+  Create a Git commit and tag for the current version.
+
+  - Requires that the current directory is a Git repo
+  - Requires that there are no unstaged files (this can be bypassed with --force)
+  - Requires that at least one file is staged (this can be bypassed with --force)
+
+  Examples:
+    neil version tag
+    neil version tag --force")))
 
 (defn print-version []
   (println "neil" meta/version))
