@@ -27,7 +27,7 @@
                "version minor -h"
                "version patch -h"]]
     (let [{:keys [out]} (neil cmd :out :string)]
-      (is (str/starts-with? out "Usage: neil version [set|major|minor|patch] ")))))
+      (is (str/starts-with? out "Usage: neil version")))))
 
 (deftest root-test
   (with-redefs [meta/version "1.0.0"]
