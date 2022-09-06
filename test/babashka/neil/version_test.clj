@@ -170,5 +170,10 @@
   (let [{:keys [out]} (neil "version" :out :edn)]
     (is (= "1.0.0" (:project out)))))
 
+(deftest version-map->str-test
+  (doseq [v ["0.0.10-dev" "0.0.10+build" "0.0.10-dev+build"]]
+    (let [version-map (version/str->version-map v)]
+      (is (= v (version/version-map->str version-map))))))
+
 (comment
   (clojure.test/run-tests))

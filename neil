@@ -530,17 +530,18 @@ Examples:
                (when pre-release {:pre-release pre-release})
                (when build {:build build}))))))
 
-(defn- str->version-map [s]
+(defn str->version-map [s]
   (cond
     (#{:version-not-set} s) {:version-not-set true}
     (string? s) (or (parse-semver-string s) {:raw-string s})
     :else (throw (ex-info "Invalid version string" {:version-string s}))))
 
-(defn- semver-version-map->str [version-map str-opts]
-  (let [{:keys [minor major patch qualifier]} version-map]
+(defn semver-version-map->str [version-map str-opts]
+  (let [{:keys [minor major patch pre-release build]} version-map]
     (str (when (:prefix str-opts) "v")
          (str/join "." [major minor patch])
-         (when qualifier (str "-" qualifier)))))
+         (when pre-release (str "-" pre-release))
+         (when build (str "+" build)))))
 
 (defn version-map->str [version-map & {:as str-opts}]
   (cond
