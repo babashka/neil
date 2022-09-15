@@ -21,10 +21,11 @@ For detailed information about scoop installer check [scoop-clojure](https://git
 ### Nix
 
 ```bash
-$ nix-shell -p neil
+# With nix flakes (recommended)
+$ nix run github:NixOS/nixpkgs/nixpkgs-unstable#neil -- --version
 
-# Alternatively, if your nix channel doesn't have neil yet:
-$ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
+# Legacy nix
+$ nix-shell -p neil
 ```
 
 ### Clojure
