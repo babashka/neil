@@ -28,6 +28,16 @@ $ nix run github:NixOS/nixpkgs/nixpkgs-unstable#neil -- --version
 $ nix-shell -p neil
 ```
 
+The repository provides a flake, you can run the latest neil from the main
+branch with:
+
+```bash
+$ nix run github:babashka/neil -- --help
+```
+
+There is a `default.nix` file for older nix versions. If you use flakes, you
+can ignore that file.
+
 ### Clojure
 
 Add the following alias to your global or project-local `deps.edn`:
