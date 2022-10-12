@@ -22,12 +22,13 @@
 (defn set-deps-edn! [x]
   (spit (test-file "deps.edn") (pr-str x)))
 
-(defn neil [cli-args & {:keys [out] :or {out :string}}]
-  (let [deps-file (str (test-file "deps.edn"))
-        cli-args' (concat (if (string? cli-args)
-                            (process/tokenize cli-args)
-                            cli-args)
-                          [:deps-file deps-file])]
+(defn neil [cli-args & {:keys [deps-file dry-run out] :or {out :string}}]
+  (let [backup-deps-file (str (test-file "deps.edn"))
+        cli-args'        (concat (if (string? cli-args)
+                                   (process/tokenize cli-args)
+                                   cli-args)
+                                 [:deps-file (or deps-file backup-deps-file)]
+                                 (when dry-run [:dry-run "true"]))]
     (binding [*command-line-args* cli-args']
       (let [s (with-out-str (tasks/exec `neil-main/-main))]
         {:out (if (#{:edn} out) (edn/read-string s) (str/trim s))}))))
