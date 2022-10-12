@@ -1213,12 +1213,16 @@ will return libraries with 'test framework' in their description.")))
             (and version (not= (:mvn/version current) version)))
     (if (:dry-run opts)
       (if sha
-        (println :lib lib :version (:git/sha current) :latest-sha sha)
-        (println :lib lib :version (:mvn/version current) :latest-version version))
-      (dep-add {:opts (cond-> opts
-                        lib     (assoc :lib lib)
-                        version (assoc :version version)
-                        sha     (assoc :sha sha))}))))
+        (println "Would upgrade" :lib lib :version (:git/sha current) :latest-sha sha)
+        (println "Would upgrade" :lib lib :version (:mvn/version current) :latest-version version))
+      (do
+        (if sha
+          (println "Upgrading" :lib lib :version (:git/sha current) :latest-sha sha)
+          (println "Upgrading" :lib lib :version (:mvn/version current) :latest-version version))
+        (dep-add {:opts (cond-> opts
+                          lib     (assoc :lib lib)
+                          version (assoc :version version)
+                          sha     (assoc :sha sha))})))))
 
 (defn dep-upgrade [{:keys [opts] :as _all}]
   (if (:lib opts)
