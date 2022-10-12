@@ -532,12 +532,17 @@ dep
   search: Search Clojars for a string in any attribute of an artifact
     Run `neil dep search --help` to see all options.
 
-  upgrade: Upgrade all libs in the deps.edn file.
+  upgrade: Upgrade libs in the deps.edn file.
     Supports --lib <libname> or :lib <libname> for upgrading a single, specified lib.
     Supports --dry-run for printing updates without updating the deps.edn file.
+    Supports --alias <some-alias> for limiting upgrades to an alias.
+      Note that all deps (including alias deps) are upgraded by default.
+
     Ex: `neil dep upgrade` - upgrade all deps.
     Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
+    Ex: `neil dep upgrade --alias lint` - update only deps for the `lint` alias.
     Ex: `neil dep upgrade :lib clj-kondo/clj-kondo` - update a single dep.
+
   update: Alias for `upgrade`.
 
 license
