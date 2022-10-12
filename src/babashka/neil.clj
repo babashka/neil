@@ -490,13 +490,6 @@ dep
   search: Search Clojars for a string in any attribute of an artifact
     Run `neil dep search --help` to see all options.
 
-new:
-  Create a project using deps-new
-    Run neil new --help to see all options.
-
-test:
-  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
-
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
@@ -504,6 +497,17 @@ license
     Options:
     --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
     --file    The file to write. Defaults to 'LICENSE'.
+
+new
+  Create a project using deps-new
+    Run `neil new --help` to see all options.
+
+version
+  Commands for managing the :version key in the deps.edn project config.
+    Run `neil version --help` to see all options.
+
+test
+  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
 ")))
 
 ;; licenses
@@ -575,6 +579,18 @@ license
      :aliases {:h :help}}
     {:cmds ["version" "set"]
      :fn (partial neil-version/neil-version :set)
+     :args->opts [:version]
+     :aliases {:h :help}}
+    {:cmds ["version" "major"]
+     :fn (partial neil-version/neil-version :major)
+     :args->opts [:version]
+     :aliases {:h :help}}
+    {:cmds ["version" "minor"]
+     :fn (partial neil-version/neil-version :minor)
+     :args->opts [:version]
+     :aliases {:h :help}}
+    {:cmds ["version" "patch"]
+     :fn (partial neil-version/neil-version :patch)
      :args->opts [:version]
      :aliases {:h :help}}
     {:cmds ["version"]

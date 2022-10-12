@@ -21,11 +21,22 @@ For detailed information about scoop installer check [scoop-clojure](https://git
 ### Nix
 
 ```bash
-$ nix-shell -p neil
+# With nix flakes (recommended)
+$ nix run github:NixOS/nixpkgs/nixpkgs-unstable#neil -- --version
 
-# Alternatively, if your nix channel doesn't have neil yet:
-$ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
+# Legacy nix
+$ nix-shell -p neil
 ```
+
+The repository provides a flake, you can run the latest neil from the main
+branch with:
+
+```bash
+$ nix run github:babashka/neil -- --help
+```
+
+There is a `default.nix` file for older nix versions. If you use flakes, you
+can ignore that file.
 
 ### Clojure
 
@@ -77,13 +88,6 @@ dep
   search: Search Clojars for a string in any attribute of an artifact
     Run `neil dep search --help` to see all options.
 
-new:
-  Create a project using deps-new
-    Run neil new --help to see all options.
-
-test:
-  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
-
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
@@ -91,6 +95,17 @@ license
     Options:
     --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
     --file    The file to write. Defaults to 'LICENSE'.
+
+new
+  Create a project using deps-new
+    Run `neil new --help` to see all options.
+
+version
+  Commands for managing the :version key in the deps.edn project config.
+    Run `neil version --help` to see all options.
+
+test
+  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
 ```
 
 ### add dep

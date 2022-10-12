@@ -38,17 +38,18 @@
                (when pre-release {:pre-release pre-release})
                (when build {:build build}))))))
 
-(defn- str->version-map [s]
+(defn str->version-map [s]
   (cond
     (#{:version-not-set} s) {:version-not-set true}
     (string? s) (or (parse-semver-string s) {:raw-string s})
     :else (throw (ex-info "Invalid version string" {:version-string s}))))
 
-(defn- semver-version-map->str [version-map str-opts]
-  (let [{:keys [minor major patch qualifier]} version-map]
+(defn semver-version-map->str [version-map str-opts]
+  (let [{:keys [minor major patch pre-release build]} version-map]
     (str (when (:prefix str-opts) "v")
          (str/join "." [major minor patch])
-         (when qualifier (str "-" qualifier)))))
+         (when pre-release (str "-" pre-release))
+         (when build (str "+" build)))))
 
 (defn version-map->str [version-map & {:as str-opts}]
   (cond
@@ -159,12 +160,100 @@
         (git/tag next-prefixed-version (git-opts opts')))
       (println next-prefixed-version))))
 
+(defn- assert-semver-version [version-map]
+  (when-not (semver-version-map? version-map)
+    (let [provided-version (version-map->str version-map :prefix false)]
+      (throw (ex-info "Only SemVer-style version strings can be bumped"
+                      {:provided-version provided-version})))))
+
+(defn- initial-version-map [semver-key override]
+  (assoc {:major 0 :minor 0 :patch 0} semver-key (or override 1)))
+
+(defn- bump-version [version-map semver-key override]
+  (if (not-set-version-map? version-map)
+    (initial-version-map semver-key override)
+    (do
+      (assert-semver-version version-map)
+      (let [next-version (or override (inc (get version-map semver-key)))
+            version-map' (assoc version-map semver-key next-version)
+            {:keys [major minor patch]} version-map']
+        (case semver-key
+          :major {:major major :minor 0 :patch 0}
+          :minor {:major major :minor minor :patch 0}
+          :patch {:major major :minor minor :patch patch})))))
+
+(defn run-bump-command [command {:keys [dir deps-file] :as opts}]
+  (let [deps-file (proj/resolve-deps-file dir deps-file)
+        deps-edn (some-> deps-file slurp edn/read-string)
+        project-version-string (deps-edn->project-version-string deps-edn)
+        _ (assert-valid-project-version-string project-version-string deps-file)
+        project-version-map (str->version-map project-version-string)
+        override (:version opts)
+        bumped-version-map (bump-version project-version-map command override)
+        bumped-version-str (version-map->str bumped-version-map :prefix false)]
+    (run-set-command (assoc opts :version bumped-version-str))))
+
 (defn print-help []
   (println (str/trim "
-Usage: neil version [set|major|minor|patch] [version]
+Usage: neil version
+       neil version set [version]
+       neil version [major|minor|patch] [version]
        neil version tag
 
-Bump the :version key in the project config.")))
+Commands for managing the :version key in the deps.edn project config.
+
+By default, these commands also create Git commits and tags in the current Git
+repo to help with publishing new versions.
+
+The project version is located in the deps.edn file at the current directory at
+the path [:aliases :neil :project :version].
+
+Any string is a valid version, but only SemVer-style versions can be bumped
+using the [major|minor|patch] subcommands.
+
+## neil version
+
+  Print the current neil and project versions.
+
+  Examples:
+    neil version
+
+## neil version set [version]
+
+  Set the :version key in the project config to the provided version.
+
+  - Creates a Git commit and tag (this can be bypassed with --no-tag)
+  - Requires the working directory to be clean (this can be bypassed with --force)
+
+  Examples:
+    neil version set 0.1.0
+    neil version set 9.4.146.24-node.21 --force
+    neil version set 1.1.1q+quic --no-tag
+
+## neil version [major|minor|patch] [version]
+
+  Bump the :version key in the project config. If no specific version is provided,
+  the selected version will be incremented by one.
+
+  - Creates a Git commit and tag (this can be bypassed with --no-tag)
+  - Requires the Git working directory to be clean (this can be bypassed with --force)
+
+  Examples:
+    neil version patch
+    neil version major 3 --force
+    neil version minor --no-tag
+
+## neil version tag
+
+  Create a Git commit and tag for the current version.
+
+  - Requires that the current directory is a Git repo
+  - Requires that there are no unstaged files (this can be bypassed with --force)
+  - Requires that at least one file is staged (this can be bypassed with --force)
+
+  Examples:
+    neil version tag
+    neil version tag --force")))
 
 (defn print-version []
   (println "neil" meta/version))
@@ -177,4 +266,5 @@ Bump the :version key in the project config.")))
      (case command
        :root (run-root-command opts)
        :tag (run-tag-command opts)
-       :set (run-set-command opts)))))
+       :set (run-set-command opts)
+       (:major :minor :patch) (run-bump-command command opts)))))
