@@ -3,7 +3,7 @@
 ## 0.1.46 (2022-10-12)
 
 - Introduce `neil dep upgrade` API for upgrading existing dependencies. By [@teodorlu](https://github.com/teodorlu) and [@russmatney](https://github.com/russmatney).
-- Add nix flake. By [@jlesquembre](https://github.com/teodorlu).
+- Add nix flake. By [@jlesquembre](https://github.com/jlesquembre).
 - `neil version` improvements. By [@rads](https://github.com/rads).
 
 ## 0.1.45 (2022-08-30)
