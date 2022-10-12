@@ -490,6 +490,11 @@ dep
   search: Search Clojars for a string in any attribute of an artifact
     Run `neil dep search --help` to see all options.
 
+upgrade
+  Upgrade all libs in the deps.edn file.
+    Supports --lib <libname> for upgrading a single, specified lib.
+    Supports --dry-run for printing updates without updating the deps.edn file.
+
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
   search Alias for `list`
