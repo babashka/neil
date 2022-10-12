@@ -42,7 +42,7 @@
         (is (not (= clj-kondo-original clj-kondo-upgraded)))
         (is (= fs-original fs-upgraded))))))
 
-(deftest dep-upgrade-test-maintain-vcs
+(deftest dep-upgrade-test-maintain-dep-source
   (testing "upgrading a :git/sha dep should maintain :git/sha"
     (spit test-file-path "{}")
     (test-util/neil "dep add :lib clj-kondo/clj-kondo :latest-sha true" :deps-file test-file-path)
@@ -66,4 +66,24 @@
         (is sha)
         ;; should be a different sha
         (is (not (= sha (:git/sha clj-kondo-original)))))))
-  )
+
+  (testing "upgrading a single lib should also maintain :git/url and sha"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078"
+                    :deps-file test-file-path)
+    (test-util/neil "dep add :lib babashka/fs :sha 791009052fe8916b4e10e55732622a69250c7598"
+                    :deps-file test-file-path)
+
+    (let [clj-kondo-original (get-dep-version 'clj-kondo/clj-kondo)
+          fs-original        (get-dep-version 'babashka/fs)]
+      (test-util/neil "dep upgrade :lib babashka/fs" :deps-file test-file-path)
+      (let [clj-kondo-upgraded (get-dep-version 'clj-kondo/clj-kondo)
+            fs-upgraded        (get-dep-version 'babashka/fs)]
+        (is (:git/sha clj-kondo-upgraded))
+        (is (:git/url clj-kondo-upgraded))
+        (is (:git/sha fs-upgraded))
+        (is (:git/url fs-upgraded))
+        ;; should be unchanged
+        (is (= clj-kondo-original clj-kondo-upgraded))
+        ;; should be a different sha
+        (is (not (= fs-original fs-upgraded)))))))
