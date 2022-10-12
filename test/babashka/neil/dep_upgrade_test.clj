@@ -2,11 +2,23 @@
   (:require
    [babashka.neil.test-util :as test-util]
    [clojure.test :as t :refer [deftest is testing]]
-   [clojure.edn :as edn]))
+   [clojure.edn :as edn]
+   [clojure.set :as set]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
+
+(defn ->edn []
+  (-> test-file-path slurp edn/read-string))
+
 (defn get-dep-version [dep-name]
-  (-> test-file-path slurp edn/read-string :deps (get dep-name)))
+  (-> (->edn) :deps (get dep-name)))
+
+(defn get-alias-versions
+  "Returns a set of the dep versions for aliases matching the passed `dep-name`."
+  [dep-name]
+  (-> (->edn) :aliases
+      (->> (map (comp #(get % dep-name) :extra-deps second))
+           (into #{}))))
 
 (deftest dep-upgrade-test
   (testing "a fresh project is up-to-date"
@@ -87,3 +99,21 @@
         (is (= clj-kondo-original clj-kondo-upgraded))
         ;; should be a different sha
         (is (not (= fs-original fs-upgraded)))))))
+
+(deftest dep-upgrade-test-updates-aliases-independently
+  (testing "upgrading an alias's :extra-deps works as expected"
+    (spit test-file-path "{}")
+    ;; here we add the same dep to two aliases
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078 --alias lint" :deps-file test-file-path)
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo --version 2020.01.01 --alias other-lint" :deps-file test-file-path)
+    (let [initial-versions (get-alias-versions 'clj-kondo/clj-kondo)]
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded-versions (get-alias-versions 'clj-kondo/clj-kondo)
+            lint-clj-v        (-> (->edn) :aliases :lint :extra-deps (get 'clj-kondo/clj-kondo))
+            other-lint-clj-v  (-> (->edn) :aliases :other-lint :extra-deps (get 'clj-kondo/clj-kondo))]
+        ;; both should be upgraded - there should be no overlap in these sets
+        (is (nil? (set/intersection initial-versions upgraded-versions)))
+        ;; lint alias still has :git/sha key
+        (is (:git/sha lint-clj-v))
+        ;; other-lint alias still has :mvn/version key
+        (is (:mvn/version other-lint-clj-v))))))

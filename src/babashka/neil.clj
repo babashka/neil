@@ -440,58 +440,62 @@ will return libraries with 'test framework' in their description.")))
   "Updates the deps version in deps.edn for a single lib with the version passed in `latest`.
   First compares `current` and `latest`.
   Supports `:dry-run` in the passed `opts`."
-  [opts lib current {:keys [git/sha mvn/version] :as _latest}]
-  (when (or (and sha (not= (:git/sha current) sha))
-            (and version (not= (:mvn/version current) version)))
-    (if (:dry-run opts)
-      (if sha
-        (println "Would upgrade" :lib lib :version (:git/sha current) :latest-sha sha)
-        (println "Would upgrade" :lib lib :version (:mvn/version current) :latest-version version))
-      (do
-        (if sha
-          (println "Upgrading" :lib lib :version (:git/sha current) :latest-sha sha)
-          (println "Upgrading" :lib lib :version (:mvn/version current) :latest-version version))
-        (dep-add {:opts (cond-> opts
-                          lib     (assoc :lib lib)
-                          version (assoc :version version)
-                          sha     (assoc :sha sha))})))))
+  [opts {:keys [lib current latest alias]}]
+  (let [{:keys [git/sha mvn/version]} latest
+        log-args
+        (concat (when alias [:alias alias])
+                [:lib lib]
+                [:version current] ;; prints whole dep coords
+                (when sha [:latest-sha sha])
+                (when version [:latest-version version]))
+        log-msg                       (fn [msg] (apply println msg log-args))]
+    (when (or (and sha (not= (:git/sha current) sha))
+              (and version (not= (:mvn/version current) version)))
+      (if (:dry-run opts)
+        (log-msg "Would upgrade")
+        (do
+          (log-msg "Upgrading")
+          (dep-add {:opts (cond-> opts
+                            lib     (assoc :lib lib)
+                            alias   (assoc :alias alias)
+                            version (assoc :version version)
+                            sha     (assoc :sha sha))}))))))
 
 (defn dep-upgrade [{:keys [opts] :as _all}]
-  (if (:lib opts)
-    ;; upgrade a single dependency
-    (let [lib     (:lib opts)
-          lib     (symbol lib)
-          current (-> (edn-string opts)
-                      edn/read-string
-                      :deps
-                      (get lib))
-          latest  (when current (lib+current->latest lib current))]
-      (cond (not current)
+  (let [lib          (some-> opts :lib symbol)
+        deps-edn     (-> (edn-string opts) edn/read-string)
+        current-deps (-> deps-edn :deps (->> (map (fn [[lib current]]
+                                                    {:lib lib :current current}))))
+        alias-deps   (-> deps-edn :aliases (->> (mapcat (fn [[alias def]]
+                                                          (->> (:extra-deps def)
+                                                               (map (fn [[lib current]]
+                                                                      {:alias   alias
+                                                                       :lib     lib
+                                                                       :current current})))))))
+        all-deps     (->> (concat current-deps alias-deps)
+                          ;; if lib was passed, only keep matches
+                          (filter (fn [dep] (if lib (= lib (:lib dep)) true))))
+        updates      (->> all-deps
+                          (pmap (fn [{:keys [lib current] :as dep}]
+                                  (merge dep {:latest (lib+current->latest lib current)})))
+                          ;; keep if :latest version was found
+                          (filter (fn [dep] (some? (:latest dep)))))]
+    ;; TODO we may care to warn/log when no latest is found for any dep
+    (when lib
+      ;; special logging, early-exit when :lib is specified
+      (cond (not (seq all-deps))
             (binding [*out* *err*]
               (println "Local dependency not found:" lib)
               (println "Use `neil dep add` to add dependencies.")
               (System/exit 1))
 
-            (and (not (:git/sha latest)) (not (:mvn/version latest)))
+            (not (seq updates))
             (binding [*out* *err*]
               (println "No remote version found for" lib)
-              (System/exit 1))
+              (System/exit 1))))
 
-            :else (do-dep-upgrade opts lib current latest)))
-
-    ;; upgrade multiple dependencies
-    (let [current-deps (-> (edn-string opts)
-                           edn/read-string
-                           :deps)
-          latest-deps  (->> current-deps
-                            (pmap (fn [[lib current]]
-                                    [lib (lib+current->latest lib current)]))
-                            (filter (fn [[_lib new-version]]
-                                      (some? new-version)))
-                            (into {}))]
-      (doseq [[lib current] current-deps]
-        (let [latest (get latest-deps lib)]
-          (do-dep-upgrade opts lib current latest))))))
+    (doseq [dep-update updates]
+      (do-dep-upgrade opts dep-update))))
 
 
 (defn print-help [_]
