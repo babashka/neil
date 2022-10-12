@@ -9,9 +9,14 @@
 
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
+(def dev-github-user (System/getenv "BABASHKA_NEIL_DEV_GITHUB_USER"))
+(def dev-github-token (System/getenv "BABASHKA_NEIL_DEV_GITHUB_TOKEN"))
+
 (def curl-opts
-  {:throw false
-   :compressed (not (fs/windows?))})
+  (merge {:throw false
+          :compressed (not (fs/windows?))}
+         (when (and dev-github-user dev-github-token)
+           {:basic-auth [dev-github-user dev-github-token]})))
 
 (defn curl-get-json [url]
   (-> (curl/get url curl-opts)

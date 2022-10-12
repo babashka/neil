@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Introduce `neil dep upgrade` API for upgrading existing dependencies
+
 ## 0.1.46
 
 - Add `neil version` subcommands

@@ -27,7 +27,8 @@
            :deps-file {:ref "<file>"
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
-           :limit {:coerce :long}})
+           :limit {:coerce :long}
+           :dry-run {:coerce :boolean}})
 
 (def windows? (fs/windows?))
 
@@ -418,6 +419,81 @@ will return libraries with 'test framework' in their description.")))
                  :version (:version search-result)
                  :description (pr-str (:description search-result)))))))
 
+
+(defn lib+current->latest
+  "Expects a lib symbol like `'babashka/fs` and a dep description
+  like `{:mvn/version \"some-version\"}` or `{:git/sha \"sha-blah\"}`.
+
+  Returns a dep description of the same form (a map with `:mvn/version` or `:git/sha`)
+  with the latest version or latest sha."
+  [lib current-dep]
+  (cond (:git/sha current-dep)
+        (when-let [sha (git/latest-github-sha lib)]
+          {:git/sha sha})
+
+        (:mvn/version current-dep)
+        (when-let [version (or (latest-clojars-version lib)
+                               (latest-mvn-version lib))]
+          {:mvn/version version})))
+
+(defn do-dep-upgrade
+  "Updates the deps version in deps.edn for a single lib with the version passed in `latest`.
+  First compares `current` and `latest`.
+  Supports `:dry-run` in the passed `opts`."
+  [opts lib current {:keys [git/sha mvn/version] :as _latest}]
+  (when (or (and sha (not= (:git/sha current) sha))
+            (and version (not= (:mvn/version current) version)))
+    (if (:dry-run opts)
+      (if sha
+        (println "Would upgrade" :lib lib :version (:git/sha current) :latest-sha sha)
+        (println "Would upgrade" :lib lib :version (:mvn/version current) :latest-version version))
+      (do
+        (if sha
+          (println "Upgrading" :lib lib :version (:git/sha current) :latest-sha sha)
+          (println "Upgrading" :lib lib :version (:mvn/version current) :latest-version version))
+        (dep-add {:opts (cond-> opts
+                          lib     (assoc :lib lib)
+                          version (assoc :version version)
+                          sha     (assoc :sha sha))})))))
+
+(defn dep-upgrade [{:keys [opts] :as _all}]
+  (if (:lib opts)
+    ;; upgrade a single dependency
+    (let [lib     (:lib opts)
+          lib     (symbol lib)
+          current (-> (edn-string opts)
+                      edn/read-string
+                      :deps
+                      (get lib))
+          latest  (when current (lib+current->latest lib current))]
+      (cond (not current)
+            (binding [*out* *err*]
+              (println "Local dependency not found:" lib)
+              (println "Use `neil dep add` to add dependencies.")
+              (System/exit 1))
+
+            (and (not (:git/sha latest)) (not (:mvn/version latest)))
+            (binding [*out* *err*]
+              (println "No remote version found for" lib)
+              (System/exit 1))
+
+            :else (do-dep-upgrade opts lib current latest)))
+
+    ;; upgrade multiple dependencies
+    (let [current-deps (-> (edn-string opts)
+                           edn/read-string
+                           :deps)
+          latest-deps  (->> current-deps
+                            (pmap (fn [[lib current]]
+                                    [lib (lib+current->latest lib current)]))
+                            (filter (fn [[_lib new-version]]
+                                      (some? new-version)))
+                            (into {}))]
+      (doseq [[lib current] current-deps]
+        (let [latest (get latest-deps lib)]
+          (do-dep-upgrade opts lib current latest))))))
+
+
 (defn print-help [_]
   (println (str/trim "
 Usage: neil <subcommand> <options>
@@ -441,6 +517,14 @@ dep
 
   search: Search Clojars for a string in any attribute of an artifact
     Run `neil dep search --help` to see all options.
+
+  upgrade: Upgrade all libs in the deps.edn file.
+    Supports --lib <libname> or :lib <libname> for upgrading a single, specified lib.
+    Supports --dry-run for printing updates without updating the deps.edn file.
+    Ex: `neil dep upgrade` - upgrade all deps.
+    Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
+    Ex: `neil dep upgrade :lib clj-kondo/clj-kondo` - update a single dep.
+  update: Alias for `upgrade`.
 
 license
   list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
@@ -519,6 +603,8 @@ test
     {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
     {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
+    {:cmds ["dep" "upgrade"] :fn dep-upgrade}
+    {:cmds ["dep" "update"] :fn dep-upgrade} ;; supported as an alias
     {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :args->opts [:license]}

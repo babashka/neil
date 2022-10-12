@@ -8,7 +8,8 @@
 
 (def test-namespaces
   '[tests
-    babashka.neil.version-test])
+    babashka.neil.version-test
+    babashka.neil.dep-upgrade-test])
 
 (doseq [ns test-namespaces]
   (require ns))
