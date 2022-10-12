@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.1.46 (2022-10-12)
 
-- Introduce `neil dep upgrade` API for upgrading existing dependencies
+- Introduce `neil dep upgrade` API for upgrading existing dependencies. By [@teodorlu](https://github.com/teodorlu) and [@russmatney](https://github.com/russmatney).
 
-## 0.1.46
+## 0.1.45 (2022-08-30)
 
 - Add `neil version` subcommands
   - `neil version` (updated, now includes project version)
