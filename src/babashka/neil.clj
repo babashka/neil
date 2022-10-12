@@ -419,7 +419,7 @@ will return libraries with 'test framework' in their description.")))
                  :version (:version search-result)
                  :description (pr-str (:description search-result)))))))
 
-(defn dep-upgrade [{:keys [opts] :as all}]
+(defn dep-upgrade [{:keys [opts] :as _all}]
   (if (:lib opts)
     ;; upgrade a single dependency
     (let [lib (:lib opts)
