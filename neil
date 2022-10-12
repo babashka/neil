@@ -1195,7 +1195,7 @@ will return libraries with 'test framework' in their description.")))
   Returns a dep description of the same form (a map with `:mvn/version` or `:git/sha`)
   with the latest version or latest sha."
   [lib current-dep]
-  (cond (:git/url current-dep)
+  (cond (:git/sha current-dep)
         (when-let [sha (git/latest-github-sha lib)]
           {:git/sha sha})
 
