@@ -104,16 +104,31 @@
   (testing "upgrading an alias's :extra-deps works as expected"
     (spit test-file-path "{}")
     ;; here we add the same dep to two aliases
-    (test-util/neil "dep add :lib clj-kondo/clj-kondo --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078 --alias lint" :deps-file test-file-path)
-    (test-util/neil "dep add :lib clj-kondo/clj-kondo --version 2020.01.01 --alias other-lint" :deps-file test-file-path)
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo --alias lint --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078" :deps-file test-file-path)
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo --alias other-lint --version 2020.01.01" :deps-file test-file-path)
     (let [initial-versions (get-alias-versions 'clj-kondo/clj-kondo)]
       (test-util/neil "dep upgrade" :deps-file test-file-path)
       (let [upgraded-versions (get-alias-versions 'clj-kondo/clj-kondo)
             lint-clj-v        (-> (->edn) :aliases :lint :extra-deps (get 'clj-kondo/clj-kondo))
             other-lint-clj-v  (-> (->edn) :aliases :other-lint :extra-deps (get 'clj-kondo/clj-kondo))]
         ;; both should be upgraded - there should be no overlap in these sets
-        (is (nil? (set/intersection initial-versions upgraded-versions)))
+        (is (nil? (seq (set/intersection initial-versions upgraded-versions))))
         ;; lint alias still has :git/sha key
         (is (:git/sha lint-clj-v))
         ;; other-lint alias still has :mvn/version key
-        (is (:mvn/version other-lint-clj-v))))))
+        (is (:mvn/version other-lint-clj-v)))))
+
+  (testing "specifying an alias only upgrades for that alias"
+    (spit test-file-path "{}")
+    ;; here we add the same dep to two aliases
+    (test-util/neil (str "dep add :lib clj-kondo/clj-kondo"
+                         " --alias lint --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078")
+                    :deps-file test-file-path)
+    (test-util/neil "dep add :lib babashka/fs :version 0.0.1" :deps-file test-file-path)
+    (let [initial-clj-kondo-v (first (get-alias-versions 'clj-kondo/clj-kondo))
+          initial-fs-v        (get-dep-version 'babashka/fs)]
+      (test-util/neil "dep upgrade --alias lint" :deps-file test-file-path)
+      (let [upgraded-clj-kondo-v (first (get-alias-versions 'clj-kondo/clj-kondo))
+            upgraded-fs-v        (get-dep-version 'babashka/fs)]
+        (is (= initial-fs-v upgraded-fs-v))
+        (is (not (= initial-clj-kondo-v upgraded-clj-kondo-v)))))))

@@ -420,82 +420,92 @@ will return libraries with 'test framework' in their description.")))
                  :description (pr-str (:description search-result)))))))
 
 
-(defn lib+current->latest
-  "Expects a lib symbol like `'babashka/fs` and a dep description
-  like `{:mvn/version \"some-version\"}` or `{:git/sha \"sha-blah\"}`.
+(defn dep->latest
+  "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
+  `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
+  or `{:git/sha \"sha-blah\"}`.
 
-  Returns a dep description of the same form (a map with `:mvn/version` or `:git/sha`)
-  with the latest version or latest sha."
-  [lib current-dep]
-  (cond (:git/sha current-dep)
+  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha`.
+  Note that this is not a full dep coordinate - we rely on `dep-add` later to include
+  `:git/url`, for example."
+  [{:keys [current lib] :as _dep-update}]
+  (cond (:git/sha current)
         (when-let [sha (git/latest-github-sha lib)]
           {:git/sha sha})
 
-        (:mvn/version current-dep)
+        (:mvn/version current)
         (when-let [version (or (latest-clojars-version lib)
                                (latest-mvn-version lib))]
           {:mvn/version version})))
 
+(defn opts->all-deps
+  "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
+  [opts]
+  (let [{:keys [deps aliases]} (-> (edn-string opts) edn/read-string)
+        current-deps
+        (->> deps (map (fn [[lib current]]
+                         {:lib lib :current current})))
+        alias-deps
+        (->> aliases (mapcat (fn [[alias def]]
+                               (->> (:extra-deps def)
+                                    (map (fn [[lib current]]
+                                           {:alias   alias
+                                            :lib     lib
+                                            :current current}))))))]
+    (concat current-deps alias-deps)))
+
 (defn do-dep-upgrade
-  "Updates the deps version in deps.edn for a single lib with the version passed in `latest`.
-  First compares `current` and `latest`.
-  Supports `:dry-run` in the passed `opts`."
-  [opts {:keys [lib current latest alias]}]
+  "Updates the deps version in deps.edn for a single lib,
+  as described in `dep-upgrade`, which is a map with
+  `:lib`, `:current`, `:latest` (the current and latest dep coords), and optionally `:alias`.
+
+  When `:current` and `:latest` do not match, `:latest` is written to deps.edn via `dep-add`.
+  Supports `:dry-run` in the passed `opts` to instead just print the update."
+  [opts {:keys [lib current latest alias] :as _dep-upgrade}]
   (let [{:keys [git/sha mvn/version]} latest
         log-args
-        (concat (when alias [:alias alias])
-                [:lib lib]
-                [:version current] ;; prints whole dep coords
-                (when sha [:latest-sha sha])
-                (when version [:latest-version version]))
+        (concat (when alias [:alias alias]) [:lib lib] [:version current]
+                (when sha [:latest-sha sha]) (when version [:latest-version version]))
         log-msg                       (fn [msg] (apply println msg log-args))]
     (when (or (and sha (not= (:git/sha current) sha))
               (and version (not= (:mvn/version current) version)))
       (if (:dry-run opts)
         (log-msg "Would upgrade")
-        (do
-          (log-msg "Upgrading")
-          (dep-add {:opts (cond-> opts
-                            lib     (assoc :lib lib)
-                            alias   (assoc :alias alias)
-                            version (assoc :version version)
-                            sha     (assoc :sha sha))}))))))
+        (do (log-msg "Upgrading")
+            (dep-add {:opts (cond-> opts
+                              lib     (assoc :lib lib)
+                              alias   (assoc :alias alias)
+                              version (assoc :version version)
+                              sha     (assoc :sha sha))}))))))
 
-(defn dep-upgrade [{:keys [opts] :as _all}]
-  (let [lib          (some-> opts :lib symbol)
-        deps-edn     (-> (edn-string opts) edn/read-string)
-        current-deps (-> deps-edn :deps (->> (map (fn [[lib current]]
-                                                    {:lib lib :current current}))))
-        alias-deps   (-> deps-edn :aliases (->> (mapcat (fn [[alias def]]
-                                                          (->> (:extra-deps def)
-                                                               (map (fn [[lib current]]
-                                                                      {:alias   alias
-                                                                       :lib     lib
-                                                                       :current current})))))))
-        all-deps     (->> (concat current-deps alias-deps)
-                          ;; if lib was passed, only keep matches
-                          (filter (fn [dep] (if lib (= lib (:lib dep)) true))))
-        updates      (->> all-deps
-                          (pmap (fn [{:keys [lib current] :as dep}]
-                                  (merge dep {:latest (lib+current->latest lib current)})))
-                          ;; keep if :latest version was found
-                          (filter (fn [dep] (some? (:latest dep)))))]
-    ;; TODO we may care to warn/log when no latest is found for any dep
+(defn dep-upgrade [{:keys [opts]}]
+  (let [lib           (some-> opts :lib symbol)
+        alias         (some-> opts :alias)
+        all-deps      (opts->all-deps opts)
+        deps-to-check (->> all-deps
+                           (filter (fn [dep] (if alias (= alias (:alias dep)) true)))
+                           (filter (fn [dep] (if lib (= lib (:lib dep)) true))))
+        upgrades      (->> deps-to-check
+                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           ;; keep if :latest version was found
+                           (filter (fn [dep] (some? (:latest dep)))))]
     (when lib
-      ;; special logging, early-exit when :lib is specified
-      (cond (not (seq all-deps))
+      ;; logging and early-exit when :lib is specified
+      (cond (not (seq deps-to-check))
             (binding [*out* *err*]
-              (println "Local dependency not found:" lib)
+              (if alias
+                (println "Local dependency not found:" lib "for alias:" alias)
+                (println "Local dependency not found:" lib))
               (println "Use `neil dep add` to add dependencies.")
               (System/exit 1))
 
-            (not (seq updates))
+            (not (seq upgrades))
             (binding [*out* *err*]
+              ;; note this could also mean we've hit github's rate limit
               (println "No remote version found for" lib)
               (System/exit 1))))
 
-    (doseq [dep-update updates]
-      (do-dep-upgrade opts dep-update))))
+    (doseq [dep-upgrade upgrades] (do-dep-upgrade opts dep-upgrade))))
 
 
 (defn print-help [_]
