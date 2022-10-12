@@ -282,5 +282,3 @@ $ brew reinstall --build-from-source ./neil.rb
 Copyright © 2022 Michiel Borkent
 
 Distributed under the MIT License. See LICENSE.
-
-<!-- trigger ci -->
