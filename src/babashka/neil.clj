@@ -441,10 +441,12 @@ will return libraries with 'test framework' in their description.")))
                                (latest-mvn-version lib))]
           {:mvn/version version})))
 
-(defn opts->all-deps
+(defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
   [opts]
-  (let [no-aliases?            (:no-aliases opts)
+  (let [lib                    (some-> opts :lib symbol)
+        alias                  (some-> opts :alias)
+        no-aliases?            (:no-aliases opts)
         {:keys [deps aliases]} (-> (edn-string opts) edn/read-string)
         current-deps
         (->> deps (map (fn [[lib current]]
@@ -457,7 +459,9 @@ will return libraries with 'test framework' in their description.")))
                                                {:alias   alias
                                                 :lib     lib
                                                 :current current})))))))]
-    (concat current-deps alias-deps)))
+    (->> (concat current-deps alias-deps)
+         (filter (fn [dep] (if alias (= alias (:alias dep)) true)))
+         (filter (fn [dep] (if lib (= lib (:lib dep)) true))))))
 
 (defn do-dep-upgrade
   "Updates the deps version in deps.edn for a single lib,
@@ -486,10 +490,7 @@ will return libraries with 'test framework' in their description.")))
 (defn dep-upgrade [{:keys [opts]}]
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
-        all-deps      (opts->all-deps opts)
-        deps-to-check (->> all-deps
-                           (filter (fn [dep] (if alias (= alias (:alias dep)) true)))
-                           (filter (fn [dep] (if lib (= lib (:lib dep)) true))))
+        deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
                            (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
                            ;; keep if :latest version was found
