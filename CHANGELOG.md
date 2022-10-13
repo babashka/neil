@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Extend `neil dep upgrade` to upgrade alias deps (now the default).
+  - `neil dep upgrade --alias tests` supports upgrading deps for a particular alias.
+  - `neil dep upgrade --no-aliases` supports upgrading _only_ the project deps.
+
 ## 0.1.46 (2022-10-12)
 
 - Introduce `neil dep upgrade` API for upgrading existing dependencies. By [@teodorlu](https://github.com/teodorlu) and [@russmatney](https://github.com/russmatney).
