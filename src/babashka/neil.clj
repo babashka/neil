@@ -28,7 +28,10 @@
                        :desc "Add to <file> instead of deps.edn."
                        :default "deps.edn"}
            :limit {:coerce :long}
-           :dry-run {:coerce :boolean}})
+           :dry-run {:coerce :boolean
+                     :desc "dep upgrade only. Prevents updates to deps.edn."}
+           :no-aliases {:coerce :boolean
+                        :desc "Prevents updates to alias :extra-deps when upgrading."}})
 
 (def windows? (fs/windows?))
 
@@ -441,17 +444,19 @@ will return libraries with 'test framework' in their description.")))
 (defn opts->all-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
   [opts]
-  (let [{:keys [deps aliases]} (-> (edn-string opts) edn/read-string)
+  (let [no-aliases?            (:no-aliases opts)
+        {:keys [deps aliases]} (-> (edn-string opts) edn/read-string)
         current-deps
         (->> deps (map (fn [[lib current]]
                          {:lib lib :current current})))
         alias-deps
-        (->> aliases (mapcat (fn [[alias def]]
-                               (->> (:extra-deps def)
-                                    (map (fn [[lib current]]
-                                           {:alias   alias
-                                            :lib     lib
-                                            :current current}))))))]
+        (if no-aliases? []
+            (->> aliases (mapcat (fn [[alias def]]
+                                   (->> (:extra-deps def)
+                                        (map (fn [[lib current]]
+                                               {:alias   alias
+                                                :lib     lib
+                                                :current current})))))))]
     (concat current-deps alias-deps)))
 
 (defn do-dep-upgrade
@@ -537,6 +542,7 @@ dep
     Supports --dry-run for printing updates without updating the deps.edn file.
     Supports --alias <some-alias> for limiting upgrades to an alias.
       Note that all deps (including alias deps) are upgraded by default.
+    Supports --no-aliases if you'd like to upgrade only the project's :deps.
 
     Ex: `neil dep upgrade` - upgrade all deps.
     Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
