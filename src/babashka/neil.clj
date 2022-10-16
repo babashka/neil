@@ -18,6 +18,8 @@
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
            :sha {:desc "When provided, assumes lib refers to Github repo."}
            :latest-sha {:desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :tag {:desc "When provided, assumes lib refers to Github repo."}
+           :latest-tag {:desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
                 :coerce :symbol}
@@ -302,7 +304,20 @@
   (println "Options:")
   (println (cli/format-opts
             {:spec spec
-             :order [:lib :version :sha :latest-sha :deps/root :as :alias :deps-file]})))
+             :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
+
+(comment
+  (git/list-github-tags 'clj-kondo/clj-kondo)
+  (git/list-github-tags 'clj-kondo/clj-kondo)
+  (git/latest-github-tag 'clj-kondo/clj-kondo)
+  {:name "v2022.10.14",
+   :zipball_url "https://api.github.com/repos/clj-kondo/clj-kondo/zipball/refs/tags/v2022.10.14",
+   :tarball_url "https://api.github.com/repos/clj-kondo/clj-kondo/tarball/refs/tags/v2022.10.14",
+   :commit
+   {:sha "a1f5f1b03c34d915015cde74431ddd6ad2cc17e9",
+    :url "https://api.github.com/repos/clj-kondo/clj-kondo/commits/a1f5f1b03c34d915015cde74431ddd6ad2cc17e9"},
+   :node_id "MDM6UmVmMTc2ODI5NzE0OnJlZnMvdGFncy92MjAyMi4xMC4xNA=="}
+  )
 
 (defn dep-add [{:keys [opts]}]
   (if (or (:help opts) (:h opts) (not (:lib opts)))
@@ -314,22 +329,29 @@
             lib (:lib opts)
             lib (symbol lib)
             alias (:alias opts)
-            explicit-git? (or (:sha opts)
-                              (:latest-sha opts))
-            [version git?] (if explicit-git?
-                             [(or (:sha opts)
-                                  (git/latest-github-sha lib)) true]
-                             (or
-                              (when-let [v (:version opts)]
-                                [v false])
-                              (when-let [v (latest-clojars-version lib)]
-                                [v false])
-                              (when-let [v (latest-mvn-version lib)]
-                                [v false])
-                              (when-let [v (git/latest-github-sha lib)]
-                                [v true])))
-            mvn? (not git?)
-            git-url (when git?
+            explicit-git-sha? (or (:sha opts) (:latest-sha opts))
+            explicit-git-tag? (or (:tag opts) (:latest-tag opts))
+            [version coord-type?]
+            (cond explicit-git-tag?
+                  [(or (and (:tag opts)
+                            (git/find-github-tag lib (:tag opts)))
+                       (git/latest-github-tag lib)) :git/tag]
+                  explicit-git-sha?
+                  [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
+                  :else
+                  (or
+                    (when-let [v (:version opts)]
+                      [v :mvn])
+                    (when-let [v (latest-clojars-version lib)]
+                      [v :mvn])
+                    (when-let [v (latest-mvn-version lib)]
+                      [v :mvn])
+                    (when-let [v (git/latest-github-sha lib)]
+                      [v :git/sha])))
+            mvn? (= coord-type? :mvn)
+            git-sha? (= coord-type? :git/sha)
+            git-tag? (= coord-type? :git/tag)
+            git-url (when (or git-sha? git-tag?)
                       (or (:git/url opts)
                           (str "https://github.com/" (git/clean-github-lib lib))))
             as (or (:as opts) lib)
@@ -354,16 +376,26 @@
                     mvn?
                     (r/assoc-in edn-nodes path
                                 {:mvn/version version})
-                    git?
+                    git-sha?
                     ;; multiple steps to force newlines
                     (-> edn-nodes
-                        (r/assoc-in
-                         (conj path :git/url) git-url)
+                        (r/assoc-in (conj path :git/url) git-url)
                         str
                         r/parse-string
-                        (r/assoc-in
-                         (conj path :git/sha) version)))
-            nodes (if-let [root (and git? (:deps/root opts))]
+                        (r/assoc-in (conj path :git/sha) version))
+
+                    git-tag?
+                    ;; multiple steps to force newlines
+                    (-> edn-nodes
+                        (r/assoc-in (conj path :git/url) git-url)
+                        str
+                        r/parse-string
+                        (r/assoc-in (conj path :git/tag) (-> version :name))
+                        str
+                        r/parse-string
+                        (r/assoc-in (conj path :git/sha)
+                                    (some-> version :commit :sha (subs 0 7)))))
+            nodes (if-let [root (and (or git-sha? git-tag?) (:deps/root opts))]
                     (-> nodes
                         (r/assoc-in (conj path :deps/root) root))
                     nodes)

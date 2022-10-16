@@ -54,6 +54,24 @@
         (is (not (= clj-kondo-original clj-kondo-upgraded)))
         (is (= fs-original fs-upgraded))))))
 
+(deftest dep-upgrade-test-using-git-tags
+  (testing "deps can be added with --latest-tag"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :latest-tag" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (:git/tag original))
+      (is (:git/sha original))
+      (is (:git/url original))))
+
+  (testing "deps can be added with --tag"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :tag \"v2022.03.08\"" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:git/tag original)))
+      (is (:git/sha original))
+      (is (:git/url original))))
+  )
+
 (deftest dep-upgrade-test-maintain-dep-source
   (testing "upgrading a :git/sha dep should maintain :git/sha"
     (spit test-file-path "{}")

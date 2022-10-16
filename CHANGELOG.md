@@ -5,6 +5,7 @@
 - Extend `neil dep upgrade` to upgrade alias deps (now the default).
   - `neil dep upgrade --alias tests` supports upgrading deps for a particular alias.
   - `neil dep upgrade --no-aliases` supports upgrading _only_ the project deps.
+- `neil dep add` now supports `--tag` and `--latest-tag`
 
 ## 0.1.46 (2022-10-12)
 
