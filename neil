@@ -1200,7 +1200,7 @@ will return libraries with 'test framework' in their description.")))
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
-  (cond (:git/sha current)
+  (cond (or (:git/sha current) (:sha current))
         (when-let [sha (git/latest-github-sha lib)]
           {:git/sha sha})
 

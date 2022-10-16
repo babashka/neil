@@ -79,6 +79,21 @@
         ;; should be a different sha
         (is (not (= sha (:git/sha clj-kondo-original)))))))
 
+  (testing "upgrading a coordinate with just :sha (not :git/sha) should still work"
+    (spit test-file-path "{:deps {clj-kondo/clj-kondo
+                            {:git/url \"https://github.com/clj-kondo/clj-kondo\"
+                             :sha \"6ffc3934cb83d2c4fff16d84198c73b40cd8a078\"}}}")
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      ;; here we upgrade and then assert that the sha is different,
+      ;; and on :git/sha rather than :sha
+      (is (:sha original))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (:git/sha upgraded))
+        (is (not (:sha upgraded)))
+        ;; should be a different sha
+        (is (not (= (:git/sha upgraded) (:sha original)))))))
+
   (testing "upgrading a single lib should also maintain :git/url and sha"
     (spit test-file-path "{}")
     (test-util/neil "dep add :lib clj-kondo/clj-kondo :sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078"
