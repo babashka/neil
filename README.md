@@ -264,6 +264,13 @@ Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 If this project shows potential to you, I'd be happy to discuss and receive
 contributions.
 
+#### Github's Rate Limit
+
+Developing and running tests locally, you may run into github's rate limit (60 unauthenticated hits per hour). The current workaround for this is creating a [personal access token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) and setting two env vars:
+
+- `BABASHKA_NEIL_DEV_GITHUB_USER`
+- `BABASHKA_NEIL_DEV_GITHUB_TOKEN`
+
 ## Dev
 
 See
