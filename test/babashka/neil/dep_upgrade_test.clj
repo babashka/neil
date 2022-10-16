@@ -54,6 +54,45 @@
         (is (not (= clj-kondo-original clj-kondo-upgraded)))
         (is (= fs-original fs-upgraded))))))
 
+(deftest dep-upgrade-test-using-git-tags
+  (testing "deps can be added with --latest-tag"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :latest-tag" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (:git/tag original))
+      (is (:git/sha original))
+      (is (:git/url original))))
+
+  (testing "deps can be added with --tag"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :tag \"v2022.03.08\"" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:git/tag original)))
+      (is (:git/sha original))
+      (is (:git/url original))))
+
+  (testing "deps with :git/tag coords upgrade to latest tags"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :tag \"v2022.03.08\"" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:git/tag original)))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (= (:git/url original) (:git/url upgraded)))
+        (is (:git/tag upgraded))
+        (is (not= (:git/tag original) (:git/tag upgraded)))
+        (is (:git/sha upgraded)))))
+
+  (testing "deps with :tag coords are also supported"
+    (spit test-file-path "{:deps {clj-kondo/clj-kondo {:tag \"v2022.03.08\" :sha \"247e538\"}}}")
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:tag original)))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (:git/tag upgraded))
+        (is (not= (:tag original) (:git/tag upgraded)))
+        (is (:git/sha upgraded))))))
+
 (deftest dep-upgrade-test-maintain-dep-source
   (testing "upgrading a :git/sha dep should maintain :git/sha"
     (spit test-file-path "{}")
@@ -78,6 +117,21 @@
         (is sha)
         ;; should be a different sha
         (is (not (= sha (:git/sha clj-kondo-original)))))))
+
+  (testing "upgrading a coordinate with just :sha (not :git/sha) should still work"
+    (spit test-file-path "{:deps {clj-kondo/clj-kondo
+                            {:git/url \"https://github.com/clj-kondo/clj-kondo\"
+                             :sha \"6ffc3934cb83d2c4fff16d84198c73b40cd8a078\"}}}")
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      ;; here we upgrade and then assert that the sha is different,
+      ;; and on :git/sha rather than :sha
+      (is (:sha original))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (:git/sha upgraded))
+        (is (not (:sha upgraded)))
+        ;; should be a different sha
+        (is (not (= (:git/sha upgraded) (:sha original)))))))
 
   (testing "upgrading a single lib should also maintain :git/url and sha"
     (spit test-file-path "{}")

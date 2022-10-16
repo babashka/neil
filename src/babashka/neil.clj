@@ -18,6 +18,8 @@
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
            :sha {:desc "When provided, assumes lib refers to Github repo."}
            :latest-sha {:desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :tag {:desc "When provided, assumes lib refers to Github repo."}
+           :latest-tag {:desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
                 :coerce :symbol}
@@ -302,7 +304,7 @@
   (println "Options:")
   (println (cli/format-opts
             {:spec spec
-             :order [:lib :version :sha :latest-sha :deps/root :as :alias :deps-file]})))
+             :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
 
 (defn dep-add [{:keys [opts]}]
   (if (or (:help opts) (:h opts) (not (:lib opts)))
@@ -314,22 +316,29 @@
             lib (:lib opts)
             lib (symbol lib)
             alias (:alias opts)
-            explicit-git? (or (:sha opts)
-                              (:latest-sha opts))
-            [version git?] (if explicit-git?
-                             [(or (:sha opts)
-                                  (git/latest-github-sha lib)) true]
-                             (or
-                              (when-let [v (:version opts)]
-                                [v false])
-                              (when-let [v (latest-clojars-version lib)]
-                                [v false])
-                              (when-let [v (latest-mvn-version lib)]
-                                [v false])
-                              (when-let [v (git/latest-github-sha lib)]
-                                [v true])))
-            mvn? (not git?)
-            git-url (when git?
+            explicit-git-sha? (or (:sha opts) (:latest-sha opts))
+            explicit-git-tag? (or (:tag opts) (:latest-tag opts))
+            [version coord-type?]
+            (cond explicit-git-tag?
+                  [(or (and (:tag opts)
+                            (git/find-github-tag lib (:tag opts)))
+                       (git/latest-github-tag lib)) :git/tag]
+                  explicit-git-sha?
+                  [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
+                  :else
+                  (or
+                    (when-let [v (:version opts)]
+                      [v :mvn])
+                    (when-let [v (latest-clojars-version lib)]
+                      [v :mvn])
+                    (when-let [v (latest-mvn-version lib)]
+                      [v :mvn])
+                    (when-let [v (git/latest-github-sha lib)]
+                      [v :git/sha])))
+            mvn? (= coord-type? :mvn)
+            git-sha? (= coord-type? :git/sha)
+            git-tag? (= coord-type? :git/tag)
+            git-url (when (or git-sha? git-tag?)
                       (or (:git/url opts)
                           (str "https://github.com/" (git/clean-github-lib lib))))
             as (or (:as opts) lib)
@@ -354,16 +363,26 @@
                     mvn?
                     (r/assoc-in edn-nodes path
                                 {:mvn/version version})
-                    git?
+                    git-sha?
                     ;; multiple steps to force newlines
                     (-> edn-nodes
-                        (r/assoc-in
-                         (conj path :git/url) git-url)
+                        (r/assoc-in (conj path :git/url) git-url)
                         str
                         r/parse-string
-                        (r/assoc-in
-                         (conj path :git/sha) version)))
-            nodes (if-let [root (and git? (:deps/root opts))]
+                        (r/assoc-in (conj path :git/sha) version))
+
+                    git-tag?
+                    ;; multiple steps to force newlines
+                    (-> edn-nodes
+                        (r/assoc-in (conj path :git/url) git-url)
+                        str
+                        r/parse-string
+                        (r/assoc-in (conj path :git/tag) (-> version :name))
+                        str
+                        r/parse-string
+                        (r/assoc-in (conj path :git/sha)
+                                    (some-> version :commit :sha (subs 0 7)))))
+            nodes (if-let [root (and (or git-sha? git-tag?) (:deps/root opts))]
                     (-> nodes
                         (r/assoc-in (conj path :deps/root) root))
                     nodes)
@@ -432,14 +451,20 @@ will return libraries with 'test framework' in their description.")))
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
-  (cond (:git/sha current)
-        (when-let [sha (git/latest-github-sha lib)]
-          {:git/sha sha})
+  (cond
+    (or (:git/tag current) (:tag current))
+    (when-let [tag (git/latest-github-tag lib)]
+      {:git/tag (:name tag)
+       :git/sha (-> tag :commit :sha (subs 0 7))})
 
-        (:mvn/version current)
-        (when-let [version (or (latest-clojars-version lib)
-                               (latest-mvn-version lib))]
-          {:mvn/version version})))
+    (or (:git/sha current) (:sha current))
+    (when-let [sha (git/latest-github-sha lib)]
+      {:git/sha sha})
+
+    (:mvn/version current)
+    (when-let [version (or (latest-clojars-version lib)
+                           (latest-mvn-version lib))]
+      {:mvn/version version})))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
@@ -471,21 +496,26 @@ will return libraries with 'test framework' in their description.")))
   When `:current` and `:latest` do not match, `:latest` is written to deps.edn via `dep-add`.
   Supports `:dry-run` in the passed `opts` to instead just print the update."
   [opts {:keys [lib current latest alias] :as _dep-upgrade}]
-  (let [{:keys [git/sha mvn/version]} latest
+  (let [{:keys [git/tag git/sha mvn/version]} latest
         log-args
-        (concat (when alias [:alias alias]) [:lib lib] [:version current]
-                (when sha [:latest-sha sha]) (when version [:latest-version version]))
-        log-msg                       (fn [msg] (apply println msg log-args))]
-    (when (or (and sha (not= (:git/sha current) sha))
+        (concat (when alias [:alias alias]) [:lib lib]
+                [:current-version ((some-fn :git/tag :git/sha :mvn/version) current)]
+                (when tag [:tag tag])
+                (when (and (not tag) sha) [:sha sha])
+                (when version [:version version]))
+        log-action (fn [action] (apply println :action (str "\"" action "\"") log-args))]
+    (when (or (and tag (not= (:git/tag current) tag))
+              (and sha (not= (:git/sha current) sha))
               (and version (not= (:mvn/version current) version)))
       (if (:dry-run opts)
-        (log-msg "Would upgrade")
-        (do (log-msg "Upgrading")
+        (log-action "upgrading (dry run)")
+        (do (log-action "upgrading")
             (dep-add {:opts (cond-> opts
                               lib     (assoc :lib lib)
                               alias   (assoc :alias alias)
                               version (assoc :version version)
-                              sha     (assoc :sha sha))}))))))
+                              tag     (assoc :tag tag)
+                              (and (not tag) sha) (assoc :sha sha))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (let [lib           (some-> opts :lib symbol)
