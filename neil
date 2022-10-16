@@ -1074,19 +1074,6 @@ using the [major|minor|patch] subcommands.
             {:spec spec
              :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
 
-(comment
-  (git/list-github-tags 'clj-kondo/clj-kondo)
-  (git/list-github-tags 'clj-kondo/clj-kondo)
-  (git/latest-github-tag 'clj-kondo/clj-kondo)
-  {:name "v2022.10.14",
-   :zipball_url "https://api.github.com/repos/clj-kondo/clj-kondo/zipball/refs/tags/v2022.10.14",
-   :tarball_url "https://api.github.com/repos/clj-kondo/clj-kondo/tarball/refs/tags/v2022.10.14",
-   :commit
-   {:sha "a1f5f1b03c34d915015cde74431ddd6ad2cc17e9",
-    :url "https://api.github.com/repos/clj-kondo/clj-kondo/commits/a1f5f1b03c34d915015cde74431ddd6ad2cc17e9"},
-   :node_id "MDM6UmVmMTc2ODI5NzE0OnJlZnMvdGFncy92MjAyMi4xMC4xNA=="}
-  )
-
 (defn dep-add [{:keys [opts]}]
   (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
