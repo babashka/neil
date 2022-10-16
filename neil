@@ -1279,17 +1279,18 @@ will return libraries with 'test framework' in their description.")))
   [opts {:keys [lib current latest alias] :as _dep-upgrade}]
   (let [{:keys [git/tag git/sha mvn/version]} latest
         log-args
-        (concat (when alias [:alias alias]) [:lib lib] [:version current]
-                (when tag [:latest-tag tag])
-                (when sha [:latest-sha sha])
-                (when version [:latest-version version]))
-        log-msg                       (fn [msg] (apply println msg log-args))]
+        (concat (when alias [:alias alias]) [:lib lib]
+                [:current-version ((some-fn :git/tag :git/sha :mvn/version) current)]
+                (when tag [:tag tag])
+                (when (and (not tag) sha) [:sha sha])
+                (when version [:version version]))
+        log-action (fn [action] (apply println :action (str "\"" action "\"") log-args))]
     (when (or (and tag (not= (:git/tag current) tag))
               (and sha (not= (:git/sha current) sha))
               (and version (not= (:mvn/version current) version)))
       (if (:dry-run opts)
-        (log-msg "Would upgrade")
-        (do (log-msg "Upgrading")
+        (log-action "upgrading (dry run)")
+        (do (log-action "upgrading")
             (dep-add {:opts (cond-> opts
                               lib     (assoc :lib lib)
                               alias   (assoc :alias alias)

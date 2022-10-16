@@ -5,10 +5,16 @@
 - `neil dep add` now supports `--tag` and `--latest-tag`
 - `neil dep upgrade`
   - when `:git/tag` is used, upgrades to the repo's latest tag (instead of the latest sha)
-  - support `:tag` and `:sha`, which tools.deps supports (for backwards compatibility)
+  - support prefixless `:tag` and `:sha` coords, which tools.deps supports (for backwards compatibility)
   - upgrade alias deps (now the default).
     - `neil dep upgrade --alias tests` supports upgrading deps for a particular alias.
     - `neil dep upgrade --no-aliases` supports upgrading _only_ the project deps.
+  - the `neil dep upgrade --dry-run` output can now be piped back into `neil dep
+    add`, so you can now select a single upgrade from a list of available via `fzf`:
+
+```
+neil dep upgrade --dry-run | fzf | xargs ./neil dep add
+```
 
 ## 0.1.46 (2022-10-12)
 
