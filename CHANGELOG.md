@@ -2,10 +2,13 @@
 
 ## Unreleased
 
-- Extend `neil dep upgrade` to upgrade alias deps (now the default).
-  - `neil dep upgrade --alias tests` supports upgrading deps for a particular alias.
-  - `neil dep upgrade --no-aliases` supports upgrading _only_ the project deps.
 - `neil dep add` now supports `--tag` and `--latest-tag`
+- `neil dep upgrade`
+  - when `:git/tag` is used, upgrades to the repo's latest tag (instead of the latest sha)
+  - support `:tag` and `:sha`, which tools.deps supports (for backwards compatibility)
+  - upgrade alias deps (now the default).
+    - `neil dep upgrade --alias tests` supports upgrading deps for a particular alias.
+    - `neil dep upgrade --no-aliases` supports upgrading _only_ the project deps.
 
 ## 0.1.46 (2022-10-12)
 

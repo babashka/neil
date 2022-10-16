@@ -464,14 +464,20 @@ will return libraries with 'test framework' in their description.")))
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
-  (cond (or (:git/sha current) (:sha current))
-        (when-let [sha (git/latest-github-sha lib)]
-          {:git/sha sha})
+  (cond
+    (or (:git/tag current) (:tag current))
+    (when-let [tag (git/latest-github-tag lib)]
+      {:git/tag (:name tag)
+       :git/sha (-> tag :commit :sha (subs 0 7))})
 
-        (:mvn/version current)
-        (when-let [version (or (latest-clojars-version lib)
-                               (latest-mvn-version lib))]
-          {:mvn/version version})))
+    (or (:git/sha current) (:sha current))
+    (when-let [sha (git/latest-github-sha lib)]
+      {:git/sha sha})
+
+    (:mvn/version current)
+    (when-let [version (or (latest-clojars-version lib)
+                           (latest-mvn-version lib))]
+      {:mvn/version version})))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
@@ -503,12 +509,15 @@ will return libraries with 'test framework' in their description.")))
   When `:current` and `:latest` do not match, `:latest` is written to deps.edn via `dep-add`.
   Supports `:dry-run` in the passed `opts` to instead just print the update."
   [opts {:keys [lib current latest alias] :as _dep-upgrade}]
-  (let [{:keys [git/sha mvn/version]} latest
+  (let [{:keys [git/tag git/sha mvn/version]} latest
         log-args
         (concat (when alias [:alias alias]) [:lib lib] [:version current]
-                (when sha [:latest-sha sha]) (when version [:latest-version version]))
+                (when tag [:latest-tag tag])
+                (when sha [:latest-sha sha])
+                (when version [:latest-version version]))
         log-msg                       (fn [msg] (apply println msg log-args))]
-    (when (or (and sha (not= (:git/sha current) sha))
+    (when (or (and tag (not= (:git/tag current) tag))
+              (and sha (not= (:git/sha current) sha))
               (and version (not= (:mvn/version current) version)))
       (if (:dry-run opts)
         (log-msg "Would upgrade")
@@ -517,7 +526,8 @@ will return libraries with 'test framework' in their description.")))
                               lib     (assoc :lib lib)
                               alias   (assoc :alias alias)
                               version (assoc :version version)
-                              sha     (assoc :sha sha))}))))))
+                              tag     (assoc :tag tag)
+                              (and (not tag) sha) (assoc :sha sha))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (let [lib           (some-> opts :lib symbol)

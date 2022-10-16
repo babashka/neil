@@ -70,7 +70,28 @@
       (is (= "v2022.03.08" (:git/tag original)))
       (is (:git/sha original))
       (is (:git/url original))))
-  )
+
+  (testing "deps with :git/tag coords upgrade to latest tags"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :tag \"v2022.03.08\"" :deps-file test-file-path)
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:git/tag original)))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (= (:git/url original) (:git/url upgraded)))
+        (is (:git/tag upgraded))
+        (is (not= (:git/tag original) (:git/tag upgraded)))
+        (is (:git/sha upgraded)))))
+
+  (testing "deps with :tag coords are also supported"
+    (spit test-file-path "{:deps {clj-kondo/clj-kondo {:tag \"v2022.03.08\" :sha \"247e538\"}}}")
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (is (= "v2022.03.08" (:tag original)))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        (is (:git/tag upgraded))
+        (is (not= (:tag original) (:git/tag upgraded)))
+        (is (:git/sha upgraded))))))
 
 (deftest dep-upgrade-test-maintain-dep-source
   (testing "upgrading a :git/sha dep should maintain :git/sha"
