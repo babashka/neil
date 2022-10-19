@@ -335,6 +335,7 @@
                       [v :mvn])
                     (when-let [v (git/latest-github-sha lib)]
                       [v :git/sha])))
+            missing? (nil? version)
             mvn? (= coord-type? :mvn)
             git-sha? (= coord-type? :git/sha)
             git-tag? (= coord-type? :git/tag)
@@ -360,6 +361,7 @@
             ;; [:aliases alias :extra-deps as] if alias exists
             edn-nodes (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string)
             nodes (cond
+                    missing? edn-nodes
                     mvn?
                     (r/assoc-in edn-nodes path
                                 {:mvn/version version})
@@ -387,7 +389,8 @@
                         (r/assoc-in (conj path :deps/root) root))
                     nodes)
             s (str (str/trim (str nodes)) "\n")]
-        (spit (:deps-file opts) s)))))
+        (when-not missing?
+          (spit (:deps-file opts) s))))))
 
 (defn dep-versions [{:keys [opts]}]
   (let [lib (:lib opts)

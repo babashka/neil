@@ -36,6 +36,16 @@
     (let [edn (edn/read-string (slurp tmp-file))]
       (is (-> edn :aliases :lint :deps (get 'clj-kondo/clj-kondo))))))
 
+(deftest add-dep-bogus-lib-symbol-test
+  (let [tmp-file      (test-file "deps.edn")
+        existing-deps {'clj-kondo/clj-kondo {:tag "v2022.03.08" :sha "247e538"}}]
+    (spit tmp-file (str "{:deps " existing-deps "}"))
+    ;; note this is not a qualified namespace - no version will be found, it should not be added
+    (tasks/shell "./neil add dep com.rpl.specter --deps-file" tmp-file)
+    (let [edn (edn/read-string (slurp tmp-file))]
+      ;; make sure existing deps were not deleted
+      (is (= (-> edn :deps) existing-deps)))))
+
 (deftest add-nrepl-test
   (let [{:keys [edn]} (neil "add nrepl")
         {:keys [main-opts extra-deps]} (-> edn :aliases :nrepl)]
