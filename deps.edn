@@ -9,7 +9,7 @@
  :tools/usage {:ns-default babashka.neil.api}
  :aliases
  {:neil
-  {:project {:version "0.1.46"}}
+  {:project {:version "0.1.47"}}
 
   :test ;; added by neil
   {:extra-paths ["test"]

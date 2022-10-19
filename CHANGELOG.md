@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.47 (2022-10-19)
 
 - `neil dep add` now supports `--tag` and `--latest-tag`
 - `neil dep upgrade`
@@ -12,9 +12,10 @@
   - the `neil dep upgrade --dry-run` output can now be piped back into `neil dep
     add`, so you can now select a single upgrade from a list of available via `fzf`:
 
-```
-neil dep upgrade --dry-run | fzf | xargs ./neil dep add
-```
+    ```
+    neil dep upgrade --dry-run | fzf | xargs ./neil dep add
+    ```
+- Don't add libraries when version is unknown ([@russmatney](https://github.com/russmatney))
 
 ## 0.1.46 (2022-10-12)
 
