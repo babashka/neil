@@ -3,7 +3,7 @@
 ## 0.1.47 (2022-10-19)
 
 - `neil dep add` now supports `--tag` and `--latest-tag` ([@russmatney](https://github.com/russmatney))
-- `neil dep upgrade`
+- `neil dep upgrade` enhancements ([@russmatney](https://github.com/russmatney))
   - when `:git/tag` is used, upgrades to the repo's latest tag (instead of the latest sha)
   - support prefixless `:tag` and `:sha` coords, which tools.deps supports (for backwards compatibility)
   - upgrade alias deps (now the default).
@@ -14,7 +14,6 @@
     ```
     neil dep upgrade --dry-run | fzf | xargs ./neil dep add
     ```
-    ([@russmatney](https://github.com/russmatney))
 - Don't add libraries when version is unknown ([@russmatney](https://github.com/russmatney))
 
 ## 0.1.46 (2022-10-12)
