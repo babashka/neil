@@ -561,7 +561,7 @@ add
   dep    Alias for `neil dep add`.
   test   adds cognitect test runner to :test alias.
   build  adds tools.build build.clj file and :build alias.
-  kaocha adds kaocha test runner to :koacha alias.
+  kaocha adds kaocha test runner to :kaocha alias.
   nrepl  adds nrepl server to :nrepl alias.
 
 dep
