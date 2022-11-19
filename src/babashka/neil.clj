@@ -267,6 +267,8 @@
 "]
     base))
 
+(proj/project-name  {:deps-file "/home/alys/repos/outside/neil/deps.edn"})
+
 (defn add-build [{:keys [opts] :as cmd}]
   (if (:help opts)
     (print-help cmd)
@@ -603,6 +605,9 @@ version
 
 test
   Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
+
+docs
+  readme   Creates a README.
 ")))
 
 ;; licenses
@@ -649,6 +654,29 @@ test
         (println (ex-message e))
         (System/exit 1)))))
 
+(defn create-readme [opts]
+  (let [readme "#  [Project Name]
+
+[Description]
+
+## Installation ##
+
+## Usage ##
+
+## Options ##
+
+## Examples ##
+
+## Bugs
+
+## Contributing ##
+
+## License ##
+Copyright (c) [year] [fullname]
+
+Distributed under the [LICENSE NAME]. See [LICENSE](/LICENSE)"] 
+    (spit "README.md" readme)))
+
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
@@ -692,6 +720,8 @@ test
     {:cmds ["version"]
      :fn neil-version/neil-version
      :aliases {:h :help}}
+    {:cmds ["docs" "readme"]
+     :fn create-readme}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
