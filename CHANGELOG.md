@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Print a message and exit when the github rate-limit is reached ([@russmatney](https://github.com/russmatney))
+
 ## 0.1.47 (2022-10-19)
 
 - `neil dep add` now supports `--tag` and `--latest-tag` ([@russmatney](https://github.com/russmatney))
