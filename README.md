@@ -260,6 +260,16 @@ Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 
 ```
 
+## Github's Rate Limit
+
+Github's API has a 60 hit/hour rate-limit. The workaround for this is creating a
+[personal access
+token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
+and setting two env vars:
+
+- `BABASHKA_NEIL_DEV_GITHUB_USER`
+- `BABASHKA_NEIL_DEV_GITHUB_TOKEN`
+
 ## Roadmap
 
 - Add `bb.edn`-related features for invoking `test` and `build` tasks

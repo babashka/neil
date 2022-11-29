@@ -3,7 +3,8 @@
   (:require
    [babashka.curl :as curl]
    [babashka.fs :as fs]
-   [cheshire.core :as cheshire]))
+   [cheshire.core :as cheshire]
+   [clojure.string :as string]))
 
 (import java.net.URLEncoder)
 
@@ -19,5 +20,17 @@
            {:basic-auth [dev-github-user dev-github-token]})))
 
 (defn curl-get-json [url]
-  (-> (curl/get url curl-opts)
-      :body (cheshire/parse-string true)))
+  (let [response    (curl/get url curl-opts)
+        parsed-body (-> response :body (cheshire/parse-string true))]
+    (cond
+      (and (= 403 (:status response))
+           (string/includes? url "api.github")
+           (string/includes? (:message parsed-body) "rate limit"))
+      (binding [*out* *err*]
+        (println "You've hit the github rate-limit (60 reqs/hr).
+  You can set an API Token to increase the limit.
+  See neil's readme for details.")
+        (System/exit 1))
+
+      :else
+      parsed-body)))
