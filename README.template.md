@@ -214,8 +214,8 @@ Github's API has a 60 hit/hour rate-limit. The workaround for this is creating a
 token](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token)
 and setting two env vars:
 
-- `BABASHKA_NEIL_DEV_GITHUB_USER`
-- `BABASHKA_NEIL_DEV_GITHUB_TOKEN`
+- `NEIL_GITHUB_USER`
+- `NEIL_GITHUB_TOKEN`
 
 ## Roadmap
 

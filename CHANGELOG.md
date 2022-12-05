@@ -3,6 +3,10 @@
 ## Unreleased
 
 - Print a message and exit when the github rate-limit is reached ([@russmatney](https://github.com/russmatney))
+- Friendlier env vars for neil github token usage ([@russmatney](https://github.com/russmatney))
+  - `BABASHKA_NEIL_DEV_GITHUB_USER` -> `NEIL_GITHUB_USER`
+  - `BABASHKA_NEIL_DEV_GITHUB_TOKEN` -> `NEIL_GITHUB_TOKEN`
+  The old env vars are left in-place as a fallback, but may be removed in a future version.
 
 ## 0.1.47 (2022-10-19)
 
