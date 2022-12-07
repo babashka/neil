@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Print a message and exit when the github rate-limit is reached ([#136](https://github.com/babashka/neil/issues/136)) ([@russmatney](https://github.com/russmatney))
+- Friendlier env vars for neil github token usage ([#136](https://github.com/babashka/neil/issues/136)) ([@russmatney](https://github.com/russmatney))
+  - `BABASHKA_NEIL_DEV_GITHUB_USER` -> `NEIL_GITHUB_USER`
+  - `BABASHKA_NEIL_DEV_GITHUB_TOKEN` -> `NEIL_GITHUB_TOKEN`
+  The old env vars are left in-place as a fallback, but may be removed in a future version.
+
 ## 0.1.47 (2022-10-19)
 
 - `neil dep add` now supports `--tag` and `--latest-tag` ([@russmatney](https://github.com/russmatney))
