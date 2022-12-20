@@ -23,6 +23,8 @@
 
 (deftest add-dep-test
   (let [{:keys [edn]} (neil "add dep clj-kondo/clj-kondo")]
+    (is (-> edn :deps (get 'clj-kondo/clj-kondo))))
+  (let [{:keys [edn]} (neil "add dep clj-kondo")]
     (is (-> edn :deps (get 'clj-kondo/clj-kondo)))))
 
 (deftest add-dep-alias-test
