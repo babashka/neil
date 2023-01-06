@@ -655,9 +655,12 @@ docs
         (System/exit 1)))))
 
 (defn create-readme [opts]
-  (let [readme "#  [Project Name]
-
-[Description]
+  (let [project-name (proj/project-name opts)
+        readme (str 
+                 (if project-name 
+                   (str \# project-name )
+                   "# [Project Name]") 
+"[Description]
 
 ## Installation ##
 
@@ -674,7 +677,7 @@ docs
 ## License ##
 Copyright (c) [year] [fullname]
 
-Distributed under the [LICENSE NAME]. See [LICENSE](/LICENSE)"] 
+Distributed under the [LICENSE NAME]. See [LICENSE](/LICENSE)")] 
     (spit "README.md" readme)))
 
 (defn neil-test [{:keys [opts]}]
