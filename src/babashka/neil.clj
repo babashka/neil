@@ -654,7 +654,7 @@ docs
         (println (ex-message e))
         (System/exit 1)))))
 
-(defn create-readme [opts]
+(defn create-readme [{:keys [opts] :as _cmd-opts}]
   (let [project-name (proj/project-name opts)
         readme (str 
                  (if project-name 
