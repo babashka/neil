@@ -1,5 +1,9 @@
 # Changelog
 
+
+## Unreleased
+- Add `neil docs readme` subcommand to create a skeleton README.md. ([@alysbrooks](https://github.com/alysbrooks))
+
 ## 0.1.47 (2022-10-19)
 
 - `neil dep add` now supports `--tag` and `--latest-tag` ([@russmatney](https://github.com/russmatney))
