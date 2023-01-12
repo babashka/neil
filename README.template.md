@@ -96,6 +96,8 @@ $ clojure -T:build uber
 $ clojure -T:build deploy
 ```
 
+If you didn't use the full app template when starting your project, then you'll need to configure a couple things in order to get a working uberjar. See the uberjar section [here](https://blog.michielborkent.nl/new-clojure-project-quickstart.html).
+
 ### add test
 
 ``` clojure
