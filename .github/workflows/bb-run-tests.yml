@@ -11,3 +11,5 @@ jobs:
         with:
           bb: latest
       - run: bb run tests
+        env:
+          NEIL_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
