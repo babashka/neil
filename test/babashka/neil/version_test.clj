@@ -143,7 +143,7 @@
   (set-deps-edn! {})
   (git/ensure-repo git-opts)
   (testing "Set initial version when no version in deps.edn"
-    (let [{:keys [out]} (neil "version minor 4 --no-tag" :out :string)
+    (let [{:keys [out]} (neil "version minor 4 :no-tag" :out :string)
           v "0.4.0"]
       (is (= (str "v" v) out))
       (is (= v (read-version-string))))
