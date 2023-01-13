@@ -6,3 +6,4 @@
 .clj-kondo/babashka
 .clj-kondo/funcool
 .envrc
+test-resources/deps.edn
