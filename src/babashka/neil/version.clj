@@ -268,3 +268,9 @@ using the [major|minor|patch] subcommands.
        :tag (run-tag-command opts)
        :set (run-set-command opts)
        (:major :minor :patch) (run-bump-command command opts)))))
+
+(def version-spec
+  {:no-tag {:coerce :boolean}
+   :no-git-tag-version {:coerce :boolean}
+   :tag {:coerce :boolean}
+   :git-tag-version {:coerce :boolean}})

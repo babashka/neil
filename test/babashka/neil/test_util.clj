@@ -2,7 +2,6 @@
   (:require [babashka.fs :as fs]
             [babashka.neil :as neil-main]
             [babashka.process :as process]
-            [babashka.tasks :as tasks]
             [clojure.edn :as edn]
             [clojure.string :as str]))
 
@@ -28,7 +27,8 @@
                                    (process/tokenize cli-args)
                                    cli-args)
                                  [:deps-file (or deps-file backup-deps-file)]
-                                 (when dry-run [:dry-run "true"]))]
+                                 (when dry-run [:dry-run "true"]))
+        cli-args' (mapv str cli-args')]
     (binding [*command-line-args* cli-args']
-      (let [s (with-out-str (tasks/exec `neil-main/-main))]
+      (let [s (with-out-str (apply neil-main/-main cli-args'))]
         {:out (if (#{:edn} out) (edn/read-string s) (str/trim s))}))))

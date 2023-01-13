@@ -122,10 +122,10 @@
     (let [prev-v (read-version-string)
           prev-commit-count (git/commit-count git-opts)
           prev-tag-count (count (git/list-tags git-opts))]
-      (doseq [args [["--no-tag"]
-                    ["--no-git-tag-version"]
-                    ["--tag" "false"]
-                    ["--git-tag-version" "false"]]]
+      (doseq [args [[":no-tag"]
+                    [":no-git-tag-version"]
+                    [":tag" "false"]
+                    [":git-tag-version" "false"]]]
         (set-deps-edn! {:aliases {:neil {:project {:version prev-v}}}})
         (let [next-v "2021a4"
               {:keys [out]} (neil (concat ["version" "set" next-v] args) :out :string)]
@@ -143,7 +143,7 @@
   (set-deps-edn! {})
   (git/ensure-repo git-opts)
   (testing "Set initial version when no version in deps.edn"
-    (let [{:keys [out]} (neil "version minor 4 --no-tag" :out :string)
+    (let [{:keys [out]} (neil "version minor 4 :no-tag" :out :string)
           v "0.4.0"]
       (is (= (str "v" v) out))
       (is (= v (read-version-string))))

@@ -181,7 +181,7 @@
     (test-util/neil "dep add :lib babashka/fs :version 0.0.1" :deps-file test-file-path)
     (let [initial-clj-kondo-v (first (get-alias-versions 'clj-kondo/clj-kondo))
           initial-fs-v        (get-dep-version 'babashka/fs)]
-      (test-util/neil "dep upgrade --alias lint" :deps-file test-file-path)
+      (test-util/neil "dep upgrade :alias lint" :deps-file test-file-path)
       (let [upgraded-clj-kondo-v (first (get-alias-versions 'clj-kondo/clj-kondo))
             upgraded-fs-v        (get-dep-version 'babashka/fs)]
         (is (= initial-fs-v upgraded-fs-v))
