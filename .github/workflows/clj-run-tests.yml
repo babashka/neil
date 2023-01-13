@@ -1,4 +1,4 @@
-name: bb run tests
+name: clj run tests
 on: [push, pull_request]
 jobs:
   Testing:
