@@ -11,4 +11,4 @@
                         io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
                         org.babashka/cli
                         #_{:local/root "/Users/borkdude/dev/cli"}
-                        {:mvn/version "0.6.41"}}})
+                        {:mvn/version "0.6.43"}}})
