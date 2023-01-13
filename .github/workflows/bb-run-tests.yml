@@ -11,6 +11,6 @@ jobs:
         with:
           bb: latest
       - run: |
-          env
-          NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-          NEIL_GITHUB_USER=borkdude bb run tests
+          echo $GITHUB_TOKEN
+          NEIL_GITHUB_TOKEN=$GITHUB_TOKEN \
+          NEIL_GITHUB_USER=$GITHUB_ACTOR bb run tests
