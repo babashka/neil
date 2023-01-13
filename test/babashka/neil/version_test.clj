@@ -122,10 +122,10 @@
     (let [prev-v (read-version-string)
           prev-commit-count (git/commit-count git-opts)
           prev-tag-count (count (git/list-tags git-opts))]
-      (doseq [args [["--no-tag"]
-                    ["--no-git-tag-version"]
-                    ["--tag" "false"]
-                    ["--git-tag-version" "false"]]]
+      (doseq [args [[":no-tag"]
+                    [":no-git-tag-version"]
+                    [":tag" "false"]
+                    [":git-tag-version" "false"]]]
         (set-deps-edn! {:aliases {:neil {:project {:version prev-v}}}})
         (let [next-v "2021a4"
               {:keys [out]} (neil (concat ["version" "set" next-v] args) :out :string)]

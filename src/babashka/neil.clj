@@ -656,6 +656,8 @@ test
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
+
+
 (defn -main [& _args]
   (cli/dispatch
    [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
@@ -676,26 +678,32 @@ test
      :spec {:name {:coerce proj/coerce-project-name}}}
     {:cmds ["version" "tag"]
      :fn (partial neil-version/neil-version :tag)
-     :aliases {:h :help}}
+     :aliases {:h :help}
+     :spec neil-version/version-spec}
     {:cmds ["version" "set"]
      :fn (partial neil-version/neil-version :set)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "major"]
      :fn (partial neil-version/neil-version :major)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "minor"]
      :fn (partial neil-version/neil-version :minor)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "patch"]
      :fn (partial neil-version/neil-version :patch)
+     :spec neil-version/version-spec
      :args->opts [:version]
      :aliases {:h :help}}
     {:cmds ["version"]
      :fn neil-version/neil-version
-     :aliases {:h :help}}
+     :aliases {:h :help}
+     :spec neil-version/version-spec}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
