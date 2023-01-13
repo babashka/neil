@@ -1,0 +1,15 @@
+name: bb run tests
+on: [push, pull_request]
+jobs:
+  Testing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install clojure tools
+        uses: DeLaGuardo/setup-clojure@9.4
+        with:
+          cli: latest
+      - run: |
+          NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} clj -X:test
