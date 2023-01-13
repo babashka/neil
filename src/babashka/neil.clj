@@ -17,9 +17,9 @@
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
            :sha {:desc "When provided, assumes lib refers to Github repo."}
-           :latest-sha {:desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
            :tag {:desc "When provided, assumes lib refers to Github repo."}
-           :latest-tag {:desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
+           :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
                 :coerce :symbol}
@@ -305,6 +305,10 @@
   (println (cli/format-opts
             {:spec spec
              :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
+
+(defn log [& xs]
+  (binding [*out* *err*]
+    (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
   (if (or (:help opts) (:h opts) (not (:lib opts)))
