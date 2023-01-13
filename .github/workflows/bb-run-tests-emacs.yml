@@ -14,4 +14,4 @@ jobs:
         uses: purcell/setup-emacs@master
         with:
           version: 28.1
-      - run: bb run tests-emacs
+      - run: bb run test:emacs

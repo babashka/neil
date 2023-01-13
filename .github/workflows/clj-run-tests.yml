@@ -9,7 +9,7 @@ jobs:
       - name: Install clojure tools
         uses: DeLaGuardo/setup-clojure@9.4
         with:
-          cli: latest
+          bb: latest
       - run: |
           NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} clj -X:test
+          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} bb test:clj

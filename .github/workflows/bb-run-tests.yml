@@ -12,4 +12,4 @@ jobs:
           bb: latest
       - run: |
           NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
-          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} bb run tests
+          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} bb run test:bb
