@@ -40,7 +40,12 @@
 
 (defn curl-get-json [url]
   (let [response    (curl/get url curl-opts)
-        parsed-body (-> response :body (cheshire/parse-string true))]
+        parsed-body (try (-> response :body (cheshire/parse-string true))
+                         (catch Exception e
+                             (binding [*out* *err*]
+                               (println "Unable to parse body as JSON:")
+                               (println (-> response :body)))
+                             (throw e)))]
     (cond
       (and (= 403 (:status response))
            (string/includes? url "api.github")
