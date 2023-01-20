@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.1.48 (2022-01-20)
 
 - Print a message and exit when the github rate-limit is reached ([#136](https://github.com/babashka/neil/issues/136)) ([@russmatney](https://github.com/russmatney))
 - Friendlier env vars for neil github token usage ([#136](https://github.com/babashka/neil/issues/136)) ([@russmatney](https://github.com/russmatney))

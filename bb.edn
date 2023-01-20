@@ -54,7 +54,8 @@
            :task
            (do
              (run 'bump-version)
-             (run 'tests)
+             (run 'test:clj)
+             (run 'test:bb)
              (run 'update-readme)
              (shell "git add .")
              (let [version (-> (slurp "deps.edn") edn/read-string
