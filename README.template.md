@@ -2,6 +2,10 @@
 
 A CLI to add common aliases and features to `deps.edn`-based projects.
 
+## Introduction
+
+See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
+
 ## Installation
 
 ### Homebrew (Linux and macOS)
