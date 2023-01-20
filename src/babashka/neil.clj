@@ -319,6 +319,8 @@
             edn-nodes (edn-nodes edn-string)
             lib (:lib opts)
             lib (symbol lib)
+            lib (symbol (or (namespace lib) (name lib))
+                        (name lib))
             alias (:alias opts)
             explicit-git-sha? (or (:sha opts) (:latest-sha opts))
             explicit-git-tag? (or (:tag opts) (:latest-tag opts))
