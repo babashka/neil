@@ -17,9 +17,9 @@
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
            :sha {:desc "When provided, assumes lib refers to Github repo."}
-           :latest-sha {:desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
            :tag {:desc "When provided, assumes lib refers to Github repo."}
-           :latest-tag {:desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
+           :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
                 :coerce :symbol}
@@ -305,6 +305,10 @@
   (println (cli/format-opts
             {:spec spec
              :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
+
+(defn log [& xs]
+  (binding [*out* *err*]
+    (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
   (if (or (:help opts) (:h opts) (not (:lib opts)))
@@ -654,6 +658,8 @@ test
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
+
+
 (defn -main [& _args]
   (cli/dispatch
    [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
@@ -674,26 +680,32 @@ test
      :spec {:name {:coerce proj/coerce-project-name}}}
     {:cmds ["version" "tag"]
      :fn (partial neil-version/neil-version :tag)
-     :aliases {:h :help}}
+     :aliases {:h :help}
+     :spec neil-version/version-spec}
     {:cmds ["version" "set"]
      :fn (partial neil-version/neil-version :set)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "major"]
      :fn (partial neil-version/neil-version :major)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "minor"]
      :fn (partial neil-version/neil-version :minor)
      :args->opts [:version]
+     :spec neil-version/version-spec
      :aliases {:h :help}}
     {:cmds ["version" "patch"]
      :fn (partial neil-version/neil-version :patch)
+     :spec neil-version/version-spec
      :args->opts [:version]
      :aliases {:h :help}}
     {:cmds ["version"]
      :fn neil-version/neil-version
-     :aliases {:h :help}}
+     :aliases {:h :help}
+     :spec neil-version/version-spec}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here

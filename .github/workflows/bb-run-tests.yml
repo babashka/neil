@@ -10,4 +10,6 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
-      - run: bb run tests
+      - run: |
+          NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
+          NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} bb run test:bb

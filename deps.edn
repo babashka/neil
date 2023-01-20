@@ -3,7 +3,7 @@
         babashka/process {:mvn/version "0.1.7"}
         rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
-        org.babashka/cli {:mvn/version "0.3.33"}
+        org.babashka/cli {:mvn/version "0.6.43"}
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}}
  :tools/usage {:ns-default babashka.neil.api}
