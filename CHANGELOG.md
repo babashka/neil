@@ -7,7 +7,7 @@
   - `BABASHKA_NEIL_DEV_GITHUB_USER` -> `NEIL_GITHUB_USER`
   - `BABASHKA_NEIL_DEV_GITHUB_TOKEN` -> `NEIL_GITHUB_TOKEN`
   The old env vars are left in-place as a fallback, but may be removed in a future version.
-- Provide namespace when not given for `neil dep add`
+- `neil dep add`: Always write library names as namespaced symbols
   - Old behavior: `neil dep add http-kit` writes `http-kit {:mvn/version "2.7.0-alpha1"}` to `deps.edn`
   - New behavior: `neil dep add http-kit` writes `http-kit/http-kit {:mvn/version "2.7.0-alpha1"}` to `deps.edn`
 
