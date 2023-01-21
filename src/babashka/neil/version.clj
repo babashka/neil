@@ -85,7 +85,7 @@
 
 (defn assert-git-repo [{:keys [deps-file dir]}]
   (when-not (git/repo? deps-file)
-    (throw (ex-info "Requires git repo" {:deps-file (str (fs/canonicalize deps-file))
+    (throw (ex-info "Requires git repo" {:deps-file (str deps-file)
                                          :dir dir}))))
 
 (defn deps-edn->project-version-string [deps-edn]
@@ -97,28 +97,34 @@
 (defn assert-valid-project-version-string [project-version-string deps-file]
   (when-not (project-version-string? project-version-string)
     (throw (ex-info "Project version must be a string, e.g. \"1.0.0\""
-                    {:deps-file (str (fs/canonicalize deps-file))
+                    {:deps-file (str deps-file)
                      :project {:version project-version-string}}))))
 
+(defn- resolve-deps-file [dir deps-file]
+  (-> (proj/resolve-deps-file dir deps-file)
+      fs/canonicalize
+      str))
+
 (defn run-tag-command [{:keys [dir deps-file] :as opts}]
-  (let [deps-file (proj/resolve-deps-file dir deps-file)
+  (let [deps-file' (resolve-deps-file dir deps-file)
+        opts' (assoc opts :deps-file deps-file')
         deps-edn (some-> deps-file slurp edn/read-string)
         project-version-string (deps-edn->project-version-string deps-edn)
-        _ (assert-valid-project-version-string project-version-string deps-file)
+        _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)
         prefixed-version (version-map->str project-version-map :prefix true)]
-    (assert-git-repo opts)
-    (assert-no-unstaged-files opts)
-    (assert-at-least-one-staged-file opts)
-    (git/commit prefixed-version (git-opts opts))
-    (git/tag prefixed-version (git-opts opts))
+    (assert-git-repo opts')
+    (assert-no-unstaged-files opts')
+    (assert-at-least-one-staged-file opts')
+    (git/commit prefixed-version (git-opts opts'))
+    (git/tag prefixed-version (git-opts opts'))
     (println prefixed-version)))
 
 (defn run-root-command [{:keys [dir deps-file]}]
-  (let [deps-file (proj/resolve-deps-file dir deps-file)
-        deps-edn (some-> deps-file slurp edn/read-string)
+  (let [deps-file' (resolve-deps-file dir deps-file)
+        deps-edn (some-> deps-file' slurp edn/read-string)
         project-version-string (deps-edn->project-version-string deps-edn)
-        _ (assert-valid-project-version-string project-version-string deps-file)
+        _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)]
     (prn {:neil meta/version
           :project (version-map->str project-version-map :prefix false)})))
@@ -141,10 +147,11 @@
 (defn assert-clean-working-directory [opts]
   (when (and (not (git-clean-working-directory? (git/status (git-opts opts))))
              (not (:force opts)))
-    (throw (ex-info "Requires clean working directory unless --force is provided" {}))))
+    (throw (ex-info "Requires clean working directory unless --force is provided"
+                    (git-opts opts)))))
 
 (defn run-set-command [{:keys [version dir deps-file] :as opts}]
-  (let [deps-file' (proj/resolve-deps-file dir deps-file)
+  (let [deps-file' (resolve-deps-file dir deps-file)
         opts' (assoc opts :deps-file deps-file')
         git-tag-version-enabled (git-tag-version-enabled? opts')]
     (when git-tag-version-enabled
@@ -183,10 +190,10 @@
           :patch {:major major :minor minor :patch patch})))))
 
 (defn run-bump-command [command {:keys [dir deps-file] :as opts}]
-  (let [deps-file (proj/resolve-deps-file dir deps-file)
-        deps-edn (some-> deps-file slurp edn/read-string)
+  (let [deps-file' (resolve-deps-file dir deps-file)
+        deps-edn (some-> deps-file' slurp edn/read-string)
         project-version-string (deps-edn->project-version-string deps-edn)
-        _ (assert-valid-project-version-string project-version-string deps-file)
+        _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)
         override (:version opts)
         bumped-version-map (bump-version project-version-map command override)
