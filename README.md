@@ -2,6 +2,10 @@
 
 A CLI to add common aliases and features to `deps.edn`-based projects.
 
+## Introduction
+
+See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
+
 ## Installation
 
 ### Homebrew (Linux and macOS)
@@ -78,16 +82,10 @@ dep
     Run `neil dep search --help` to see all options.
 
   upgrade: Upgrade libs in the deps.edn file.
-    Supports --lib <libname> or :lib <libname> for upgrading a single, specified lib.
-    Supports --dry-run for printing updates without updating the deps.edn file.
-    Supports --alias <some-alias> for limiting upgrades to an alias.
-      Note that all deps (including alias deps) are upgraded by default.
-    Supports --no-aliases if you'd like to upgrade only the project's :deps.
+    Run `neil dep upgrade --help` to see all options.
 
-    Ex: `neil dep upgrade` - upgrade all deps.
-    Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
-    Ex: `neil dep upgrade --alias lint` - update only deps for the `lint` alias.
-    Ex: `neil dep upgrade :lib clj-kondo/clj-kondo` - update a single dep.
+  versions: List available versions of a library (Clojars libraries only)
+    Run `neil dep versions -h` to see all options.
 
   update: Alias for `upgrade`.
 

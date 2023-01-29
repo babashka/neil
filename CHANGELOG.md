@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.1.49 (2023-01-29)
 
 - Fix incorrect "Requires clean working directory" error in `neil version`
 - [#148](https://github.com/babashka/neil/issues/148): Always add latest kaocha version
