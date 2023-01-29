@@ -170,14 +170,25 @@
     (is (= :foo :bar))))
 " test-ns (name pn)))))))))
 
-(def kaocha-alias
-  "
-{:extra-deps {lambdaisland/kaocha {:mvn/version \"1.0.887\"}}}")
+(defn kaocha-alias []
+  (format "
+{:extra-deps {lambdaisland/kaocha {:mvn/version \"%s\"}}}
+ :main-opts [\"-m\" \"kaocha.runner\"]"
+          (latest-clojars-version 'lambdaisland/kaocha)))
 
 (defn add-kaocha [{:keys [opts] :as cmd}]
   (if (:help opts)
     (print-help cmd)
-    (add-alias opts :kaocha kaocha-alias)))
+    (do
+      (add-alias opts :kaocha (kaocha-alias))
+      (println (str/trim "
+If you wish to create a `bin/kaocha` file, copy and run the following:
+
+mkdir -p bin && \\
+echo '#!/usr/bin/env bash
+clojure -M:kaocha \"$@\" > bin/kaocha && \\
+chmod +x bin/kaocha
+")))))
 
 (defn nrepl-alias []
   (format "
