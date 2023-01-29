@@ -1,5 +1,6 @@
 (ns babashka.neil.dep-upgrade-test
   (:require
+   [babashka.neil :as neil]
    [babashka.neil.test-util :as test-util]
    [clojure.test :as t :refer [deftest is testing]]
    [clojure.edn :as edn]
@@ -186,3 +187,8 @@
             upgraded-fs-v        (get-dep-version 'babashka/fs)]
         (is (= initial-fs-v upgraded-fs-v))
         (is (not (= initial-clj-kondo-v upgraded-clj-kondo-v)))))))
+
+(deftest prefer-stable-version-test
+  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}})))
+  (is (= #:mvn{:version "1.0.5"} (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}})))
+  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "2.0.0-alpha2"}}))))

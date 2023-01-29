@@ -7,8 +7,9 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## Unreleased
 
 - Fix incorrect "Requires clean working directory" error in `neil version`
-- Always add latest kaocha version
-- Print instructions for making a `bin/kaocha` script
+- [#148](https://github.com/babashka/neil/issues/148): Always add latest kaocha version
+- [#148](https://github.com/babashka/neil/issues/148): Print instructions for making a `bin/kaocha` script
+- [#146](https://github.com/babashka/neil/issues/146): Prefer stable versions when running `neil dep upgrade`. Versions with any qualifier (like `-rc1`, `-alpha`, etc). are considered unstable.
 
 ## 0.1.48 (2023-01-20)
 
