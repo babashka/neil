@@ -439,7 +439,7 @@ return any matches:
 
 But a search string can be matched in a library's description:
 
-$ neil dep search \"test framework\"
+  $ neil dep search \"test framework\"
 
 will return libraries with 'test framework' in their description.")))
 
