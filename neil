@@ -1158,14 +1158,14 @@ chmod +x bin/kaocha
                   [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
                   :else
                   (or
-                    (when-let [v (:version opts)]
-                      [v :mvn])
-                    (when-let [v (latest-clojars-version lib)]
-                      [v :mvn])
-                    (when-let [v (latest-mvn-version lib)]
-                      [v :mvn])
-                    (when-let [v (git/latest-github-sha lib)]
-                      [v :git/sha])))
+                   (when-let [v (:version opts)]
+                     [v :mvn])
+                   (when-let [v (latest-clojars-version lib)]
+                     [v :mvn])
+                   (when-let [v (latest-mvn-version lib)]
+                     [v :mvn])
+                   (when-let [v (git/latest-github-sha lib)]
+                     [v :git/sha])))
             missing? (nil? version)
             mvn? (= coord-type? :mvn)
             git-sha? (= coord-type? :git/sha)

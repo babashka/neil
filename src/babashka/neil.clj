@@ -355,14 +355,14 @@ chmod +x bin/kaocha
                   [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
                   :else
                   (or
-                    (when-let [v (:version opts)]
-                      [v :mvn])
-                    (when-let [v (latest-clojars-version lib)]
-                      [v :mvn])
-                    (when-let [v (latest-mvn-version lib)]
-                      [v :mvn])
-                    (when-let [v (git/latest-github-sha lib)]
-                      [v :git/sha])))
+                   (when-let [v (:version opts)]
+                     [v :mvn])
+                   (when-let [v (latest-clojars-version lib)]
+                     [v :mvn])
+                   (when-let [v (latest-mvn-version lib)]
+                     [v :mvn])
+                   (when-let [v (git/latest-github-sha lib)]
+                     [v :git/sha])))
             missing? (nil? version)
             mvn? (= coord-type? :mvn)
             git-sha? (= coord-type? :git/sha)
@@ -468,7 +468,7 @@ return any matches:
 
 But a search string can be matched in a library's description:
 
-$ neil dep search \"test framework\"
+  $ neil dep search \"test framework\"
 
 will return libraries with 'test framework' in their description.")))
 
