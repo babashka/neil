@@ -9,6 +9,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - Fix incorrect "Requires clean working directory" error in `neil version`
 - Always add latest kaocha version
 - Print instructions for making a `bin/kaocha` script
+- Fix `neil dep search` helptext formatting ([@teodorlu](https://github.com/teodorlu))
 
 ## 0.1.48 (2023-01-20)
 
