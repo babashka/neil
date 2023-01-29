@@ -421,6 +421,24 @@ chmod +x bin/kaocha
           (spit (:deps-file opts) s))))))
 
 (defn dep-versions [{:keys [opts]}]
+  (when (or (:help opts) (:h opts))
+    (println (str/trim "
+Usage: neil dep versions LIB
+
+List available versions of a Clojure dependency. Only supports Clojars.
+
+  $ neil dep versions http-kit/http-kit
+  :lib http-kit/http-kit :version 2.7.0-alpha1
+  :lib http-kit/http-kit :version 2.7.0-SNAPSHOT
+  :lib http-kit/http-kit :version 2.6.0
+  :lib http-kit/http-kit :version 2.6.0-RC1
+  :lib http-kit/http-kit :version 2.6.0-alpha1
+  :lib http-kit/http-kit :version 2.5.3
+  :lib http-kit/http-kit :version 2.5.3-SNAPSHOT
+  :lib http-kit/http-kit :version 2.5.2
+  :lib http-kit/http-kit :version 2.5.1
+  :lib http-kit/http-kit :version 2.5.0"))
+    (System/exit 0))
   (let [lib (:lib opts)
         lib (symbol lib)
         versions (or (seq (clojars-versions lib opts))
@@ -552,6 +570,29 @@ will return libraries with 'test framework' in their description.")))
                               (and (not tag) sha) (assoc :sha sha))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
+  (when (or (:h opts) (:help opts))
+    (println "Usage: neil dep upgrade [lib] [options]")
+    (println "")
+    (println "  neil dep upgrade [options]            Upgrade all libraries")
+    (println "  neil dep upgrade LIB [options]        Upgrade a single library")
+    (println "  neil dep upgrade --lib LIB [options]  Upgrade a single library")
+    (println "")
+    (println "Options:")
+    (println "")
+    (println (cli/format-opts
+              {:spec spec
+               :order [:lib :dry-run :alias :no-aliases]}))
+    (println "")
+    (println (str/trim "
+Examples:
+
+  neil dep upgrade                           ; upgrade all deps.
+  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
+  neil dep upgrade --alias lint`             ; update only deps for the `lint` alias.
+  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
+"))
+    (System/exit 0))
+
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
@@ -603,16 +644,10 @@ dep
     Run `neil dep search --help` to see all options.
 
   upgrade: Upgrade libs in the deps.edn file.
-    Supports --lib <libname> or :lib <libname> for upgrading a single, specified lib.
-    Supports --dry-run for printing updates without updating the deps.edn file.
-    Supports --alias <some-alias> for limiting upgrades to an alias.
-      Note that all deps (including alias deps) are upgraded by default.
-    Supports --no-aliases if you'd like to upgrade only the project's :deps.
+    Run `neil dep upgrade --help` to see all options.
 
-    Ex: `neil dep upgrade` - upgrade all deps.
-    Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
-    Ex: `neil dep upgrade --alias lint` - update only deps for the `lint` alias.
-    Ex: `neil dep upgrade :lib clj-kondo/clj-kondo` - update a single dep.
+  versions: List available versions of a library (Clojars libraries only)
+    Run `neil dep versions -h` to see all options.
 
   update: Alias for `upgrade`.
 
