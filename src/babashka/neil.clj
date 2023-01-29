@@ -546,6 +546,7 @@ will return libraries with 'test framework' in their description.")))
     (println "  neil dep upgrade --lib LIB [options]  Upgrade a single library")
     (println "")
     (println "Options:")
+    (println "")
     (println (cli/format-opts
               {:spec spec
                :order [:lib :dry-run :alias :no-aliases]}))
