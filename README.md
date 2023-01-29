@@ -290,6 +290,19 @@ for the brew Formula. You can install this formula locally with:
 $ brew reinstall --build-from-source ./neil.rb
 ```
 
+Or install a development version with [bbin][bbin]:
+
+```
+$ bbin install . --as neil-dev --main-opts '["-m" babashka.neil/-main]'
+```
+
+You can choose your own binary name with the `--as YOUR_BINARY` option.
+Rebuilding is not required when installing with bbin - any changes to
+`src/babashka/neil.clj` will count the next time you run `neil-dev`
+(`YOUR_BINARY`).
+
+[bbin]: https://github.com/babashka/bbin
+
 ## License
 
 Copyright © 2022 Michiel Borkent
