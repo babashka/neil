@@ -450,7 +450,7 @@ return any matches:
 
 But a search string can be matched in a library's description:
 
-  $ neil dep search \"test framework\"
+$ neil dep search \"test framework\"
 
 will return libraries with 'test framework' in their description.")))
 
@@ -458,7 +458,7 @@ will return libraries with 'test framework' in their description.")))
   (if (or (:help opts) (not (:search-term opts)))
     (print-dep-search-help)
     (let [search-term (:search-term opts)
-          url (str "https://clojars.org/search?format=json&q=\"" (url-encode search-term) "\"")
+          url (str "https://clojars.org/search?format=json&q=%22" (url-encode search-term) "%22")
           {search-results :results
            results-count :count} (curl-get-json url)]
       (when (zero? results-count)
