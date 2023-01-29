@@ -1,11 +1,12 @@
-{:deps {babashka/babashka.curl {:mvn/version "0.1.2"}
+{:deps {org.babashka/http-client {:mvn/version "0.0.2"}
         babashka/fs {:mvn/version "0.1.6"}
         babashka/process {:mvn/version "0.1.7"}
         rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
-        org.babashka/cli {:mvn/version "0.6.43"}
+        org.babashka/cli {:mvn/version "0.6.45"}
         cheshire/cheshire {:mvn/version "5.11.0"}
-        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}}
+        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
+        version-clj/version-clj {:mvn/version "2.0.2"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases
  {:neil

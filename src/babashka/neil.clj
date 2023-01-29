@@ -44,8 +44,9 @@
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
-(defn latest-clojars-version [qlib]
-  (get (get-clojars-artifact qlib) :latest_release))
+(defn latest-clojars-version
+  [qlib]
+  (get (get-clojars-artifact qlib) :versions))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
@@ -53,6 +54,16 @@
          :recent_versions
          (map :version)
          (take limit))))
+
+(defn first-stable-version [versions]
+  (let [vparse (requiring-resolve 'version-clj.core/parse)]
+    (some (fn [version]
+            (let [{:keys [qualifiers]} (vparse version)]
+              (when-not
+                  ;; assume all qualifiers indicate non-stable version
+                  (seq qualifiers)
+                version)))
+          versions)))
 
 (defn- search-mvn [qlib limit]
   (:response
@@ -457,7 +468,7 @@ return any matches:
 
 But a search string can be matched in a library's description:
 
-  $ neil dep search \"test framework\"
+$ neil dep search \"test framework\"
 
 will return libraries with 'test framework' in their description.")))
 
@@ -465,7 +476,7 @@ will return libraries with 'test framework' in their description.")))
   (if (or (:help opts) (not (:search-term opts)))
     (print-dep-search-help)
     (let [search-term (:search-term opts)
-          url (str "https://clojars.org/search?format=json&q=\"" (url-encode search-term) "\"")
+          url (str "https://clojars.org/search?format=json&q=%22" (url-encode search-term) "%22")
           {search-results :results
            results-count :count} (curl-get-json url)]
       (when (zero? results-count)
@@ -489,20 +500,23 @@ will return libraries with 'test framework' in their description.")))
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
-  (cond
-    (or (:git/tag current) (:tag current))
-    (when-let [tag (git/latest-github-tag lib)]
-      {:git/tag (:name tag)
-       :git/sha (-> tag :commit :sha (subs 0 7))})
+  (let [v-older? (requiring-resolve 'version-clj.core/older?)]
+    (cond
+      (or (:git/tag current) (:tag current))
+      (when-let [tag (git/latest-github-tag lib)]
+        {:git/tag (:name tag)
+         :git/sha (-> tag :commit :sha (subs 0 7))})
 
-    (or (:git/sha current) (:sha current))
-    (when-let [sha (git/latest-github-sha lib)]
-      {:git/sha sha})
+      (or (:git/sha current) (:sha current))
+      (when-let [sha (git/latest-github-sha lib)]
+        {:git/sha sha})
 
-    (:mvn/version current)
-    (when-let [version (or (latest-clojars-version lib)
-                           (latest-mvn-version lib))]
-      {:mvn/version version})))
+      (:mvn/version current)
+      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
+                             (first-stable-version (mvn-versions lib {:limit 100})))]
+        ;; if current version is newer than latest stable release, leave it
+        (when (v-older? (:mvn/version current) version)
+          {:mvn/version version})))))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
