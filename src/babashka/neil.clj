@@ -410,6 +410,24 @@ chmod +x bin/kaocha
           (spit (:deps-file opts) s))))))
 
 (defn dep-versions [{:keys [opts]}]
+  (when (or (:help opts) (:h opts))
+    (println (str/trim "
+Usage: neil dep versions LIB
+
+List available versions of a Clojure dependency. Only supports Clojars.
+
+  $ neil dep versions http-kit/http-kit
+  :lib http-kit/http-kit :version 2.7.0-alpha1
+  :lib http-kit/http-kit :version 2.7.0-SNAPSHOT
+  :lib http-kit/http-kit :version 2.6.0
+  :lib http-kit/http-kit :version 2.6.0-RC1
+  :lib http-kit/http-kit :version 2.6.0-alpha1
+  :lib http-kit/http-kit :version 2.5.3
+  :lib http-kit/http-kit :version 2.5.3-SNAPSHOT
+  :lib http-kit/http-kit :version 2.5.2
+  :lib http-kit/http-kit :version 2.5.1
+  :lib http-kit/http-kit :version 2.5.0"))
+    (System/exit 0))
   (let [lib (:lib opts)
         lib (symbol lib)
         versions (or (seq (clojars-versions lib opts))
@@ -613,6 +631,9 @@ dep
 
   upgrade: Upgrade libs in the deps.edn file.
     Run `neil dep upgrade --help` to see all options.
+
+  versions: List available versions of a library (Clojars libraries only)
+    Run `neil dep versions -h` to see all options.
 
   update: Alias for `upgrade`.
 
