@@ -1240,7 +1240,7 @@ return any matches:
 
 But a search string can be matched in a library's description:
 
-$ neil dep search \"test framework\"
+  $ neil dep search \"test framework\"
 
 will return libraries with 'test framework' in their description.")))
 
@@ -1339,6 +1339,28 @@ will return libraries with 'test framework' in their description.")))
                               (and (not tag) sha) (assoc :sha sha))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
+  (when (or (:h opts) (:help opts))
+    (println "Usage: neil dep upgrade [lib] [options]")
+    (println "")
+    (println "  neil dep upgrade [options]            Upgrade all libraries")
+    (println "  neil dep upgrade LIB [options]        Upgrade a single library")
+    (println "  neil dep upgrade --lib LIB [options]  Upgrade a single library")
+    (println "")
+    (println "Options:")
+    (println (cli/format-opts
+              {:spec spec
+               :order [:lib :dry-run :alias :no-aliases]}))
+    (println "")
+    (println (str/trim "
+Examples:
+
+  neil dep upgrade                           ; upgrade all deps.
+  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
+  neil dep upgrade --alias lint`             ; update only deps for the `lint` alias.
+  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
+"))
+    (System/exit 0))
+
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
@@ -1390,16 +1412,7 @@ dep
     Run `neil dep search --help` to see all options.
 
   upgrade: Upgrade libs in the deps.edn file.
-    Supports --lib <libname> or :lib <libname> for upgrading a single, specified lib.
-    Supports --dry-run for printing updates without updating the deps.edn file.
-    Supports --alias <some-alias> for limiting upgrades to an alias.
-      Note that all deps (including alias deps) are upgraded by default.
-    Supports --no-aliases if you'd like to upgrade only the project's :deps.
-
-    Ex: `neil dep upgrade` - upgrade all deps.
-    Ex: `neil dep upgrade --dry-run` - print deps that would be upgraded.
-    Ex: `neil dep upgrade --alias lint` - update only deps for the `lint` alias.
-    Ex: `neil dep upgrade :lib clj-kondo/clj-kondo` - update a single dep.
+    Run `neil dep upgrade --help` to see all options.
 
   update: Alias for `upgrade`.
 
