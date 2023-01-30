@@ -44,17 +44,6 @@
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
-(defn latest-clojars-version
-  [qlib]
-  (get (get-clojars-artifact qlib) :versions))
-
-(defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
-  (let [body (get-clojars-artifact qlib)]
-    (->> body
-         :recent_versions
-         (map :version)
-         (take limit))))
-
 (defn first-stable-version [versions]
   (let [vparse (requiring-resolve 'version-clj.core/parse)]
     (some (fn [version]
@@ -65,6 +54,17 @@
                 version)))
           versions)))
 
+(defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
+  (let [body (get-clojars-artifact qlib)]
+    (->> body
+         :recent_versions
+         (map :version)
+         (take limit))))
+
+(defn latest-clojars-version
+  [qlib]
+  (first-stable-version (clojars-versions qlib {:limit 100})))
+
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
@@ -73,17 +73,14 @@
             (name qlib)
             (str limit)))))
 
-(defn latest-mvn-version [qlib]
-  (-> (search-mvn qlib 1)
-      :docs
-      first
-      :latestVersion))
-
 (defn mvn-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [payload (search-mvn qlib limit)]
     (->> payload
          :docs
          (map :v))))
+
+(defn latest-mvn-version [qlib]
+  (first-stable-version (mvn-versions qlib {:limit 100})))
 
 (def deps-template
   (str/triml "
