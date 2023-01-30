@@ -690,6 +690,7 @@ Distributed under the [LICENSE NAME]. See [LICENSE](/LICENSE)")]
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
     {:cmds ["add" "nrepl"] :fn add-nrepl}
+    {:cmds ["add" "readme"] :fn create-readme}
     {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
     {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
@@ -723,8 +724,6 @@ Distributed under the [LICENSE NAME]. See [LICENSE](/LICENSE)")]
     {:cmds ["version"]
      :fn neil-version/neil-version
      :aliases {:h :help}}
-    {:cmds ["docs" "readme"]
-     :fn create-readme}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
      ;; TODO: babashka CLI doesn't support :coerce option directly here
