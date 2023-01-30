@@ -871,7 +871,7 @@ using the [major|minor|patch] subcommands.
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
-    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s"
+    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&wt=json"
             (namespace qlib)
             (name qlib)
             (str limit)))))

@@ -3,5 +3,6 @@
    [babashka.neil :as neil]
    [clojure.test :as t :refer [deftest is]]))
 
-(deftest latest-clojars-version-test
-  (is (= "1.0.5" (neil/latest-clojars-version 'hiccup/hiccup))))
+(deftest latest-version-test
+  (is (= "1.0.5" (neil/latest-clojars-version 'hiccup/hiccup)))
+  (is (= "1.11.1" (neil/latest-mvn-version 'org.clojure/clojure))))
