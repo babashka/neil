@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## 0.1.50 (2023-01-30)
+## 0.1.51 (2023-01-30)
 
 - Fix `neil dep add`
 - Provide `bbin` install instructions installing a development version ([@teodorlu](https://github.com/teodorlu))
