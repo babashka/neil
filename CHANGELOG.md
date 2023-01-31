@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.1.53 (2023-01-31)
+
+- Clojars search improvements ([@tobias](https://github.com/tobias))
+
 ## 0.1.52 (2023-01-30)
 
 - Fix fetching versions from maven central
