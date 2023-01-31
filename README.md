@@ -129,7 +129,7 @@ To add a git library from Github you can use `:sha` to provide a SHA or
 `:latest-sha` to pick the latest sha from the default branch:
 
 ```
-$ neil add dep borkdude/sci :latest-sha true
+$ neil add dep org.babashka/sci :latest-sha true
 ```
 
 ### add build
