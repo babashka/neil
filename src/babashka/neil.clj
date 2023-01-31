@@ -473,7 +473,7 @@ will return libraries with 'test framework' in their description.")))
   (if (or (:help opts) (not (:search-term opts)))
     (print-dep-search-help)
     (let [search-term (:search-term opts)
-          url (str "https://clojars.org/search?format=json&q=%22" (url-encode search-term) "%22")
+          url (str "https://clojars.org/search?format=json&q=" (url-encode search-term))
           {search-results :results
            results-count :count} (curl-get-json url)]
       (when (zero? results-count)
