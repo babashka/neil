@@ -456,24 +456,32 @@ Search Clojars for a string in any attribute of an artifact:
   $ neil dep search \"babashka.nrepl\"
   :lib babashka/babashka.nrepl :version 0.0.6
 
-Note that Clojars stores the namespace and name of a library as separate
-attributes, so searching for a ns-qualified library will not necessarily
-return any matches:
+You can also search for the fully ns-qualified library:
 
   $ neil dep search \"babashka/babashka.nrepl\"
-  Unable to find babashka/babashka.nrepl on Clojars.
+  :lib babashka/babashka.nrepl :version 0.0.6
 
-But a search string can be matched in a library's description:
+To search for all artifacts in a group:
+
+  $ neil dep search \"group-id:babashka\"
+  :lib babashka/babashka :version 1.1.173
+  :lib babashka/fs :version 0.2.15
+  ...
+
+A search string can also be matched in a library's description:
 
   $ neil dep search \"test framework\"
 
-will return libraries with 'test framework' in their description.")))
+will return libraries with 'test framework' in their description.
+
+See http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for
+details on the search syntax.")))
 
 (defn dep-search [{:keys [opts]}]
   (if (or (:help opts) (not (:search-term opts)))
     (print-dep-search-help)
     (let [search-term (:search-term opts)
-          url (str "https://clojars.org/search?format=json&q=%22" (url-encode search-term) "%22")
+          url (str "https://clojars.org/search?format=json&q=" (url-encode search-term))
           {search-results :results
            results-count :count} (curl-get-json url)]
       (when (zero? results-count)
