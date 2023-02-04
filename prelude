@@ -13,4 +13,4 @@
                         #_{:local/root "/Users/borkdude/dev/cli"}
                         {:mvn/version "0.6.45"}
                         version-clj/version-clj {:mvn/version "2.0.2"}
-                        org.babashka/http-client {:mvn/version "0.0.2"}}})
+                        org.babashka/http-client {:mvn/version "0.0.3"}}})

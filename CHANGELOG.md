@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.1.54 (2023-02-04)
+
+- [#159](https://github.com/babashka/neil/issues/159): fix `pmap` + `requiring-resolve` issue
+
 ## 0.1.53 (2023-01-31)
 
 - Clojars search improvements ([@tobias](https://github.com/tobias))

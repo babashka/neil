@@ -3,6 +3,7 @@
   (:require
    [babashka.neil.git :as git]
    [babashka.neil.project :as proj]
+   [babashka.neil.utils :refer [req-resolve]]
    [clojure.edn :as edn]
    [clojure.set :as set]
    [clojure.string :as str]))
@@ -137,7 +138,7 @@
            {:create-opts create-opts})))
 
 (defn- deps-new-create [create-opts]
-  ((requiring-resolve 'org.corfield.new/create) create-opts))
+  ((req-resolve 'org.corfield.new/create) create-opts))
 
 (defn print-new-help []
   (println (str/trim "
@@ -189,13 +190,13 @@ Examples:
   This is required by org.corfield.new/create. In Clojure it's set by default,
   but in Babashka it must be set explicitly."
   []
-  (let [classpath ((requiring-resolve 'babashka.classpath/get-classpath))]
+  (let [classpath ((req-resolve 'babashka.classpath/get-classpath))]
     (System/setProperty "java.class.path" classpath)))
 
 (defn- deps-new-add-template-deps
   "Adds template deps at runtime."
   [template-deps]
-  ((requiring-resolve 'babashka.deps/add-deps) {:deps template-deps}))
+  ((req-resolve 'babashka.deps/add-deps) {:deps template-deps}))
 
 (defn run-deps-new
   "Runs org.corfield.new/create using the provided CLI options.

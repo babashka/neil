@@ -1,7 +1,7 @@
-{:deps {org.babashka/http-client {:mvn/version "0.0.2"}
+{:deps {org.babashka/http-client {:mvn/version "0.0.3"}
         babashka/fs {:mvn/version "0.1.6"}
         babashka/process {:mvn/version "0.1.7"}
-        rewrite-clj/rewrite-clj {:mvn/version "1.0.699-alpha"}
+        rewrite-clj/rewrite-clj {:mvn/version "1.1.46"}
         borkdude/rewrite-edn {:mvn/version "0.2.0"}
         org.babashka/cli {:mvn/version "0.6.45"}
         cheshire/cheshire {:mvn/version "5.11.0"}

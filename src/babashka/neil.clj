@@ -7,6 +7,7 @@
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
+   [babashka.neil.utils :refer [req-resolve]]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
    [babashka.neil.version :as neil-version]
@@ -44,8 +45,9 @@
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
+
 (defn first-stable-version [versions]
-  (let [vparse (requiring-resolve 'version-clj.core/parse)]
+  (let [vparse (req-resolve 'version-clj.core/parse)]
     (some (fn [version]
             (let [{:keys [qualifiers]} (vparse version)]
               (when-not
@@ -505,7 +507,7 @@ details on the search syntax.")))
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
-  (let [v-older? (requiring-resolve 'version-clj.core/older?)]
+  (let [v-older? (req-resolve 'version-clj.core/older?)]
     (cond
       (or (:git/tag current) (:tag current))
       (when-let [tag (git/latest-github-tag lib)]
@@ -783,6 +785,7 @@ test
    *command-line-args*
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
+  (shutdown-agents)
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
