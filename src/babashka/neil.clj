@@ -785,7 +785,6 @@ test
    *command-line-args*
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
-  (shutdown-agents)
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
