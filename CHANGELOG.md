@@ -4,9 +4,9 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.1.55 (2023-02-05)
 
-- Bug fix for kaocha alias and script typos 
+- Bug fix for kaocha alias and script typos ([@KingMob](https://github.com/KingMob))
 
 ## 0.1.54 (2023-02-04)
 
