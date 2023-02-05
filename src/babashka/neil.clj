@@ -182,8 +182,8 @@
 
 (defn kaocha-alias []
   (format "
-{:extra-deps {lambdaisland/kaocha {:mvn/version \"%s\"}}}
- :main-opts [\"-m\" \"kaocha.runner\"]"
+{:extra-deps {lambdaisland/kaocha {:mvn/version \"%s\"}}
+ :main-opts [\"-m\" \"kaocha.runner\"]}"
           (latest-clojars-version 'lambdaisland/kaocha)))
 
 (defn add-kaocha [{:keys [opts] :as cmd}]
@@ -196,7 +196,7 @@ If you wish to create a `bin/kaocha` file, copy and run the following:
 
 mkdir -p bin && \\
 echo '#!/usr/bin/env bash
-clojure -M:kaocha \"$@\" > bin/kaocha && \\
+clojure -M:kaocha \"$@\"' > bin/kaocha && \\
 chmod +x bin/kaocha
 ")))))
 
