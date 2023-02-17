@@ -152,7 +152,10 @@ https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
 
 Both built-in and external templates are supported. Built-in templates use
 unqualified names (e.g. scratch) whereas external templates use fully-qualified
-names (e.g. io.github.kit/kit-clj).
+names (e.g. io.github.kit/kit-clj). The list of valid built-in templates can be
+found in the deps-new README:
+
+https://github.com/seancorfield/deps-new/blob/develop/README.md
 
 If an external template is provided, the babashka.deps/add-deps function will be
 called automatically before running org.corfield.new/create. The deps for the
