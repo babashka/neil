@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.1.56 (2023-02-17)
+
+- [#163](https://github.com/babashka/neil/issues/163): Upgrade libraries, including deps-new to 0.5.0, which no longer uses [@seancorfield](https://github.com/seancorfield)'s tools.build wrapper in project templates
+
 ## 0.1.55 (2023-02-05)
 
 - Bug fix for kaocha alias and script typos ([@KingMob](https://github.com/KingMob))
