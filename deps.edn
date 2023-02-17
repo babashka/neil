@@ -1,11 +1,13 @@
-{:deps {org.babashka/http-client {:mvn/version "0.0.3"}
-        babashka/fs {:mvn/version "0.1.6"}
-        babashka/process {:mvn/version "0.1.7"}
+{:deps {org.babashka/http-client {:mvn/version "0.1.4"}
+        babashka/fs {:mvn/version "0.2.16"}
+        babashka/process {:mvn/version "0.4.16"}
         rewrite-clj/rewrite-clj {:mvn/version "1.1.46"}
-        borkdude/rewrite-edn {:mvn/version "0.2.0"}
+        borkdude/rewrite-edn {:mvn/version "0.4.6"}
         org.babashka/cli {:mvn/version "0.6.45"}
         cheshire/cheshire {:mvn/version "5.11.0"}
-        io.github.seancorfield/deps-new {:git/tag "v0.4.13" :git/sha "879c4eb"}
+        io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
+                                         :git/tag "v0.5.0"
+                                         :git/sha "48bf01e"}
         version-clj/version-clj {:mvn/version "2.0.2"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases
@@ -15,6 +17,8 @@
   :test ;; added by neil
   {:extra-paths ["test"]
    :extra-deps {io.github.cognitect-labs/test-runner
-                {:git/tag "v0.5.0" :git/sha "b3fd0d2"}}
+                {:git/url "https://github.com/cognitect-labs/test-runner"
+                 :git/tag "v0.5.1"
+                 :git/sha "dfb30dd"}}
    :main-opts ["-m" "cognitect.test-runner"]
    :exec-fn cognitect.test-runner.api/test}}}
