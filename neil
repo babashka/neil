@@ -271,6 +271,13 @@
   [template]
   (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
 
+(defn- built-in-templates []
+  (require 'org.corfield.new)
+  (let [blacklist #{'create}]
+    (->> (ns-publics 'org.corfield.new)
+         (remove (fn [[sym _]] (contains? blacklist sym)))
+         (into {}))))
+
 (defn- github-repo-http-url [lib]
   (str "https://github.com/" (git/clean-github-lib lib)))
 
@@ -399,7 +406,10 @@
   ((req-resolve 'org.corfield.new/create) create-opts))
 
 (defn print-new-help []
-  (println (str/trim "
+  (println
+   (str/join "\n\n"
+             (map str/trim
+                  ["
 Usage: neil new [template] [name] [target-dir] [options]
 
 Runs the org.corfield.new/create function from deps-new.
@@ -410,8 +420,12 @@ https://github.com/seancorfield/deps-new/blob/develop/doc/options.md
 
 Both built-in and external templates are supported. Built-in templates use
 unqualified names (e.g. scratch) whereas external templates use fully-qualified
-names (e.g. io.github.kit/kit-clj).
-
+names (e.g. io.github.kit/kit-clj)."
+                   (str
+                    "The provided built-in templates are:\n\n"
+                    (str/join "\n" (for [sym (sort (keys (built-in-templates)))]
+                                     (str "    " sym))))
+                   "
 If an external template is provided, the babashka.deps/add-deps function will be
 called automatically before running org.corfield.new/create. The deps for the
 template are inferred automatically from the template name. The following
@@ -440,7 +454,7 @@ options can be used to control the add-deps behavior:
 
 Examples:
   neil new scratch foo --overwrite
-  neil new io.github.rads/neil-new-test-template foo2 --latest-sha")))
+  neil new io.github.rads/neil-new-test-template foo2 --latest-sha"]))))
 
 (defn- deps-new-set-classpath
   "Sets the java.class.path property.
