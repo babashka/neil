@@ -273,9 +273,9 @@
 
 (defn- built-in-templates []
   (require 'org.corfield.new)
-  (let [blacklist #{'create}]
+  (let [non-templates #{'create}]
     (->> (ns-publics 'org.corfield.new)
-         (remove (fn [[sym _]] (contains? blacklist sym)))
+         (remove (fn [[sym _]] (contains? non-templates sym)))
          (into {}))))
 
 (defn- github-repo-http-url [lib]
