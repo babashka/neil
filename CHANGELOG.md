@@ -4,6 +4,12 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- [#166]: Update `neil new -h` output to include list of provided templates
+
+[#166]: https://github.com/babashka/neil/pull/166
+
 ## 0.1.56 (2023-02-17)
 
 - [#163](https://github.com/babashka/neil/issues/163): Upgrade libraries, including deps-new to 0.5.0, which no longer uses [@seancorfield](https://github.com/seancorfield)'s tools.build wrapper in project templates
