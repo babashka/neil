@@ -6,7 +6,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## 0.1.57 (2023-03-02)
 
-- [#166]: Update `neil new -h` output to include list of provided templates
+- [#166]: Update `neil new -h` output to include list of provided templates ([@teodorlu](https://github.com/teodorlu))
 - Upgrade git libs using explicit `:git/url` when available
 
 [#166]: https://github.com/babashka/neil/pull/166
