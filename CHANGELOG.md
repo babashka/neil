@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.1.57 (2023-03-02)
 
 - [#166]: Update `neil new -h` output to include list of provided templates
 - Upgrade git libs using explicit `:git/url` when available
