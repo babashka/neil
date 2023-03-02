@@ -47,6 +47,9 @@
 
 (import java.net.URLEncoder)
 
+(def unexceptional-statuses
+  #{200 201 202 203 204 205 206 207 300 301 302 303 304 307})
+
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
 (def github-user (or (System/getenv "NEIL_GITHUB_USER")
@@ -79,8 +82,14 @@
   See neil's readme for details.")
          (System/exit 1))
 
+       (contains? unexceptional-statuses (:status response))
+       parsed-body
+       (= 404 (:status response))
+       nil
        :else
-       parsed-body))))
+       (throw (ex-info (or (not-empty (:body response))
+                           (str url " request returned status code: " (:status response)))
+                       (assoc response :babashka/exit 1)))))))
 
 (ns babashka.neil.git
   {:no-doc true}
@@ -1336,6 +1345,11 @@ details on the search syntax.")))
                  :version (:version search-result)
                  :description (pr-str (:description search-result)))))))
 
+(defn git-url->lib [git-url]
+  (when git-url
+    (when (str/starts-with? git-url "https://github.com/")
+      (-> (str/replace git-url "https://github.com/" "")
+          symbol))))
 
 (defn dep->latest
   "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
@@ -1349,13 +1363,18 @@ details on the search syntax.")))
   (let [v-older? (req-resolve 'version-clj.core/older?)]
     (cond
       (or (:git/tag current) (:tag current))
-      (when-let [tag (git/latest-github-tag lib)]
-        {:git/tag (:name tag)
-         :git/sha (-> tag :commit :sha (subs 0 7))})
+      (let [lib (or (git-url->lib (:git/url current))
+                    lib)]
+        (when-let [tag (git/latest-github-tag lib)]
+          (when tag
+            {:git/tag (:name tag)
+             :git/sha (-> tag :commit :sha (subs 0 7))})))
 
       (or (:git/sha current) (:sha current))
-      (when-let [sha (git/latest-github-sha lib)]
-        {:git/sha sha})
+      (let [lib (or (git-url->lib (:git/url current))
+                    lib)]
+        (when-let [sha (git/latest-github-sha lib)]
+          {:git/sha sha}))
 
       (:mvn/version current)
       (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
@@ -1443,7 +1462,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (map (fn [dep] (merge dep {:latest (dep->latest dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib

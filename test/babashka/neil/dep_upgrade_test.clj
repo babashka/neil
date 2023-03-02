@@ -191,4 +191,9 @@
 (deftest prefer-stable-version-test
   (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}})))
   (is (= #:mvn{:version "1.0.5"} (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}})))
-  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "2.0.0-alpha2"}}))))
+  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "2.0.0-alpha2"}})))
+  (is (= #:git{:tag "v0.8.41", :sha "9257dc0"}
+         (neil/dep->latest {:lib 'com.grzm/awyeah-api
+                            :current {:git/url "https://github.com/grzm/awyeah-api"
+                                      :git/sha "1810bf6"
+                                      :git/tag "v0.8.35"}:mvn/version "2.0.0-alpha2"}))))

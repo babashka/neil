@@ -7,6 +7,9 @@
 
 (import java.net.URLEncoder)
 
+(def unexceptional-statuses
+  #{200 201 202 203 204 205 206 207 300 301 302 303 304 307})
+
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
 (def github-user (or (System/getenv "NEIL_GITHUB_USER")
@@ -39,5 +42,11 @@
   See neil's readme for details.")
          (System/exit 1))
 
+       (contains? unexceptional-statuses (:status response))
+       parsed-body
+       (= 404 (:status response))
+       nil
        :else
-       parsed-body))))
+       (throw (ex-info (or (not-empty (:body response))
+                           (str url " request returned status code: " (:status response)))
+                       (assoc response :babashka/exit 1)))))))
