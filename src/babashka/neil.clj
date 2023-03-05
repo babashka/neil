@@ -16,10 +16,13 @@
    [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
-           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."}
-           :sha {:desc "When provided, assumes lib refers to Github repo."}
+           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
+                     :coerce :string}
+           :sha {:desc "When provided, assumes lib refers to Github repo."
+                 :coerce :string}
            :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
-           :tag {:desc "When provided, assumes lib refers to Github repo."}
+           :tag {:desc "When provided, assumes lib refers to Github repo."
+                 :coerce :string}
            :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
@@ -29,6 +32,7 @@
                    :coerce :keyword}
            :deps-file {:ref "<file>"
                        :desc "Add to <file> instead of deps.edn."
+                       :coerce :string
                        :default "deps.edn"}
            :limit {:coerce :long}
            :dry-run {:coerce :boolean
@@ -491,11 +495,10 @@ details on the search syntax.")))
           (println "Unable to find" search-term  "on Clojars.")
           (System/exit 1)))
       (doseq [search-result search-results]
-        (println :lib (format  "%s/%s"
-                               (:group_name search-result)
-                               (:jar_name search-result))
-                 :version (:version search-result)
-                 :description (pr-str (:description search-result)))))))
+        (prn :lib (symbol (:group_name search-result)
+                          (:jar_name search-result))
+             :version (:version search-result)
+             :description (:description search-result))))))
 
 (defn git-url->lib [git-url]
   (when git-url
