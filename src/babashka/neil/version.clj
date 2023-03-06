@@ -12,9 +12,13 @@
 (defn raw-string-version-map? [{:keys [raw-string]}]
   (string? raw-string))
 
+(defn coerce-int [x]
+  (cond-> x (string? x) Integer.))
+
 (defn semver-version-map? [{:keys [major minor patch pre-release build] :as m}]
-  (and (nat-int? major)
-       (nat-int? minor)
+  (and
+       (-> major coerce-int nat-int?)
+       (-> minor coerce-int nat-int?)
        (nat-int? patch)
        (if (contains? m :pre-release) (string? pre-release) true)
        (if (contains? m :build) (string? build) true)))
