@@ -57,7 +57,7 @@
              (shell {:continue true} "git add .")
              (let [version (-> (slurp "deps.edn") edn/read-string
                                :aliases :neil :project :version)]
-               (shell (format "git commit -m 'Bump version %s'" version))
+               (shell {:continue true} (format "git commit -m 'Bump version %s'" version))
                (shell (str "git tag v" version))
                (shell "git push --atomic origin main"
                       (str "v" version))))}}}
