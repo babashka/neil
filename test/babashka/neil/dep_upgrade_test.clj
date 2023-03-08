@@ -196,4 +196,6 @@
          (neil/dep->latest {:lib 'com.grzm/awyeah-api
                             :current {:git/url "https://github.com/grzm/awyeah-api"
                                       :git/sha "1810bf6"
-                                      :git/tag "v0.8.35"}:mvn/version "2.0.0-alpha2"}))))
+                                      :git/tag "v0.8.35"}:mvn/version "2.0.0-alpha2"})))
+  (is (some? (neil/dep->latest {:lib 'com.google.apis/google-api-services-sheets
+                                :current {:mvn/version "v4-rev20220927-2.0.0"}}))))

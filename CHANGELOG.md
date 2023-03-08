@@ -4,12 +4,15 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.1.58 (2023-03-08)
+
+- [#171](https://github.com/babashka/neil/issues/171): better stable version check
+- [#170](https://github.com/babashka/neil/issues/170): always print and coerce `:version` as string
+
 ## 0.1.57 (2023-03-02)
 
 - [#166]: Update `neil new -h` output to include list of provided templates ([@teodorlu](https://github.com/teodorlu))
 - Upgrade git libs using explicit `:git/url` when available
-
-[#166]: https://github.com/babashka/neil/pull/166
 
 ## 0.1.56 (2023-02-17)
 
