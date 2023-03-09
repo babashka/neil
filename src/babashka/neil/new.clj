@@ -49,8 +49,11 @@
    [#{} #{:git/url}]
    (fn [lib-sym lib-opts]
      (let [url (or (:git/url lib-opts) (github-repo-http-url lib-sym))
-           {:keys [name commit]} (git/latest-github-tag (git-url->lib-sym url))]
-       {lib-sym {:git/url url :git/tag name :git/sha (:sha commit)}}))
+           tag (git/latest-github-tag (git-url->lib-sym url))]
+       (if tag
+         {lib-sym {:git/url url :git/tag (:name tag) :git/sha (-> tag :commit :sha)}}
+         (let [sha (git/latest-github-sha (git-url->lib-sym url))]
+           {lib-sym {:git/url url :git/sha sha}}))))
 
    [#{:git/tag} #{:git/url :git/tag}]
    (fn [lib-sym lib-opts]
