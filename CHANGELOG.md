@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.1.59 (2023-03-09)
 
 - [#173](https://github.com/babashka/neil/issues/173): `neil new`: Support Git repos without tags
 
