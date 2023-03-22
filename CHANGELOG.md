@@ -4,9 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.1.60 (2023-03-22)
 
 - [#177](https://github.com/babashka/neil/issues/177): `neil dep add`: add latest unstable version if no stable versions are found ([@teodorlu](https://github.com/teodorlu))
+- Continue upgrading deps even when some HTTP calls contain 5xx response codes
 
 ## 0.1.59 (2023-03-09)
 
