@@ -66,9 +66,12 @@
          (map :version)
          (take limit))))
 
-(defn latest-clojars-version
+(defn latest-stable-clojars-version
   [qlib]
   (first-stable-version (clojars-versions qlib {:limit 100})))
+
+(defn latest-clojars-version [qlib]
+  (first (clojars-versions qlib {:limit 100})))
 
 (defn- search-mvn [qlib limit]
   (:response
@@ -84,8 +87,11 @@
          :docs
          (map :v))))
 
-(defn latest-mvn-version [qlib]
+(defn latest-stable-mvn-version [qlib]
   (first-stable-version (mvn-versions qlib {:limit 100})))
+
+(defn latest-mvn-version [qlib]
+  (first (mvn-versions qlib {:limit 100})))
 
 (def deps-template
   (str/triml "
@@ -187,7 +193,7 @@
   (format "
 {:extra-deps {lambdaisland/kaocha {:mvn/version \"%s\"}}
  :main-opts [\"-m\" \"kaocha.runner\"]}"
-          (latest-clojars-version 'lambdaisland/kaocha)))
+          (latest-stable-clojars-version 'lambdaisland/kaocha)))
 
 (defn add-kaocha [{:keys [opts] :as cmd}]
   (if (:help opts)
@@ -207,7 +213,7 @@ chmod +x bin/kaocha
   (format "
 {:extra-deps {nrepl/nrepl {:mvn/version \"%s\"}}
  :main-opts [\"-m\" \"nrepl.cmdline\" \"--interactive\" \"--color\"]}"
-          (latest-clojars-version 'nrepl/nrepl)))
+          (latest-stable-clojars-version 'nrepl/nrepl)))
 
 (defn add-nrepl [{:keys [opts] :as cmd}]
   (if (:help opts)
@@ -359,12 +365,16 @@ chmod +x bin/kaocha
                   (or
                    (when-let [v (:version opts)]
                      [v :mvn])
+                   (when-let [v (latest-stable-clojars-version lib)]
+                     [v :mvn])
+                   (when-let [v (latest-stable-mvn-version lib)]
+                     [v :mvn])
+                   (when-let [v (git/latest-github-sha lib)]
+                     [v :git/sha])
                    (when-let [v (latest-clojars-version lib)]
                      [v :mvn])
                    (when-let [v (latest-mvn-version lib)]
-                     [v :mvn])
-                   (when-let [v (git/latest-github-sha lib)]
-                     [v :git/sha])))
+                     [v :mvn])))
             missing? (nil? version)
             mvn? (= coord-type? :mvn)
             git-sha? (= coord-type? :git/sha)
