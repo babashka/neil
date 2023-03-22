@@ -626,7 +626,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (map (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib

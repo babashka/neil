@@ -70,8 +70,9 @@
                           (catch Exception e
                             (binding [*out* *err*]
                               (println "Unable to parse body as JSON:")
+                              (println (ex-message e))
                               (println (-> response :body)))
-                            (throw e)))]
+                            nil #_(throw e)))]
      (cond
        (and (= 403 (:status response))
             (string/includes? url "api.github")
@@ -79,17 +80,19 @@
        (binding [*out* *err*]
          (println "You've hit the github rate-limit (60 reqs/hr).
   You can set an API Token to increase the limit.
-  See neil's readme for details.")
-         (System/exit 1))
+  See neil's README for details.")
+         nil #_(System/exit 1))
 
        (contains? unexceptional-statuses (:status response))
        parsed-body
        (= 404 (:status response))
        nil
        :else
-       (throw (ex-info (or (not-empty (:body response))
-                           (str url " request returned status code: " (:status response)))
-                       (assoc response :babashka/exit 1)))))))
+       (binding [*out* *err*]
+         (println
+          (or (not-empty (:body response))
+              (str url " request returned status code: " (:status response))))
+         nil)))))
 
 (ns babashka.neil.git
   {:no-doc true}
@@ -1481,7 +1484,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (map (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib

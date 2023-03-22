@@ -30,8 +30,9 @@
                           (catch Exception e
                             (binding [*out* *err*]
                               (println "Unable to parse body as JSON:")
+                              (println (ex-message e))
                               (println (-> response :body)))
-                            (throw e)))]
+                            nil #_(throw e)))]
      (cond
        (and (= 403 (:status response))
             (string/includes? url "api.github")
@@ -39,14 +40,16 @@
        (binding [*out* *err*]
          (println "You've hit the github rate-limit (60 reqs/hr).
   You can set an API Token to increase the limit.
-  See neil's readme for details.")
-         (System/exit 1))
+  See neil's README for details.")
+         nil #_(System/exit 1))
 
        (contains? unexceptional-statuses (:status response))
        parsed-body
        (= 404 (:status response))
        nil
        :else
-       (throw (ex-info (or (not-empty (:body response))
-                           (str url " request returned status code: " (:status response)))
-                       (assoc response :babashka/exit 1)))))))
+       (binding [*out* *err*]
+         (println
+          (or (not-empty (:body response))
+              (str url " request returned status code: " (:status response))))
+         nil)))))
