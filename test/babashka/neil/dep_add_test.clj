@@ -4,5 +4,6 @@
    [clojure.test :as t :refer [deftest is]]))
 
 (deftest latest-version-test
-  (is (= "1.0.5" (neil/latest-clojars-version 'hiccup/hiccup)))
-  (is (= "1.11.1" (neil/latest-mvn-version 'org.clojure/clojure))))
+  (is (= "1.0.5" (neil/latest-stable-clojars-version 'hiccup/hiccup)))
+  (is (= "2.0.0-alpha2" (neil/latest-clojars-version 'hiccup/hiccup)))
+  (is (= "1.11.1" (neil/latest-stable-mvn-version 'org.clojure/clojure))))
