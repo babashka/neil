@@ -540,6 +540,11 @@ details on the search syntax.")))
         (when-let [sha (git/latest-github-sha lib)]
           {:git/sha sha}))
 
+      ;; Proposed semantic:
+      ;;
+      ;; 1. When a stable version is installed, upgrade to latest stable.
+      ;; 2. When an unstable version is installed, upgrade to latest version - stable or unstable.
+
       (:mvn/version current)
       (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
                              (first-stable-version (mvn-versions lib {:limit 100})))]
