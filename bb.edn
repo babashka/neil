@@ -44,10 +44,6 @@
            :requires ([babashka.neil.test-runner])
            :task (exec 'babashka.neil.test-runner/run-tests)}
 
-  test:teodor {:depends [gen-script]
-               :requires ([babashka.neil.test-runner])
-               :task (babashka.neil.test-runner/run-tests {:nses (pr-str '[babashka.neil.dep-upgrade-test])})}
-
   test:clj {:task (apply clojure "-M:test" *command-line-args*)}
 
   test:emacs {:extra-paths ["."]
