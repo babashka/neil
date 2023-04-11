@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: allow upgrading from an unstable version to the latest unstable version ([@teodorlu](https://github.com/teodorlu))
+
 ## 0.1.60 (2023-03-22)
 
 - [#177](https://github.com/babashka/neil/issues/177): `neil dep add`: add latest unstable version if no stable versions are found ([@teodorlu](https://github.com/teodorlu))
