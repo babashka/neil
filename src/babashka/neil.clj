@@ -49,15 +49,13 @@
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
-(defn first-stable-version [versions]
+(defn stable-version? [version]
   (let [vparse (req-resolve 'version-clj.core/parse)]
-    (some (fn [version]
-            (let [{:keys [qualifiers]} (vparse version)]
-              (when-not
-                  ;; assume all qualifiers indicate non-stable version
-                  (some #{"rc" "alpha" "beta" "snapshot" "milestone"} qualifiers)
-                version)))
-          versions)))
+    (not (some #{"rc" "alpha" "beta" "snapshot" "milestone"}
+               (:qualifiers (vparse version))))))
+
+(defn first-stable-version [versions]
+  (->> versions (filter stable-version?) first))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
