@@ -23,7 +23,8 @@
 
 (deftest stable-version-test
   (is (true? (neil/stable-version? "1.11")))
-  (is (false? (neil/stable-version? "v2-alpha-263-g89da9d11"))))
+  (is (false? (neil/stable-version? "v2-alpha-263-g89da9d11")))
+  (is (= "1.11" (neil/first-stable-version ["v2-alpha-263-g89da9d11" "1.11"]))))
 
 (deftest dep-upgrade-test
   (testing "a fresh project is up-to-date"

@@ -907,15 +907,13 @@ using the [major|minor|patch] subcommands.
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
-(defn first-stable-version [versions]
+(defn stable-version? [version]
   (let [vparse (req-resolve 'version-clj.core/parse)]
-    (some (fn [version]
-            (let [{:keys [qualifiers]} (vparse version)]
-              (when-not
-                  ;; assume all qualifiers indicate non-stable version
-                  (some #{"rc" "alpha" "beta" "snapshot" "milestone"} qualifiers)
-                version)))
-          versions)))
+    (not (some #{"rc" "alpha" "beta" "snapshot" "milestone"}
+               (:qualifiers (vparse version))))))
+
+(defn first-stable-version [versions]
+  (->> versions (filter stable-version?) first))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
@@ -1380,7 +1378,13 @@ details on the search syntax.")))
 
   Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha`.
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
-  `:git/url`, for example."
+  `:git/url`, for example.
+  
+  Upgrade semantics:
+
+    1. A version will not be superseded by an older version
+    2. A stable version will only be superseded by another stable version
+    3. Unstable versions will be replaced by the latest version, whether stable or unstable."
   [{:keys [current lib] :as _dep-update}]
   (let [v-older? (req-resolve 'version-clj.core/older?)]
     (cond
@@ -1399,11 +1403,14 @@ details on the search syntax.")))
           {:git/sha sha}))
 
       (:mvn/version current)
-      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
-                             (first-stable-version (mvn-versions lib {:limit 100})))]
-        ;; if current version is newer than latest stable release, leave it
-        (when (v-older? (:mvn/version current) version)
-          {:mvn/version version})))))
+      (let [first-acceptable (if (stable-version? (:mvn/version current))
+                               first-stable-version
+                               first)]
+        (when-let [latest-version (or (first-acceptable (clojars-versions lib {:limit 100}))
+                                      (first-acceptable (mvn-versions lib {:limit 100})))]
+          ;; if current version is newer than latest release, leave it
+          (when (v-older? (:mvn/version current) latest-version)
+            {:mvn/version latest-version}))))))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
