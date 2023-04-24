@@ -45,7 +45,17 @@
 
       ;; after a non-dry-run, the version should be changed
       (test-util/neil "dep upgrade" :deps-file test-file-path)
-      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo)))))))
+      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
+
+  (testing "Update logic: update to new stable versions."
+    (let [versions ["1.12.0-alpha2" "1.12.0-alpha1" "1.11.2" "1.11.2-alpha1" "1.11.1" "1.11.0" "1.11.0-alpha1"]]
+      (is (= "1.11.2" (neil/preferred-upgrade-version "1.11.1" versions)))
+      (is (= "1.11.2" (neil/preferred-upgrade-version "1.11.0" versions)))
+      (is (= "1.11.2" (neil/preferred-upgrade-version "1.11.0-alpha1" versions)))))
+
+  (testing "Update logic: when on unstable and a more recent unstable is available, update."
+    (let [versions ["1.12.0-alpha2" "1.12.0-alpha1" "1.11.2" "1.11.2-alpha1" "1.11.1" "1.11.0" "1.11.0-alpha1"]]
+      (is (= "1.12.0-alpha2" (neil/preferred-upgrade-version "1.12.0-alpha1" versions))))))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"

@@ -513,6 +513,30 @@ details on the search syntax.")))
       (-> (str/replace git-url "https://github.com/" "")
           symbol))))
 
+(defn preferred-upgrade-version
+  "Given a current version and a list of optional versions, either return an
+  upgrade to recommend, or nil if upgrading is not recommended.
+
+  Upgrade semantics:
+
+  1. A version will not be replaced by an older version
+  2. A stable version will not be replaced by an unstable version
+  3. An unstable version will preferrably be replaced by a more recent stable
+     version (preferred), otherwise a more recent unstable version if present."
+  [current versions]
+  (let [latest-stable-version (first-stable-version versions)
+        latest-version (first versions)
+        v-older? (req-resolve 'version-clj.core/older?)]
+    (cond (v-older? current latest-stable-version)
+          latest-stable-version
+
+          (and (not (stable-version? current))
+               (v-older? current latest-version))
+          latest-version
+
+          :else
+          nil)))
+
 (defn dep->latest
   "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
   `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
