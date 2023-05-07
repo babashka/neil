@@ -797,13 +797,14 @@ test
      :spec neil-version/version-spec}
     {:cmds ["help"] :fn print-help}
     {:cmds ["test"] :fn neil-test
-     ;; TODO: babashka CLI doesn't support :coerce option directly here
      :spec neil-test/neil-test-spec
      :alias neil-test/neil-test-aliases}
-    {:cmds [] :fn (fn [{:keys [opts] :as m}]
-                    (if (:version opts)
-                      (neil-version/print-version)
-                      (print-help m)))}]
+    {:cmds []
+     :spec {:version {:coerce :boolean}}
+     :fn (fn [{:keys [opts] :as m}]
+           (if (:version opts)
+             (neil-version/print-version)
+             (print-help m)))}]
    *command-line-args*
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
