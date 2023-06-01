@@ -390,6 +390,7 @@ chmod +x bin/kaocha
                     (if (get-in existing-aliases [alias :deps]) :deps :extra-deps)
                     as]
                    [:deps as])
+            
             nl-path (if (and alias
                              (not (contains? existing-aliases alias)))
                       [:aliases alias]
@@ -403,8 +404,7 @@ chmod +x bin/kaocha
             nodes (cond
                     missing? edn-nodes
                     mvn?
-                    (r/assoc-in edn-nodes path
-                                {:mvn/version version})
+                    (r/assoc-in edn-nodes (conj path :mvn/version) version)
                     git-sha?
                     ;; multiple steps to force newlines
                     (-> edn-nodes
