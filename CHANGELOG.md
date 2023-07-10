@@ -7,6 +7,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## Unreleased
 
 - [#181](https://github.com/babashka/neil/issues/181): fix `neil --version`
+- fix tests by referring to latest hiccup ([@teodorlu](https://github.com/teodorlu))
 
 ## 0.1.60 (2023-03-22)
 
