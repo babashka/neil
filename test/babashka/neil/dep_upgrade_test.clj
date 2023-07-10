@@ -190,12 +190,15 @@
 
 (deftest prefer-stable-version-test
   (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup
-                               :current {:mvn/version "1.0.5"}})))
+                               :current {:mvn/version "1.0.5"}}))
+      "1.0.5 is (per 2023-07-10) the latest stable version of hiccup, no updates are available")
   (is (= #:mvn{:version "1.0.5"}
          (neil/dep->latest {:lib 'hiccup/hiccup
-                            :current {:mvn/version "1.0.4"}})))
+                            :current {:mvn/version "1.0.4"}}))
+      "1.0.5 is an update to 1.0.4 for hiccup")
   (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup
-                               :current {:mvn/version "2.0.0-alpha2"}})))
+                               :current {:mvn/version "2.0.0-alpha2"}}))
+      "Neil does not propose updates to unstable versions")
   (is (= #:git{:tag "v0.8.41", :sha "9257dc0"}
          (neil/dep->latest {:lib 'com.grzm/awyeah-api
                             :current {:git/url "https://github.com/grzm/awyeah-api"
