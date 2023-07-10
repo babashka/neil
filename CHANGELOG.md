@@ -6,7 +6,11 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## Unreleased
 
+<<<<<<< HEAD
 - [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: allow upgrading from an unstable version to the latest unstable version ([@teodorlu](https://github.com/teodorlu))
+=======
+- [#181](https://github.com/babashka/neil/issues/181): fix `neil --version`
+>>>>>>> origin/main
 
 ## 0.1.60 (2023-03-22)
 
