@@ -520,7 +520,9 @@ details on the search syntax.")))
   `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
   or `{:git/sha \"sha-blah\"}`.
 
-  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha`.
+  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha` if a
+  valid upgrade is found, `nil` otherwise.
+
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
