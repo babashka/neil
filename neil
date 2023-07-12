@@ -871,7 +871,8 @@ using the [major|minor|patch] subcommands.
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.set :as set]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -907,15 +908,26 @@ using the [major|minor|patch] subcommands.
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
-(defn first-stable-version [versions]
+(defn stable-version?
+  [version-str]
   (let [vparse (req-resolve 'version-clj.core/parse)]
-    (some (fn [version]
-            (let [{:keys [qualifiers]} (vparse version)]
-              (when-not
-                  ;; assume all qualifiers indicate non-stable version
-                  (some #{"rc" "alpha" "beta" "snapshot" "milestone"} qualifiers)
-                version)))
-          versions)))
+    (empty? (set/intersection (:qualifiers (vparse version-str))
+                              #{"rc" "alpha" "beta" "snapshot" "milestone"}))))
+
+(comment
+  (stable-version? "1.0.4")
+  ;; => true
+  (stable-version? "1.0.5")
+  ;; => true
+  (stable-version? "2.0.0-RC1")
+  ;; => false
+  )
+
+(defn first-stable-version [versions]
+  (some (fn [version]
+          (when (stable-version? version)
+            version))
+        versions))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
@@ -1373,12 +1385,14 @@ details on the search syntax.")))
       (-> (str/replace git-url "https://github.com/" "")
           symbol))))
 
-(defn dep->latest
+(defn dep->latest-stable
   "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
   `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
   or `{:git/sha \"sha-blah\"}`.
 
-  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha`.
+  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha` if a
+  valid upgrade is found, `nil` otherwise.
+
   Note that this is not a full dep coordinate - we rely on `dep-add` later to include
   `:git/url`, for example."
   [{:keys [current lib] :as _dep-update}]
@@ -1404,6 +1418,17 @@ details on the search syntax.")))
         ;; if current version is newer than latest stable release, leave it
         (when (v-older? (:mvn/version current) version)
           {:mvn/version version})))))
+
+(defn dep->upgrade
+  "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
+  upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
+
+    (dep->latest-stable {:lib 'hiccup/hiccup
+                         :current {:mvn/version \"1.0.4\"}})
+  "
+  [{:keys [lib current]}]
+  ;; for now, just upgrade to stable versions
+  (dep->latest-stable {:lib lib :current current}))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
@@ -1484,7 +1509,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib
