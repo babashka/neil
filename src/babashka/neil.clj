@@ -548,6 +548,7 @@ details on the search syntax.")))
 
     (dep->latest-stable {:lib 'hiccup/hiccup
                          :current {:mvn/version \"1.0.4\"}})
+    ;; => {:mvn/version \"1.0.5\"}
   "
   [{:keys [lib current]}]
   ;; for now, just upgrade to stable versions
