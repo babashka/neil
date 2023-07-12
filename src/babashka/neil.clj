@@ -639,7 +639,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->latest-stable dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib
