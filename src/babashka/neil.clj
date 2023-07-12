@@ -586,12 +586,7 @@ details on the search syntax.")))
              candidate))
 
          ;; otherwise, do nothing (fall through to nil)
-
-         )
-
-        )
-      #_#_
-      :else (dep->latest-stable {:lib lib :current current}))))
+         )))))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
