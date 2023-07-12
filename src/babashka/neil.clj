@@ -13,7 +13,8 @@
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.set :as set]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -65,14 +66,10 @@
 
  )
 (defn first-stable-version [versions]
-  (let [vparse (req-resolve 'version-clj.core/parse)]
-    (some (fn [version]
-            (let [{:keys [qualifiers]} (vparse version)]
-              (when-not
-                  ;; assume all qualifiers indicate non-stable version
-                  (some #{"rc" "alpha" "beta" "snapshot" "milestone"} qualifiers)
-                version)))
-          versions)))
+  (some (fn [version]
+          (when (stable-version? version)
+            version))
+        versions))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
