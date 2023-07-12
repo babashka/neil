@@ -2,7 +2,7 @@
   (:require
    [babashka.neil :as neil]
    [babashka.neil.test-util :as test-util]
-   [clojure.test :as t :refer [deftest is testing]]
+   [clojure.test :as t :refer [deftest is testing are]]
    [clojure.edn :as edn]
    [clojure.set :as set]))
 
@@ -206,3 +206,10 @@
                                        :git/tag "v0.8.35"}})))
   (is (some? (neil/dep->upgrade {:lib 'com.google.apis/google-api-services-sheets
                                  :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
+
+(deftest first-stable-version-test
+  (are [all-versions first-stable] (= first-stable (neil/first-stable-version all-versions))
+    ["1.0.4"] "1.0.4"
+    ["2.0.0-RC1"] nil
+    ["1.0.4" "2.0.0-RC1"] "1.0.4"
+    ["2.0.0-RC1" "1.0.4"] "1.0.4"))
