@@ -57,10 +57,9 @@
                               #{"rc" "alpha" "beta" "snapshot" "milestone"}))))
 
 (defn first-stable-version [versions]
-  (some (fn [version]
-          (when (stable-version? version)
-            version))
-        versions))
+  (->> versions
+       (filter stable-version?)
+       first))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
