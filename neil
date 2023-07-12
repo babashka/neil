@@ -910,7 +910,7 @@ using the [major|minor|patch] subcommands.
 
 (defn stable-version?
   [version-str]
-  (let [vparse (req-resolve 'version-clj.core/parse)]
+  (let [vparse (req-resolve 'version-clj.core/parse)] ; We lazy-load version-clj to improve average script startup time
     (empty? (set/intersection (:qualifiers (vparse version-str))
                               #{"rc" "alpha" "beta" "snapshot" "milestone"}))))
 
@@ -1387,7 +1387,7 @@ details on the search syntax.")))
 
 (defn- dep->latest-stable
   [{:keys [current lib] :as _dep-update}]
-  (let [v-older? (req-resolve 'version-clj.core/older?)]
+  (let [v-older? (req-resolve 'version-clj.core/older?)] ; We lazy-load version-clj to improve average script startup time
     (cond
       (or (:git/tag current) (:tag current))
       (let [lib (or (git-url->lib (:git/url current))
