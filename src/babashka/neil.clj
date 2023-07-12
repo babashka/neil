@@ -56,15 +56,6 @@
     (empty? (set/intersection (:qualifiers (vparse version-str))
                               #{"rc" "alpha" "beta" "snapshot" "milestone"}))))
 
-(comment
-  (stable-version? "1.0.4")
-  ;; => true
-  (stable-version? "1.0.5")
-  ;; => true
-  (stable-version? "2.0.0-RC1")
-  ;; => false
-  )
-
 (defn first-stable-version [versions]
   (some (fn [version]
           (when (stable-version? version)

@@ -218,3 +218,11 @@
                                             :current {:git/sha "247e538"}})]
       (is (:git/sha kondo-upgrade) "a tag is returned.")
       (is (not (:git/tag kondo-upgrade)) ", there is no tag."))))
+
+(deftest stable-version-test
+  (let [stable true
+        unstable false]
+    (are [stability version-str] (= stability (neil/stable-version? version-str))
+      stable "1.0.4"
+      stable "1.0.5"
+      unstable "2.0.0-RC1")))
