@@ -561,7 +561,9 @@ details on the search syntax.")))
   "
   [{:keys [lib current]}]
   ;; for now, just upgrade to stable versions
-  (dep->latest-stable {:lib lib :current current}))
+  (cond
+    nil nil
+    :else (dep->latest-stable {:lib lib :current current})))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
