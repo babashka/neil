@@ -565,15 +565,17 @@ details on the search syntax.")))
       (let [lib (or (git-url->lib (:git/url current))
                     lib)]
         (when-let [tag (git/latest-github-tag lib)]
-          {:git/tag (:name tag)
-           :git/sha (-> tag :commit :sha (subs 0 7))}))
+          (when (not= tag (:git/tag current))
+            {:git/tag (:name tag)
+             :git/sha (-> tag :commit :sha (subs 0 7))})))
 
       ;; if there's a git sha, find the latest git sha.
       (:git/sha current)
       (let [lib (or (git-url->lib (:git/url current))
                     lib)]
         (when-let [sha (git/latest-github-sha lib)]
-          {:git/sha sha}))
+          (when (not= sha (:git/sha current))
+            {:git/sha sha})))
 
       nil nil
       :else (dep->latest-stable {:lib lib :current current}))))
