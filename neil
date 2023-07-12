@@ -1413,11 +1413,28 @@ details on the search syntax.")))
     (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
     ;; => {:git/sha \"...\"}
   "
-  [{:keys [lib current]}]
+  [{:keys [lib current] :as dep}]
   ;; for now, just upgrade to stable versions
-  (cond
-    nil nil
-    :else (dep->latest-stable {:lib lib :current current})))
+  (let [current (set/rename-keys current {:sha :git/sha
+                                          :tag :git/tag})]
+    (cond
+      ;; if there's a git tag, find the latest git tag.
+      (:git/tag current)
+      (let [lib (or (git-url->lib (:git/url current))
+                    lib)]
+        (when-let [tag (git/latest-github-tag lib)]
+          {:git/tag (:name tag)
+           :git/sha (-> tag :commit :sha (subs 0 7))}))
+
+      ;; if there's a git sha, find the latest git sha.
+      (:git/sha current)
+      (let [lib (or (git-url->lib (:git/url current))
+                    lib)]
+        (when-let [sha (git/latest-github-sha lib)]
+          {:git/sha sha}))
+
+      nil nil
+      :else (dep->latest-stable {:lib lib :current current}))))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
