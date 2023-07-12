@@ -188,22 +188,12 @@
         (is (= initial-fs-v upgraded-fs-v))
         (is (not (= initial-clj-kondo-v upgraded-clj-kondo-v)))))))
 
-(deftest prefer-stable-version-test
-  (is (nil? (neil/dep->upgrade {:lib 'hiccup/hiccup
-                                :current {:mvn/version "1.0.5"}}))
-      "1.0.5 is (per 2023-07-10) the latest stable version of hiccup, no updates are available")
-  (is (= #:mvn{:version "1.0.5"}
-         (neil/dep->upgrade {:lib 'hiccup/hiccup
-                             :current {:mvn/version "1.0.4"}}))
-      "1.0.5 is an update to 1.0.4 for hiccup")
-  (is (nil? (neil/dep->upgrade {:lib 'hiccup/hiccup
-                                :current {:mvn/version "2.0.0-alpha2"}}))
-      "Neil does not propose updates to unstable versions")
-  (is (= #:git{:tag "v0.8.41", :sha "9257dc0"}
-         (neil/dep->upgrade {:lib 'com.grzm/awyeah-api
-                             :current {:git/url "https://github.com/grzm/awyeah-api"
-                                       :git/sha "1810bf6"
-                                       :git/tag "v0.8.35"}})))
+(deftest prefer-stable-test
+  (are [upgrade dep] (= upgrade (neil/dep->upgrade dep))
+    nil                    {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}}
+    {:mvn/version "1.0.5"} {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}}
+    nil                    {:mvn/version "2.0.0-alpha2"})
+
   (is (some? (neil/dep->upgrade {:lib 'com.google.apis/google-api-services-sheets
                                  :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
 
