@@ -549,6 +549,17 @@ details on the search syntax.")))
         (when (v-older? (:mvn/version current) version)
           {:mvn/version version})))))
 
+(defn dep->upgrade
+  "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
+  upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
+
+    (dep->latest-stable {:lib 'hiccup/hiccup
+                         :current {:mvn/version \"1.0.4\"}})
+  "
+  [{:keys [lib current]}]
+  ;; for now, just upgrade to stable versions
+  (dep->latest-stable {:lib lib :current current}))
+
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
   [opts]
