@@ -1388,7 +1388,7 @@ details on the search syntax.")))
     (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
     ;; => {:git/sha \"...\"}
   "
-  [{:keys [lib current] :as dep}]
+  [{:keys [lib current]}]
   ;; for now, just upgrade to stable versions
   (let [current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
