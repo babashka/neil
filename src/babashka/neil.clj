@@ -555,8 +555,8 @@ details on the search syntax.")))
       ;; if `current` is a stable maven/clojars version, find the latest stable
       ;; maven clojars dep
       (and (:mvn/version current) (stable-version? (:mvn/version current)))
-      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
-                             (first-stable-version (mvn-versions lib {:limit 100})))]
+      (when-let [version (or (first (filter stable-version? (clojars-versions lib {:limit 100})))
+                             (first (filter stable-version? (mvn-versions lib {:limit 100}))))]
         ;; only upgrade to a newer version than the current. Useful when
         ;; developing a new version locally.
         (let [v-older? (req-resolve 'version-clj.core/older?)]
