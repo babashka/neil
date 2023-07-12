@@ -515,7 +515,7 @@ details on the search syntax.")))
       (-> (str/replace git-url "https://github.com/" "")
           symbol))))
 
-(defn dep->latest
+(defn dep->latest-stable
   "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
   `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
   or `{:git/sha \"sha-blah\"}`.
@@ -628,7 +628,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->latest-stable dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib
