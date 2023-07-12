@@ -546,9 +546,14 @@ details on the search syntax.")))
   "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
   upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
 
+  Supports different kinds of coordinate formats.
+
     (dep->latest-stable {:lib 'hiccup/hiccup
                          :current {:mvn/version \"1.0.4\"}})
     ;; => {:mvn/version \"1.0.5\"}
+
+    (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
+    ;; => {:git/sha \"...\"}
   "
   [{:keys [lib current]}]
   ;; for now, just upgrade to stable versions
