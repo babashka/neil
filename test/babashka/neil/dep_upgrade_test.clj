@@ -203,3 +203,18 @@
     ["2.0.0-RC1"] nil
     ["1.0.4" "2.0.0-RC1"] "1.0.4"
     ["2.0.0-RC1" "1.0.4"] "1.0.4"))
+
+(deftest dep->upgrade-test
+  (testing "when a tag is provided,"
+    (let [kondo-upgrade (neil/dep->upgrade {:lib 'clj-kondo/clj-kondo
+                                            :current {:git/url "https://github.com/clj-kondo/clj-kondo",
+                                                      :git/tag "v2022.03.08",
+                                                      :git/sha "247e538"}})]
+      (is (:git/tag kondo-upgrade) "a tag is returned.")
+      (is (:git/sha kondo-upgrade) "a sha is also returned")))
+
+  (testing "when only a sha is provided,"
+    (let [kondo-upgrade (neil/dep->upgrade {:lib 'clj-kondo/clj-kondo
+                                            :current {:git/sha "247e538"}})]
+      (is (:git/sha kondo-upgrade) "a tag is returned.")
+      (is (not (:git/tag kondo-upgrade)) ", there is no tag."))))
