@@ -517,31 +517,6 @@ details on the search syntax.")))
       (-> (str/replace git-url "https://github.com/" "")
           symbol))))
 
-(defn- dep->latest-stable
-  [{:keys [current lib] :as _dep-update}]
-  (let [v-older? (req-resolve 'version-clj.core/older?)] ; We lazy-load version-clj to improve average script startup time
-    (cond
-      (or (:git/tag current) (:tag current))
-      (let [lib (or (git-url->lib (:git/url current))
-                    lib)]
-        (when-let [tag (git/latest-github-tag lib)]
-          (when tag
-            {:git/tag (:name tag)
-             :git/sha (-> tag :commit :sha (subs 0 7))})))
-
-      (or (:git/sha current) (:sha current))
-      (let [lib (or (git-url->lib (:git/url current))
-                    lib)]
-        (when-let [sha (git/latest-github-sha lib)]
-          {:git/sha sha}))
-
-      (:mvn/version current)
-      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
-                             (first-stable-version (mvn-versions lib {:limit 100})))]
-        ;; if current version is newer than latest stable release, leave it
-        (when (v-older? (:mvn/version current) version)
-          {:mvn/version version})))))
-
 (defn dep->upgrade
   "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
   upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
@@ -577,7 +552,45 @@ details on the search syntax.")))
           (when (not= sha (:git/sha current))
             {:git/sha sha})))
 
-      nil nil
+      ;; if `current` is a stable maven/clojars version, find the latest stable
+      ;; maven clojars dep
+      (and (:mvn/version current) (stable-version? (:mvn/version current)))
+      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
+                             (first-stable-version (mvn-versions lib {:limit 100})))]
+        ;; only upgrade to a newer version than the current. Useful when
+        ;; developing a new version locally.
+        (let [v-older? (req-resolve 'version-clj.core/older?)]
+          (when (v-older? (:mvn/version current) version)
+            {:mvn/version version})))
+
+      ;; if `current` is an unstable maven/clojars version, preferrably upgrade
+      ;; to a more recent stable version. Otherwise, look for a more recent
+      ;; unstable version.
+      ;;
+      ;; Useful when depending on an unstable version under active development.
+      (and (:mvn/version current)
+           (not (stable-version? (:mvn/version current))))
+      (let [clojars-candidates (clojars-versions lib {:limit 100})
+            maven-candidates (mvn-versions lib {:limit 100})
+            v-older? (req-resolve 'version-clj.core/older?)]
+        (or
+         ;; prefer a more recent stable
+         (let [candidate (or (first (filter stable-version? clojars-candidates))
+                             (first (filter stable-version? maven-candidates)))]
+           (when (v-older? (:mvn/version current) candidate)
+             {:mvn/version candidate}))
+
+         ;; otherwise, provide a more recent unstable
+         (let [candidate (or (first clojars-candidates) (first maven-candidates))]
+           (when (v-older? (:mvn/version current) candidate)
+             candidate))
+
+         ;; otherwise, do nothing (fall through to nil)
+
+         )
+
+        )
+      #_#_
       :else (dep->latest-stable {:lib lib :current current}))))
 
 (defn opts->specified-deps
