@@ -217,7 +217,13 @@
     (let [kondo-upgrade (neil/dep->upgrade {:lib 'clj-kondo/clj-kondo
                                             :current {:git/sha "247e538"}})]
       (is (:git/sha kondo-upgrade) "a tag is returned.")
-      (is (not (:git/tag kondo-upgrade)) ", there is no tag."))))
+      (is (not (:git/tag kondo-upgrade)) ", there is no tag.")))
+
+  (testing "when --unstable is set, upgrade to unstable hiccup versions"
+    (is (= {:mvn/version "2.0.0-RC1"}
+           (neil/dep->upgrade {:lib 'hiccup/hiccup
+                               :current {:mvn/version "1.0.0"}
+                               :unstable true})))))
 
 (deftest stable-version-test
   (let [stable true

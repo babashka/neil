@@ -530,7 +530,7 @@ details on the search syntax.")))
     (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
     ;; => {:git/sha \"...\"}
   "
-  [{:keys [lib current]}]
+  [{:keys [lib current unstable]}]
   ;; for now, just upgrade to stable versions
   (let [current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
@@ -551,6 +551,14 @@ details on the search syntax.")))
         (when-let [sha (git/latest-github-sha lib)]
           (when (not= sha (:git/sha current))
             {:git/sha sha})))
+
+      ;; when :unstable is set, find the lastest version whatsoever
+      unstable
+      (when-let [version (or (first (clojars-versions lib {:limit 100}))
+                             (first (mvn-versions lib {:limit 100})))]
+        (let [v-older? (req-resolve 'version-clj.core/older?)]
+          (when (v-older? (:mvn/version current) version)
+            {:mvn/version version})))
 
       ;; if `current` is a stable maven/clojars version, find the latest stable
       ;; maven clojars dep
