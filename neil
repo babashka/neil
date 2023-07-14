@@ -871,7 +871,8 @@ using the [major|minor|patch] subcommands.
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [clojure.set :as set]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -907,15 +908,16 @@ using the [major|minor|patch] subcommands.
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
+(defn stable-version?
+  [version-str]
+  (let [vparse (req-resolve 'version-clj.core/parse)] ; We lazy-load version-clj to improve average script startup time
+    (empty? (set/intersection (:qualifiers (vparse version-str))
+                              #{"rc" "alpha" "beta" "snapshot" "milestone"}))))
+
 (defn first-stable-version [versions]
-  (let [vparse (req-resolve 'version-clj.core/parse)]
-    (some (fn [version]
-            (let [{:keys [qualifiers]} (vparse version)]
-              (when-not
-                  ;; assume all qualifiers indicate non-stable version
-                  (some #{"rc" "alpha" "beta" "snapshot" "milestone"} qualifiers)
-                version)))
-          versions)))
+  (->> versions
+       (filter stable-version?)
+       first))
 
 (defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
   (let [body (get-clojars-artifact qlib)]
@@ -1373,37 +1375,76 @@ details on the search syntax.")))
       (-> (str/replace git-url "https://github.com/" "")
           symbol))))
 
-(defn dep->latest
-  "Expects a `dep-upgrade` map, with `:lib` and `:current` keys.
-  `:current` is the dep's current coordinates, like `{:mvn/version \"some-version\"}`
-  or `{:git/sha \"sha-blah\"}`.
+(defn dep->upgrade
+  "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
+  upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
 
-  Returns a `latest` coordinate as a map with `:mvn/version` or `:git/sha`.
-  Note that this is not a full dep coordinate - we rely on `dep-add` later to include
-  `:git/url`, for example."
-  [{:keys [current lib] :as _dep-update}]
-  (let [v-older? (req-resolve 'version-clj.core/older?)]
+  Supports different kinds of coordinate formats.
+
+    (dep->latest-stable {:lib 'hiccup/hiccup
+                         :current {:mvn/version \"1.0.4\"}})
+    ;; => {:mvn/version \"1.0.5\"}
+
+    (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
+    ;; => {:git/sha \"...\"}
+  "
+  [{:keys [lib current]}]
+  ;; for now, just upgrade to stable versions
+  (let [current (set/rename-keys current {:sha :git/sha
+                                          :tag :git/tag})]
     (cond
-      (or (:git/tag current) (:tag current))
+      ;; if there's a git tag, find the latest git tag.
+      (:git/tag current)
       (let [lib (or (git-url->lib (:git/url current))
                     lib)]
         (when-let [tag (git/latest-github-tag lib)]
-          (when tag
+          (when (not= tag (:git/tag current))
             {:git/tag (:name tag)
              :git/sha (-> tag :commit :sha (subs 0 7))})))
 
-      (or (:git/sha current) (:sha current))
+      ;; if there's a git sha, find the latest git sha.
+      (:git/sha current)
       (let [lib (or (git-url->lib (:git/url current))
                     lib)]
         (when-let [sha (git/latest-github-sha lib)]
-          {:git/sha sha}))
+          (when (not= sha (:git/sha current))
+            {:git/sha sha})))
 
-      (:mvn/version current)
-      (when-let [version (or (first-stable-version (clojars-versions lib {:limit 100}))
-                             (first-stable-version (mvn-versions lib {:limit 100})))]
-        ;; if current version is newer than latest stable release, leave it
-        (when (v-older? (:mvn/version current) version)
-          {:mvn/version version})))))
+      ;; if `current` is a stable maven/clojars version, find the latest stable
+      ;; maven clojars dep
+      (and (:mvn/version current) (stable-version? (:mvn/version current)))
+      (when-let [version (or (first (filter stable-version? (clojars-versions lib {:limit 100})))
+                             (first (filter stable-version? (mvn-versions lib {:limit 100}))))]
+        ;; only upgrade to a newer version than the current. Useful when
+        ;; developing a new version locally.
+        (let [v-older? (req-resolve 'version-clj.core/older?)]
+          (when (v-older? (:mvn/version current) version)
+            {:mvn/version version})))
+
+      ;; if `current` is an unstable maven/clojars version, preferrably upgrade
+      ;; to a more recent stable version. Otherwise, look for a more recent
+      ;; unstable version.
+      ;;
+      ;; Useful when depending on an unstable version under active development.
+      (and (:mvn/version current)
+           (not (stable-version? (:mvn/version current))))
+      (let [clojars-candidates (clojars-versions lib {:limit 100})
+            maven-candidates (mvn-versions lib {:limit 100})
+            v-older? (req-resolve 'version-clj.core/older?)]
+        (or
+         ;; prefer a more recent stable
+         (let [candidate (or (first (filter stable-version? clojars-candidates))
+                             (first (filter stable-version? maven-candidates)))]
+           (when (v-older? (:mvn/version current) candidate)
+             {:mvn/version candidate}))
+
+         ;; otherwise, provide a more recent unstable
+         (let [candidate (or (first clojars-candidates) (first maven-candidates))]
+           (when (v-older? (:mvn/version current) candidate)
+             candidate))
+
+         ;; otherwise, do nothing (fall through to nil)
+         )))))
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
@@ -1484,7 +1525,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->latest dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
     (when lib
@@ -1604,8 +1645,6 @@ test
 
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
-
-
 
 (defn -main [& _args]
   (cli/dispatch
