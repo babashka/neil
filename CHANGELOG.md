@@ -9,6 +9,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - [#181](https://github.com/babashka/neil/issues/181): fix `neil --version`
 - fix tests by referring to latest hiccup ([@teodorlu](https://github.com/teodorlu))
 - [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: allow upgrading from an unstable version to the latest unstable version ([@teodorlu](https://github.com/teodorlu))
+- [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: with `--unstable`, opt-into unstable library updates ([@teodorlu](https://github.com/teodorlu))
 
 ## 0.1.60 (2023-03-22)
 
