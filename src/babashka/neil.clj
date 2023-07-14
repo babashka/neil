@@ -605,7 +605,8 @@ details on the search syntax.")))
         {:keys [deps aliases]} (-> (edn-string opts) edn/read-string)
         current-deps
         (->> deps (map (fn [[lib current]]
-                         {:lib lib :current current})))
+                         (cond-> {:lib lib :current current}
+                           (:unstable opts) (assoc :unstable true)))))
         alias-deps
         (if no-aliases? []
             (->> aliases (mapcat (fn [[alias def]]
