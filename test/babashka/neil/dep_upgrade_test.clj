@@ -2,7 +2,7 @@
   (:require
    [babashka.neil :as neil]
    [babashka.neil.test-util :as test-util]
-   [clojure.test :as t :refer [deftest is testing]]
+   [clojure.test :as t :refer [deftest is testing are]]
    [clojure.edn :as edn]
    [clojure.set :as set]))
 
@@ -188,14 +188,47 @@
         (is (= initial-fs-v upgraded-fs-v))
         (is (not (= initial-clj-kondo-v upgraded-clj-kondo-v)))))))
 
-(deftest prefer-stable-version-test
-  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}})))
-  (is (= #:mvn{:version "1.0.5"} (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}})))
-  (is (nil? (neil/dep->latest {:lib 'hiccup/hiccup :current {:mvn/version "2.0.0-alpha2"}})))
-  (is (= #:git{:tag "v0.8.41", :sha "9257dc0"}
-         (neil/dep->latest {:lib 'com.grzm/awyeah-api
-                            :current {:git/url "https://github.com/grzm/awyeah-api"
-                                      :git/sha "1810bf6"
-                                      :git/tag "v0.8.35"}:mvn/version "2.0.0-alpha2"})))
-  (is (some? (neil/dep->latest {:lib 'com.google.apis/google-api-services-sheets
-                                :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
+(deftest prefer-stable-test
+  (are [upgrade dep] (= upgrade (neil/dep->upgrade dep))
+    nil                    {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}}
+    {:mvn/version "1.0.5"} {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}}
+    nil                    {:mvn/version "2.0.0-alpha2"})
+
+  (is (some? (neil/dep->upgrade {:lib 'com.google.apis/google-api-services-sheets
+                                 :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
+
+(deftest first-stable-version-test
+  (are [all-versions first-stable] (= first-stable (neil/first-stable-version all-versions))
+    ["1.0.4"] "1.0.4"
+    ["2.0.0-RC1"] nil
+    ["1.0.4" "2.0.0-RC1"] "1.0.4"
+    ["2.0.0-RC1" "1.0.4"] "1.0.4"))
+
+(deftest dep->upgrade-test
+  (testing "when a tag is provided,"
+    (let [kondo-upgrade (neil/dep->upgrade {:lib 'clj-kondo/clj-kondo
+                                            :current {:git/url "https://github.com/clj-kondo/clj-kondo",
+                                                      :git/tag "v2022.03.08",
+                                                      :git/sha "247e538"}})]
+      (is (:git/tag kondo-upgrade) "a tag is returned.")
+      (is (:git/sha kondo-upgrade) "a sha is also returned")))
+
+  (testing "when only a sha is provided,"
+    (let [kondo-upgrade (neil/dep->upgrade {:lib 'clj-kondo/clj-kondo
+                                            :current {:git/sha "247e538"}})]
+      (is (:git/sha kondo-upgrade) "a tag is returned.")
+      (is (not (:git/tag kondo-upgrade)) ", there is no tag.")))
+
+  (testing "when --unstable is set, upgrade to unstable hiccup versions"
+    (is (= {:mvn/version "2.0.0-RC1"}
+           (neil/dep->upgrade {:lib 'hiccup/hiccup
+                               :current {:mvn/version "1.0.0"}
+                               :unstable true})))))
+
+(deftest stable-version-test
+  (let [stable true
+        unstable false]
+    (are [stability version-str] (= stability (neil/stable-version? version-str))
+      stable "1.0.4"
+      stable "1.0.5"
+      unstable "2.0.0-RC1")))
