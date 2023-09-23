@@ -396,7 +396,6 @@ chmod +x bin/kaocha
                              (not (contains? existing-aliases alias)))
                       [:aliases alias]
                       path)
-            _ (prn edn-nodes)
             edn-nodes (if (r/get-in edn-nodes nl-path)
                         ;; if this dep already exists, don't touch it.
                         ;; We risk loosing :exclusions and other properties.
@@ -409,7 +408,6 @@ chmod +x bin/kaocha
                         ;;     [:aliases alias :deps as] if :deps present
                         ;;     [:aliases alias :extra-deps as] if alias exists
                         (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string))
-            _ (prn edn-nodes)
             nodes (cond
                     missing? edn-nodes
                     mvn?
