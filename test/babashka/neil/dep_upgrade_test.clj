@@ -2,10 +2,9 @@
   (:require
    [babashka.neil :as neil]
    [babashka.neil.test-util :as test-util]
-   [clojure.test :as t :refer [deftest is testing are]]
    [clojure.edn :as edn]
    [clojure.set :as set]
-   [borkdude.rewrite-edn :as r]))
+   [clojure.test :as t :refer [are deftest is testing]]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
 
