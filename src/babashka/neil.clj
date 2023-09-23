@@ -418,7 +418,8 @@ chmod +x bin/kaocha
                         (r/assoc-in (conj path :git/url) git-url)
                         str
                         r/parse-string
-                        (r/assoc-in (conj path :git/sha) version))
+                        (r/assoc-in (conj path :git/sha) version)
+                        (r/update-in path r/dissoc :sha))
 
                     git-tag?
                     ;; multiple steps to force newlines
