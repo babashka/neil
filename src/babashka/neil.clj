@@ -392,7 +392,6 @@ chmod +x bin/kaocha
                     (if (get-in existing-aliases [alias :deps]) :deps :extra-deps)
                     as]
                    [:deps as])
-            
             nl-path (if (and alias
                              (not (contains? existing-aliases alias)))
                       [:aliases alias]
@@ -402,7 +401,10 @@ chmod +x bin/kaocha
             ;; [:aliases alias] if alias DNE
             ;; [:aliases alias :deps as] if :deps present
             ;; [:aliases alias :extra-deps as] if alias exists
+            _ (prn edn-nodes)
+            _ (prn nl-path)
             edn-nodes (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string)
+            _ (prn edn-nodes)
             nodes (cond
                     missing? edn-nodes
                     mvn?

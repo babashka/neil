@@ -4,7 +4,8 @@
    [babashka.neil.test-util :as test-util]
    [clojure.test :as t :refer [deftest is testing are]]
    [clojure.edn :as edn]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [borkdude.rewrite-edn :as r]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
 
@@ -251,4 +252,23 @@
       ;; We want to keep exclusions.
       ;; https://github.com/babashka/neil/issues/183
       ))
+  )
+
+(comment
+
+  (require '[borkdude.rewrite-edn :as r])
+  (def clojure2d-deps-edn-string "
+{:deps {
+        clojure2d/clojure2d {:mvn/version \"1.4.4\"
+                             :exclusions [org.apache.xmlgraphics/batik-transcoder]}
+}}")
+
+  (neil/edn-nodes clojure2d-deps-edn-string)
+
+  (r/assoc-in (neil/edn-nodes clojure2d-deps-edn-string)
+              [:deps 'clojure2d/clojure2d :mvn/version]
+              "NEW VERSION"
+              )
+
+
   )
