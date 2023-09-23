@@ -232,3 +232,23 @@
       stable "1.0.4"
       stable "1.0.5"
       unstable "2.0.0-RC1")))
+
+(deftest upgrade-with-exclusions
+  (testing "neil currently drops exclusions"
+    (spit test-file-path "
+{:deps {
+        clojure2d/clojure2d {:mvn/version \"1.4.4\"
+                             :exclusions [org.apache.xmlgraphics/batik-transcoder]}
+}}")
+    (test-util/neil "dep dep upgrade" :deps-file test-file-path)
+    (let [clojure2d-exclusions (fn [] (:exclusions (get-dep-version 'clojure2d/clojure2d)))]
+      ;; before upgrading, there are exclusions:
+      (is (clojure2d-exclusions))
+      ;; after upgrading, the exclusions are gone!
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (is (not (clojure2d-exclusions)))
+      ;; This behavior is a bug!
+      ;; We want to keep exclusions.
+      ;; https://github.com/babashka/neil/issues/183
+      ))
+  )
