@@ -2,9 +2,9 @@
   (:require
    [babashka.neil :as neil]
    [babashka.neil.test-util :as test-util]
-   [clojure.test :as t :refer [deftest is testing are]]
    [clojure.edn :as edn]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [clojure.test :as t :refer [are deftest is testing]]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
 
@@ -232,3 +232,16 @@
       stable "1.0.4"
       stable "1.0.5"
       unstable "2.0.0-RC1")))
+
+(deftest upgrade-with-exclusions
+  (testing "Neil keeps :exclusions data when upgrading deps"
+    (spit test-file-path "
+{:deps {
+        clojure2d/clojure2d {:mvn/version \"1.4.4\"
+                             :exclusions [org.apache.xmlgraphics/batik-transcoder]}
+}}")
+    (test-util/neil "dep dep upgrade" :deps-file test-file-path)
+    (let [clojure2d-exclusions (fn [] (:exclusions (get-dep-version 'clojure2d/clojure2d)))]
+      (is (clojure2d-exclusions) "Exclusions are present before upgrading")
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (is (clojure2d-exclusions) "Exclusions are present after upgrading"))))
