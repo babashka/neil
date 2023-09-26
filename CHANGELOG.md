@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## 0.2.62
+## 0.2.61
 
 - [#181](https://github.com/babashka/neil/issues/181): fix `neil --version`
 - fix tests by referring to latest hiccup ([@teodorlu](https://github.com/teodorlu))
