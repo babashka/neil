@@ -10,10 +10,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - fix tests by referring to latest hiccup ([@teodorlu](https://github.com/teodorlu))
 - [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: allow upgrading from an unstable version to the latest unstable version ([@teodorlu](https://github.com/teodorlu))
 - [#180](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: with `--unstable`, opt-into unstable library updates ([@teodorlu](https://github.com/teodorlu))
-- [#183](https://github.com/babashka/neil/issues/183): Don't drop `:exclusions` when running `neil dep add` or `neil dep upgrade` ([@borkdude] and [@teodorlu])
-
-[@borkdude]: https://github.com/borkdude
-[@teodorlu]: https://github.com/teodorlu
+- [#183](https://github.com/babashka/neil/issues/183): Don't drop `:exclusions` when running `neil dep add` or `neil dep upgrade` ([@borkdude](https://github.com/borkdude) and [@teodorlu](https://github.com/teodorlu))
 
 ## 0.1.60 (2023-03-22)
 
