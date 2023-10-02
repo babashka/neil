@@ -245,3 +245,8 @@
       (is (clojure2d-exclusions) "Exclusions are present before upgrading")
       (test-util/neil "dep upgrade" :deps-file test-file-path)
       (is (clojure2d-exclusions) "Exclusions are present after upgrading"))))
+
+(deftest npe-test
+  (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
+                          :current {:mvn/version "2023.01.31-alpha"}
+                          :unstable true})))

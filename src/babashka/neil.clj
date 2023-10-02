@@ -589,13 +589,13 @@ details on the search syntax.")))
             v-older? (req-resolve 'version-clj.core/older?)]
         (or
          ;; prefer a more recent stable
-         (let [candidate (or (first (filter stable-version? clojars-candidates))
-                             (first (filter stable-version? maven-candidates)))]
+         (when-let [candidate (or (first (filter stable-version? clojars-candidates))
+                                  (first (filter stable-version? maven-candidates)))]
            (when (v-older? (:mvn/version current) candidate)
              {:mvn/version candidate}))
 
          ;; otherwise, provide a more recent unstable
-         (let [candidate (or (first clojars-candidates) (first maven-candidates))]
+         (when-let [candidate (or (first clojars-candidates) (first maven-candidates))]
            (when (v-older? (:mvn/version current) candidate)
              candidate))
 
