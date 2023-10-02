@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.2.62
+
+- Fix NPE during `neil dep upgrade`
+
 ## 0.2.61
 
 - [#181](https://github.com/babashka/neil/issues/181): fix `neil --version`
