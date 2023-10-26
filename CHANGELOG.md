@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- [#92](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: delete rogue "`" character from helptext ([@teodorlu](https://github.com/teodorlu))
+
 ## 0.2.62
 
 - Fix NPE during `neil dep upgrade`
