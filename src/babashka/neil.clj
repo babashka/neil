@@ -673,7 +673,7 @@ Examples:
 
   neil dep upgrade                           ; upgrade all deps.
   neil dep upgrade --dry-run                 ; print deps that would be upgraded.
-  neil dep upgrade --alias lint`             ; update only deps for the `lint` alias.
+  neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
   neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
 "))
     (System/exit 0))
