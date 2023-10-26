@@ -220,7 +220,7 @@
       (is (not (:git/tag kondo-upgrade)) ", there is no tag.")))
 
   (testing "when --unstable is set, upgrade to unstable hiccup versions"
-    (is (= {:mvn/version "2.0.0-RC1"}
+    (is (= {:mvn/version "2.0.0-RC2"}
            (neil/dep->upgrade {:lib 'hiccup/hiccup
                                :current {:mvn/version "1.0.0"}
                                :unstable true})))))
