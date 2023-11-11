@@ -508,13 +508,17 @@ details on the search syntax.")))
                 :a :jar_name
                 :timestamp :created
                 :latestVersion :version}
+        add-desc (fn [{:keys [group_name jar_name] :as m}]
+                   ;; Maven doesn't provide package description through its API,
+                   ;; but that doesn't mean we should just leave it blank
+                   (assoc
+                    m :description
+                    (format "%s/%s on Maven" group_name jar_name)))
         res (some-> url curl-get-json :response :docs
                     first
                     (clojure.set/rename-keys keys-m)
                     (select-keys (vals keys-m))
-                    ;; maven doesn't provide description through its API
-                    (as-> m (assoc m :description (str (:group_name m) " on Maven")))
-                    vector)]
+                    add-desc vector)]
     (if (nil? res)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Maven."))
