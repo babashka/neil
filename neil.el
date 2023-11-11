@@ -77,14 +77,17 @@ the dependency to the project (deps.edn only)."
               (when (and lib-name version)
                 (if (or (null build-tool)
                         (eq build-tool 'clojure-cli))
-                    (format "%s {:mvn/version %s}" lib-name version)
-                  (format "[%s %s]" lib-name version))))))
+                    (format "%s {:mvn/version %S}"
+                            lib-name version)
+                  (format "[%s %S]" lib-name version))))))
 
          (perform-action
           (lambda (exe args)
             (let* ((res (shell-command-to-string
                          (format "%s %s" exe args)))
-                   (res (if (or (string-match-p "Unable to find\\|Error" res))
+                   (res (if (or (string-match-p "Error" res)
+                                (and (string-match-p "Unable to find.*Maven" res)
+                                     (string-match-p "Unable to find.*Clojars" res)))
                             (user-error res)
                           (seq-filter
                            (lambda (x) (string-match-p ":lib" x))
@@ -122,7 +125,7 @@ the dependency to the project (deps.edn only)."
                           (completing-read
                            (format "Choose version of %s:" lib-name)
                            (funcall keep-order (seq-map (lambda (x) (alist-get 'version x)) versions)))))
-                    (alist-get 'version (cdr (assoc lib-name res)))))
+                    (read (or (alist-get 'version (cdr (assoc lib-name res))) "nil"))))
          (dep-str (funcall format-dep-str lib-name version)))
 
     (when (and neil-inject-dep-to-project-p
