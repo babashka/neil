@@ -77,8 +77,8 @@ the dependency to the project (deps.edn only)."
               (when (and lib-name version)
                 (if (or (null build-tool)
                         (eq build-tool 'clojure-cli))
-                    (format "%s {:mvn/version %S}" lib-name version)
-                  (format "[%s %S]" lib-name version))))))
+                    (format "%s {:mvn/version %s}" lib-name version)
+                  (format "[%s %s]" lib-name version))))))
 
          (perform-action
           (lambda (exe args)
