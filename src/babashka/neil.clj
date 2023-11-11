@@ -502,7 +502,7 @@ details on the search syntax.")))
 
 (defn dep-search-maven [search-term]
   (let [url (format
-             "https://search.maven.org/solrsearch/select?q=a:%s&rows=20&wt=json"
+             "https://search.maven.org/solrsearch/select?q=%s&rows=20&wt=json"
              (url-encode search-term))
         keys-m {:g :group_name
                 :a :jar_name
@@ -514,12 +514,13 @@ details on the search syntax.")))
                    (assoc
                     m :description
                     (format "%s/%s on Maven" group_name jar_name)))
-        res (some-> url curl-get-json :response :docs
-                    first
-                    (clojure.set/rename-keys keys-m)
-                    (select-keys (vals keys-m))
-                    add-desc vector)]
-    (if (nil? res)
+        res (->> url curl-get-json :response :docs
+                    (map #(some->
+                           %
+                           (clojure.set/rename-keys keys-m)
+                           (select-keys (vals keys-m))
+                           add-desc)))]
+    (if (empty? res)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Maven."))
       res)))
