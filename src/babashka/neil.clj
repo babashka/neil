@@ -508,17 +508,17 @@ details on the search syntax.")))
                 :a :jar_name
                 :timestamp :created
                 :latestVersion :version}
-        res (-> url curl-get-json :response :docs
-                first
-                (clojure.set/rename-keys keys-m)
-                (select-keys (vals keys-m)))]
+        res (some-> url curl-get-json :response :docs
+                    first
+                    (clojure.set/rename-keys keys-m)
+                    (select-keys (vals keys-m))
+                    ;; maven doesn't provide description through its API
+                    (as-> m (assoc m :description (str (:group_name m) " on Maven")))
+                    vector)]
     (if (nil? res)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Maven."))
-      (-> res
-          ;; maven doesn't provide description through its API
-          (assoc :description (format "%s on Maven" (:group_name res)))
-          vector))))
+      res)))
 
 (defn dep-search-clojars [search-term]
   (let [url (format
@@ -731,7 +731,6 @@ Examples:
               (System/exit 1))))
 
     (doseq [dep-upgrade upgrades] (do-dep-upgrade opts dep-upgrade))))
-
 
 (defn print-help [_]
   (println (str/trim "
