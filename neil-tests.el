@@ -43,14 +43,14 @@
                ((eq shell-cmd-calls 1)
                 (expect command :to-equal "/bin/neil dep search test-pkg")
                 (concat
-                 ":lib foo/test-pkg :version 1.0.0 :description \"good lib\"\n"
-                 ":lib bar/awesome-test-pkg :version 2.1.0 :description \"better lib\"\n"))
+                 ":lib foo/test-pkg :version \"1.0.0\" :description \"good lib\"\n"
+                 ":lib bar/awesome-test-pkg :version \"2.1.0\" :description \"better lib\"\n"))
 
                ((eq shell-cmd-calls 2)
                  (expect command :to-equal "/bin/neil dep versions foo/test-pkg")
                  (concat
-                  ":lib foo/test-pkg :version 1.0.0\n"
-                  ":lib bar/awesome-test-pkg :version 2.1.0\n")))))
+                  ":lib foo/test-pkg :version \"1.0.0\"\n"
+                  ":lib bar/awesome-test-pkg :version \"2.1.0\"\n")))))
     (spy-on #'neil-search-annotation-fn)
     (spy-on #'completing-read
             :and-call-fake
@@ -64,8 +64,12 @@
                ((eq prompt-calls 1)
                 (expect prompt :to-equal "Found 2 matches for 'test-pkg':")
                 (expect coll :to-equal
-                        '(("foo/test-pkg" (version . "1.0.0") (description . "\"good lib\""))
-                          ("bar/awesome-test-pkg" (version . "2.1.0") (description . "\"better lib\""))))
+                        '(("foo/test-pkg"
+                           (version . "\"1.0.0\"")
+                           (description . "\"good lib\""))
+                          ("bar/awesome-test-pkg"
+                           (version . "\"2.1.0\"")
+                           (description . "\"better lib\""))))
                 "foo/test-pkg")
 
                ((eq prompt-calls 2)
