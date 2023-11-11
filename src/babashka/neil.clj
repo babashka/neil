@@ -537,19 +537,21 @@ details on the search syntax.")))
       search-results)))
 
 (defn dep-search [{:keys [opts]}]
-  (if (or (:help opts) (not (:search-term opts)))
-    (print-dep-search-help)
-    (let [search-term (:search-term opts)
-          search-results (->> [dep-search-maven
-                               dep-search-clojars]
-                              (map #(% search-term))
-                              (apply concat))]
-      (when (empty? search-results) (System/exit 1))
-      (doseq [search-result search-results]
-        (prn :lib (symbol (:group_name search-result)
-                          (:jar_name search-result))
-             :version (:version search-result)
-             :description (:description search-result))))))
+  (let [{:keys [search-term]} opts]
+    (if (or (:help opts)
+            (not (string? search-term))
+            (str/blank? search-term))
+      (print-dep-search-help)
+      (let [search-results (->> [dep-search-maven
+                                 dep-search-clojars]
+                                (map #(% search-term))
+                                (apply concat))]
+        (when (empty? search-results) (System/exit 1))
+        (doseq [search-result search-results]
+          (prn :lib (symbol (:group_name search-result)
+                            (:jar_name search-result))
+               :version (:version search-result)
+               :description (:description search-result)))))))
 
 (defn git-url->lib [git-url]
   (when git-url
