@@ -85,7 +85,7 @@ the dependency to the project (deps.edn only)."
           (lambda (exe args)
             (let* ((res (shell-command-to-string
                          (format "%s %s" exe args)))
-                   (res (if (or (string-match-p "Error" res)
+                   (res (if (or (string-match-p "Error\\|Usage: neil dep search" res)
                                 (and (string-match-p "Unable to find.*Maven" res)
                                      (string-match-p "Unable to find.*Clojars" res)))
                             (user-error res)
