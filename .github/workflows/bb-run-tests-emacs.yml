@@ -13,5 +13,21 @@ jobs:
       - name: Install emacs
         uses: purcell/setup-emacs@master
         with:
-          version: 28.1
+          version: 29.1
+
+      - name: install buttercup
+        run: |-
+          set -e
+          script=$(cat <<- 'EOF'
+            (progn
+              (require 'package)
+              (add-to-list 'package-archives '("melpa" . "http://melpa.org/packages/"))
+              (package-initialize)
+              (unless (package-installed-p 'buttercup)
+                (package-refresh-contents)
+                (package-install 'buttercup)))
+          EOF
+          )
+          emacs --batch --eval "$script"
+
       - run: bb run test:emacs

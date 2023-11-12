@@ -88,7 +88,21 @@
   #_(is (any? (run-dep-subcommand "search" "org.clojure/tools.cli")))
   (is (any? (run-dep-subcommand "search" "babashka nrepl")))
   (is (thrown-with-msg? Exception #"Unable to find"
-        (run-dep-subcommand "search" "%22searchTermThatIsn'tFound"))))
+                        (run-dep-subcommand "search" "%22searchTermThatIsn'tFound")))
+  (is (some #(str/starts-with? % "Usage: neil dep search")
+            (run-dep-subcommand "search" "42"))
+      "passing non-string shows help")
+  (is (some #(str/starts-with? % "Usage: neil dep search")
+            (run-dep-subcommand "search" "  "))
+      "passing blank string shows help")
+  (is (some
+       (partial
+        re-matches
+        (re-pattern
+         (str ":lib org.clojure/clojurescript "
+              ":version \"\\d+(\\.\\d+)+\" "
+              ":description \"org.clojure/clojurescript on Maven\"")))
+       (run-dep-subcommand "search" "\"org.clojure/clojurescript\""))))
 
 (defn run-license [filename subcommand & [args]]
   (let [args (or args "")]

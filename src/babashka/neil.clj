@@ -500,22 +500,58 @@ will return libraries with 'test framework' in their description.
 See http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for
 details on the search syntax.")))
 
+(defn dep-search-maven [search-term]
+  (let [url (format
+             "https://search.maven.org/solrsearch/select?q=%s&rows=20&wt=json"
+             (url-encode search-term))
+        keys-m {:g :group_name
+                :a :jar_name
+                :timestamp :created
+                :latestVersion :version}
+        add-desc (fn [{:keys [group_name jar_name] :as m}]
+                   ;; Maven doesn't provide package description through its API,
+                   ;; but that doesn't mean we should just leave it blank
+                   (assoc
+                    m :description
+                    (format "%s/%s on Maven" group_name jar_name)))
+        res (->> url curl-get-json :response :docs
+                    (map #(some->
+                           %
+                           (clojure.set/rename-keys keys-m)
+                           (select-keys (vals keys-m))
+                           add-desc)))]
+    (if (empty? res)
+      (binding [*out* *err*]
+        (println "Unable to find" search-term "on Maven."))
+      res)))
+
+(defn dep-search-clojars [search-term]
+  (let [url (format
+             "https://clojars.org/search?format=json&q=%s"
+             (url-encode search-term))
+        {search-results :results
+         results-count :count} (curl-get-json url)]
+    (if (zero? results-count)
+      (binding [*out* *err*]
+        (println "Unable to find" search-term "on Clojars."))
+      search-results)))
+
 (defn dep-search [{:keys [opts]}]
-  (if (or (:help opts) (not (:search-term opts)))
-    (print-dep-search-help)
-    (let [search-term (:search-term opts)
-          url (str "https://clojars.org/search?format=json&q=" (url-encode search-term))
-          {search-results :results
-           results-count :count} (curl-get-json url)]
-      (when (zero? results-count)
-        (binding [*out* *err*]
-          (println "Unable to find" search-term  "on Clojars.")
-          (System/exit 1)))
-      (doseq [search-result search-results]
-        (prn :lib (symbol (:group_name search-result)
-                          (:jar_name search-result))
-             :version (:version search-result)
-             :description (:description search-result))))))
+  (let [{:keys [search-term]} opts]
+    (if (or (:help opts)
+            (not (string? search-term))
+            (str/blank? search-term))
+      (print-dep-search-help)
+      (let [search-results (->> [dep-search-maven
+                                 dep-search-clojars]
+                                (map #(% search-term))
+                                (apply concat))]
+        (when (empty? search-results) (System/exit 1))
+        (doseq [search-result search-results]
+          (prn :lib (symbol (:group_name search-result)
+                            (:jar_name search-result))
+               :version (:version search-result)
+               :description (:description search-result)))))))
 
 (defn git-url->lib [git-url]
   (when git-url
@@ -702,7 +738,6 @@ Examples:
               (System/exit 1))))
 
     (doseq [dep-upgrade upgrades] (do-dep-upgrade opts dep-upgrade))))
-
 
 (defn print-help [_]
   (println (str/trim "
