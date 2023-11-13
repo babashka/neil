@@ -11,7 +11,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ### Homebrew (Linux and macOS)
 
 ```
-brew install babashka/brew/neil
+$ brew install babashka/brew/neil
 ```
 
 ### Scoop (Windows)
