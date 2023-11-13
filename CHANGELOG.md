@@ -7,7 +7,6 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## 0.2.63
 
 - [#194](https://github.com/babashka/neil/issues/41): `dep search` in addition to Clojars, now also searches on Maven
-
 - [#92](https://github.com/babashka/neil/issues/180): `neil dep upgrade`: delete rogue "`" character from helptext ([@teodorlu](https://github.com/teodorlu))
 
 ## 0.2.62
