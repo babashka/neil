@@ -26,13 +26,13 @@
               :task (gen-script/gen-script)}
 
   bump-version {:requires ([babashka.neil :as neil]
-                           [clojure.edn :as edn])
-                :task (let [version (-> (slurp "deps.edn") edn/read-string
-                                        :aliases :neil :project :version)
-                            [major minor patch] (str/split version (re-pattern "\\."))
-                            version (str/join "." [major minor (inc (Integer/parseInt patch))])]
-                        (binding [*command-line-args* ["version" "set" version "--no-tag"]]
-                          (neil/-main)))}
+                            [clojure.edn :as edn])
+                 :task (let [version (-> (slurp "deps.edn") edn/read-string
+                                         :aliases :neil :project :version)
+                             [major minor patch] (str/split version (re-pattern "\\."))
+                             version (str/join "." [major minor (inc (Integer/parseInt patch))])]
+                         (binding [*command-line-args* ["version" "set" version "--no-tag"]]
+                           (neil/-main)))}
 
   update-readme {:depends [gen-script]
                  :task (let [help (:out (shell {:out :string} "./neil"))]
