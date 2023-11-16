@@ -70,7 +70,11 @@ name lets you choose its version.
 With `neil-inject-dep-to-project-p' set to t, automatically adds
 the dependency to the project (deps.edn only)."
   (interactive
-   (list (read-from-minibuffer "Search for Clojure libs: ")))
+   (list (read-from-minibuffer
+          "Search for Clojure libs: "
+          (when (member (file-name-nondirectory (buffer-file-name))
+                        '("deps.edn" "project.clj"))
+            (symbol-name (symbol-at-point))))))
   (let* ((format-dep-str
           (lambda (lib-name version)
             (let ((build-tool (car (neil--identify-project-build-tool))))
