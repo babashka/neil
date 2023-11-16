@@ -74,7 +74,8 @@ the dependency to the project (deps.edn only)."
           "Search for Clojure libs: "
           (when (member (file-name-nondirectory (buffer-file-name))
                         '("deps.edn" "project.clj"))
-            (symbol-name (symbol-at-point))))))
+            (when-let ((sym (symbol-at-point)))
+              (symbol-name sym))))))
   (let* ((format-dep-str
           (lambda (lib-name version)
             (let ((build-tool (car (neil--identify-project-build-tool))))
