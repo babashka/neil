@@ -72,7 +72,7 @@ the dependency to the project (deps.edn only)."
   (interactive
    (list (read-from-minibuffer
           "Search for Clojure libs: "
-          (when (member (file-name-nondirectory (buffer-file-name))
+          (when (member (file-name-nondirectory (or (buffer-file-name) ""))
                         '("deps.edn" "project.clj"))
             (when-let ((sym (symbol-at-point)))
               (symbol-name sym))))))
@@ -99,9 +99,12 @@ the dependency to the project (deps.edn only)."
                            (split-string res "\n")))))
               (seq-map
                (lambda (s)
-                 (rx-let ((dep-rx (seq ":lib " (group-n 1 (one-or-more graph))
-                                       (zero-or-one (seq blank ":version " (group-n 2 (one-or-more graph))))
-                                       (zero-or-one (seq blank ":description " (group-n 3 (one-or-more ascii)))))))
+                 (rx-let ((dep-rx (seq
+                                   ":lib " (group-n 1 (one-or-more graph))
+                                   (zero-or-one
+                                    (seq blank ":version " (group-n 2 (one-or-more graph))))
+                                   (zero-or-one
+                                    (seq blank ":description " (group-n 3 (one-or-more ascii)))))))
                    (string-match (rx dep-rx) s)
                    (let ((lib (match-string 1 s))
                          (ver (match-string 2 s))
