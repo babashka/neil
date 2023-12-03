@@ -12,9 +12,13 @@
    [babashka.neil.test :as neil-test]
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
+   [babashka.http-client :as http]
+   [clojure.java.io :as io]
    [clojure.edn :as edn]
    [clojure.string :as str]
    [clojure.set :as set]))
+
+(def *neil-opts* (atom nil))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -633,10 +637,10 @@ details on the search syntax.")))
          ;; otherwise, provide a more recent unstable
          (when-let [candidate (or (first clojars-candidates) (first maven-candidates))]
            (when (v-older? (:mvn/version current) candidate)
-             candidate))
+             candidate)))))))
 
          ;; otherwise, do nothing (fall through to nil)
-         )))))
+         
 
 (defn opts->specified-deps
   "Returns all :deps and :alias :extra-deps for the deps.edn indicated by `opts`."
@@ -838,9 +842,27 @@ test
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
+(defn exec [& opts]
+  (println :opts opts)
+  (println :exec)
+  (let [repo-name (-> opts first :args first)
+        ext-raw-url (format "https://raw.githubusercontent.com/%s/main/neil-ext.clj" repo-name)]
+    (println :repo-name repo-name)
+    (println :ext-raw-url ext-raw-url)
+    (reset! *neil-opts* opts)
+    (io/copy
+     (:body (http/get ext-raw-url
+                      {:as :stream}))
+     (io/file "/tmp/neil-ext.clj"))
+    (load-file "/tmp/neil-ext.clj")))
+
+  
+
+
 (defn -main [& _args]
   (cli/dispatch
-   [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
+   [{:cmds ["exec"] :fn exec :args->opts []}
+    {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
     {:cmds ["add" "test"] :fn add-cognitect-test-runner}
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
