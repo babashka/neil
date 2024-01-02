@@ -343,6 +343,7 @@ chmod +x bin/kaocha
     (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
+  (prn :opts opts)
   (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
     (do
@@ -896,7 +897,7 @@ test
              (print-help m)))}]
    *command-line-args*
    {:spec spec
-    :exec-args {:deps-file "deps.edn"}})
+    #_#_:exec-args {:deps-file "deps.edn"}})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
