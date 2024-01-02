@@ -343,7 +343,7 @@ chmod +x bin/kaocha
     (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
-  (prn :opts opts)
+  (.println System/err (str opts))
   (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
     (do
@@ -890,14 +890,14 @@ test
      :spec neil-test/neil-test-spec
      :alias neil-test/neil-test-aliases}
     {:cmds []
-     :spec {:version {:coerce :boolean}}
+     ;; :spec {:version {:coerce :boolean}}
      :fn (fn [{:keys [opts] :as m}]
            (if (:version opts)
              (neil-version/print-version)
              (print-help m)))}]
    *command-line-args*
    {:spec spec
-    #_#_:exec-args {:deps-file "deps.edn"}})
+    :exec-args {:deps-file "deps.edn"}})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
