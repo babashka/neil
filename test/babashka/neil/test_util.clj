@@ -30,5 +30,6 @@
                                  (when dry-run [:dry-run "true"]))
         cli-args' (mapv str cli-args')]
     (binding [*command-line-args* cli-args']
+      (prn cli-args')
       (let [s (with-out-str (apply neil-main/-main cli-args'))]
         {:out (if (#{:edn} out) (edn/read-string s) (str/trim s))}))))
