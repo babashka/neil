@@ -240,7 +240,7 @@
         clojure2d/clojure2d {:mvn/version \"1.4.4\"
                              :exclusions [org.apache.xmlgraphics/batik-transcoder]}
 }}")
-    (test-util/neil "dep dep upgrade" :deps-file test-file-path)
+    (test-util/neil "dep upgrade" :deps-file test-file-path)
     (let [clojure2d-exclusions (fn [] (:exclusions (get-dep-version 'clojure2d/clojure2d)))]
       (is (clojure2d-exclusions) "Exclusions are present before upgrading")
       (test-util/neil "dep upgrade" :deps-file test-file-path)
