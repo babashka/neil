@@ -889,7 +889,6 @@ test
      :spec neil-test/neil-test-spec
      :alias neil-test/neil-test-aliases}
     {:cmds []
-     ;; :spec {:version {:coerce :boolean}}
      :fn (fn [{:keys [opts] :as m}]
            (if (:version opts)
              (neil-version/print-version)
