@@ -6,7 +6,7 @@
         org.babashka/cli {#_#_:local/root "../cli"
                           #_#_:mvn/version "0.7.51"
                           :git/url "https://github.com/babashka/cli"
-                          :git/sha "280ee9f2a92d5edab89cf3c9532868dd226bb96b"}
+                          :git/sha "3d86fa0b5ea6c0bd5a9a0e63f6a41028dc3e8d69"}
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
                                          :git/tag "v0.5.0"
