@@ -4,6 +4,9 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.2.64
+- [#205](https://github.com/babashka/neil/issues/205): `neil add build` now adds the latest version of `deps-deploy` from Clojars
+
 ## 0.2.63
 
 - [#194](https://github.com/babashka/neil/issues/41): `dep search` in addition to Clojars, now also searches on Maven
