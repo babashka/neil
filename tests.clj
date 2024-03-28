@@ -2,7 +2,7 @@
   (:require
    [babashka.deps :as deps]
    [babashka.fs :as fs]
-   [babashka.process :refer [check process tokenize]]
+   [babashka.process :as process :refer [check process tokenize]]
    [babashka.tasks :as tasks]
    [clojure.edn :as edn]
    [clojure.string :as str]
@@ -15,7 +15,7 @@
 
 (defn neil [arg & args]
   (let [tmp-file (test-file "deps.edn")]
-    (apply tasks/shell "./neil"
+    (apply process/shell "./neil"
            (concat (tokenize arg) [:deps-file tmp-file] args))
     (let [s (slurp tmp-file)]
       {:raw s
@@ -44,7 +44,7 @@
         existing-deps {'clj-kondo/clj-kondo {:tag "v2022.03.08" :sha "247e538"}}]
     (spit tmp-file (str "{:deps " existing-deps "}"))
     ;; note this is not a qualified namespace - no version will be found, it should not be added
-    (tasks/shell "./neil add dep com.rpl.specter --deps-file" tmp-file)
+    (tasks/shell {:continue true} "./neil add dep com.rpl.specter --deps-file" tmp-file)
     (let [edn (edn/read-string (slurp tmp-file))]
       ;; make sure existing deps were not deleted
       (is (= (-> edn :deps) existing-deps)))))
