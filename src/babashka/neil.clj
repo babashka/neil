@@ -378,10 +378,12 @@ chmod +x bin/kaocha
                      [v :mvn])
                    (when-let [v (latest-mvn-version lib)]
                      [v :mvn])))
+            _ (when-not version
+                (throw (ex-info (str "Couldn't find version for lib: " lib) {:babashka/exit 0})))
             missing? (nil? version)
-            mvn? (= coord-type? :mvn)
-            git-sha? (= coord-type? :git/sha)
-            git-tag? (= coord-type? :git/tag)
+            mvn? (= :mvn coord-type?)
+            git-sha? (= :git/sha coord-type?)
+            git-tag? (= :git/tag coord-type?)
             git-url (when (or git-sha? git-tag?)
                       (or (:git/url opts)
                           (str "https://github.com/" (git/clean-github-lib lib))))
