@@ -4,6 +4,14 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.3.65
+
+- [#209](https://github.com/babashka/neil/issues/209): add newlines between dependencies
+- [#185](https://github.com/babashka/neil/issues/185): throw on non-existing library
+- Bump `babashka.cli`
+- Fetch latest stable `slipset/deps-deploy`, instead of hard-coding ([@vedang](https://github.com/vedang))
+- Several emacs package improvements ([@agzam](https://github.com/agzam))
+
 ## 0.2.64
 - [#205](https://github.com/babashka/neil/issues/205): `neil add build` now adds the latest version of `deps-deploy` from Clojars
 
