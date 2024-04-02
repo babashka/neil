@@ -8,10 +8,6 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## Installation
 
-## Prerequisites
-
-You will need to have `git` installed for `neil` being able to create new projects or add libraries you want from git-based repositories.
-
 ### Homebrew (Linux and macOS)
 
 ```
