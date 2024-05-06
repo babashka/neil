@@ -9,7 +9,7 @@
 ;; Version: 0.0.1
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "28.1"))
 ;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:
