@@ -130,7 +130,7 @@
 (defn add-alias-str
   "Updates deps-file-str by adding alias contents to alias-kw
 
-  Returns a map of :action and :deps-file-str. :deps.file-str is the new deps
+  Returns a map of :action and :deps-file-str. :deps-file-str is the new deps
   file as a string. :action is :replace-str if the string has been
   changed, :noop otherwise.
 
