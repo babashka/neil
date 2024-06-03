@@ -132,8 +132,15 @@
 
   Returns a map of :action and :deps-file-str. :deps.file-str is the new deps
   file as a string. :action is :replace-str if the string has been
-  changed, :noop otherwise."
-  [deps-file-str alias-kw alias-contents]
+  changed, :noop otherwise.
+
+  Args:
+
+  - deps-file-str - string representing deps.edn or bb.edn
+  - alias-kw - alias keyword, like :kaocha or :dev
+  - alias-map - string representing alias contents
+  "
+  [deps-file-str alias-kw alias-map]
   (let [edn-nodes (edn-nodes deps-file-str)
         edn (edn/read-string deps-file-str)
         existing-aliases (get-in edn [:aliases])
@@ -150,7 +157,7 @@
                     edn-nodes)
                   (r/update :aliases
                             (fn [aliases]
-                              (let [s (rw/indent alias-contents 1)
+                              (let [s (rw/indent alias-map 1)
                                     alias-nodes (r/parse-string s)
                                     aliases' (r/assoc aliases alias-node alias-nodes)]
                                 (if-not (seq existing-aliases)
