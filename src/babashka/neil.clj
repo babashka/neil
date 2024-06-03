@@ -127,19 +127,21 @@
  :main-opts [\"-m\" \"cognitect.test-runner\"]
  :exec-fn cognitect.test-runner.api/test}")
 
-(defn add-alias [opts alias-kw alias-contents]
-  (ensure-deps-file opts)
-  (let [edn-string (edn-string opts)
-        edn-nodes (edn-nodes edn-string)
-        edn (edn/read-string edn-string)
-        alias (or (:alias opts)
-                  alias-kw)
+(defn add-alias-str
+  "Updates deps-file-str by adding alias contents to alias-kw
+
+  Returns a map of :action and :deps-file-str. :deps.file-str is the new deps
+  file as a string. :action is :replace-str if the string has been
+  changed, :noop otherwise."
+  [deps-file-str alias-kw alias-contents]
+  (let [edn-nodes (edn-nodes deps-file-str)
+        edn (edn/read-string deps-file-str)
         existing-aliases (get-in edn [:aliases])
         alias-node (r/parse-string
                     (str (when (seq existing-aliases) "\n ")
-                         alias
+                         alias-kw
                          " ;; added by neil"))]
-    (if-not (get existing-aliases alias)
+    (if-not (get existing-aliases alias-kw)
       (let [s (-> (if-not (seq existing-aliases)
                                         ; If there are no existing aliases, we assoc an empty map
                                         ; before updating to prevent borkdude.rewrite-edn/update
@@ -160,7 +162,26 @@
                   str)
             s (rw/clean-trailing-whitespace s)
             s (str s "\n")]
-        (spit (:deps-file opts) s))
+        {:action :replace-str
+         :deps-file-str s})
+      {:action :noop
+       :deps-file-str deps-file-str})))
+
+(defn add-alias
+  "Updates deps.edn or bb.edn at alias-kw with new alias-contents.
+
+  deps.edn or bb.edn is inferred from opts.
+  If the alias already exists, does nothing, then returns :babashka.neil/update."
+  [opts alias-kw alias-contents]
+  (ensure-deps-file opts)
+  (let [edn-string (edn-string opts)
+        alias (or (:alias opts)
+                  alias-kw)
+        {:keys [action deps-file-str]} (add-alias-str edn-string alias alias-contents)]
+    (case action
+      :replace-str
+      (spit (:deps-file opts) deps-file-str)
+      :noop
       (do (println (format "[neil] Project deps.edn already contains alias %s" (str alias ".")))
           ::update))))
 
