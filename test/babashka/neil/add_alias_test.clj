@@ -1,6 +1,7 @@
 (ns babashka.neil.add-alias-test
   (:require
    [babashka.neil :as neil]
+   [borkdude.rewrite-edn :as r]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
@@ -59,4 +60,26 @@
                                           :kaocha kaocha-alias))
       println2)
 
+  )
+
+(comment
+  ;; how do I use rewrite-edn?
+
+  (str (r/assoc (r/parse-string "{:x 1\n :y 2}") :key "value"))
+
+  (let [s (str/triml "
+{:deps {}
+ :aliases {}}
+")]
+    (-> (r/parse-string s)
+        (r/assoc-in [:aliases :kaocha] {})
+        (r/assoc-in [:aliases :dev] {})
+        str
+        println))
+  ;; =>
+  ;; {:deps {}
+  ;;  :aliases {:kaocha {}
+  ;;            :dev {}}}
+
+  ;; this works just perfectly.
   )
