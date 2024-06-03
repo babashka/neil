@@ -109,12 +109,11 @@
  }}
 "))
 
-(defn ensure-deps-file [opts]
-  (let [target (:deps-file opts)]
-    (when-not (fs/exists? target)
-      (spit target (if (= "bb.edn" target)
-                     bb-template
-                     deps-template)))))
+(defn ensure-deps-file [{:keys [deps-file]}]
+  (when-not (fs/exists? deps-file)
+    (spit deps-file (if (= "bb.edn" deps-file)
+                      bb-template
+                      deps-template))))
 
 (defn edn-string [opts] (slurp (:deps-file opts)))
 
