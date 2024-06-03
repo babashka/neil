@@ -143,34 +143,18 @@
   [deps-file-str alias-kw alias-map]
   (let [edn-nodes (edn-nodes deps-file-str)
         edn (edn/read-string deps-file-str)
-        existing-aliases (get-in edn [:aliases])
-        alias-node (r/parse-string
-                    (str (when (seq existing-aliases) "\n ")
-                         alias-kw
-                         " ;; added by neil"))]
+        existing-aliases (get-in edn [:aliases])]
     (if-not (get existing-aliases alias-kw)
-      (let [s (-> (if-not (seq existing-aliases)
-                                        ; If there are no existing aliases, we assoc an empty map
-                                        ; before updating to prevent borkdude.rewrite-edn/update
-                                        ; from removing the newline preceding the :aliases key.
-                    (r/assoc edn-nodes :aliases {})
-                    edn-nodes)
-                  (r/update :aliases
-                            (fn [aliases]
-                              (let [s (rw/indent alias-map 1)
-                                    alias-nodes (r/parse-string s)
-                                    aliases' (r/assoc aliases alias-node alias-nodes)]
-                                (if-not (seq existing-aliases)
-                                        ; If there are no existing aliases, add an
-                                        ; explicit newline after the :aliases key.
-                                  (r/parse-string (str "\n" (rw/indent (str aliases') 1)))
-                                  aliases'))))
-
-                  str)
-            s (rw/clean-trailing-whitespace s)
-            s (str s "\n")]
+      (let [node-with-aliases-key (if-not (seq existing-aliases)
+                                    (r/assoc edn-nodes :aliases {})
+                                    edn-nodes)
+            node-with-new-alias (reduce (fn [node [k v]]
+                                          (r/assoc-in node [:aliases alias-kw k] v))
+                                        node-with-aliases-key
+                                        (edn/read-string alias-map))]
         {:action :replace-str
-         :deps-file-str s})
+         :deps-file-str (str (-> node-with-new-alias str rw/clean-trailing-whitespace)
+                             "\n")})
       {:action :noop
        :deps-file-str deps-file-str})))
 
