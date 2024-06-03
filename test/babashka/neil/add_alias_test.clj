@@ -82,4 +82,14 @@
   ;;            :dev {}}}
 
   ;; this works just perfectly.
+
+  (let [s (str/triml "
+{:deps {}
+ :aliases {:dev {}}}
+")]
+    (-> (r/parse-string s)
+        (r/assoc-in [:aliases :kaocha :extra-deps] {:lambdaisland/kaocha {:mvn/version "1.91.1392"}},)
+        (r/assoc-in [:aliases :kaocha :main-opts] ["-m" "kaocha.runner"])
+        str
+        println2))
   )
