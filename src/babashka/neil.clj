@@ -140,10 +140,12 @@
   - alias-kw - alias keyword, like :kaocha or :dev
   - alias-map - string representing alias contents
   "
-  [deps-file-str alias-kw alias-map]
+  [deps-file-str alias-kw alias-map-str]
   (let [edn-nodes (edn-nodes deps-file-str)
         edn (edn/read-string deps-file-str)
-        existing-aliases (get-in edn [:aliases])]
+        existing-aliases (get-in edn [:aliases])
+        alias-map (edn/read-string alias-map-str)]
+    (assert (map? alias-map) "Alias map must be a map")
     (if-not (get existing-aliases alias-kw)
       (let [node-with-aliases-key (if-not (seq existing-aliases)
                                     (r/assoc edn-nodes :aliases {})
@@ -151,7 +153,7 @@
             node-with-new-alias (reduce (fn [node [k v]]
                                           (r/assoc-in node [:aliases alias-kw k] v))
                                         node-with-aliases-key
-                                        (edn/read-string alias-map))]
+                                        (into (sorted-map) alias-map))]
         {:action :replace-str
          :deps-file-str (str (-> node-with-new-alias str rw/clean-trailing-whitespace)
                              "\n")})
