@@ -1,7 +1,6 @@
 (ns babashka.neil.add-alias-test
   (:require
    [babashka.neil :as neil]
-   [borkdude.rewrite-edn :as r]
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
