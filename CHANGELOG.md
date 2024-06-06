@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- [#215](https://github.com/babashka/neil/issues/215): `neil add kaocha` adds `:kaocha` alias with irregular indent ([@teodorlu](https://github.com/teodorlu))
+
 ## 0.3.65
 
 - [#209](https://github.com/babashka/neil/issues/209): add newlines between dependencies
