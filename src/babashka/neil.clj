@@ -222,9 +222,14 @@ chmod +x bin/kaocha
 ")))))
 
 (defn nrepl-alias-latest []
-  (let [version (latest-stable-clojars-version 'nrepl/nrepl)]
-    {:extra-deps {'nrepl/nrepl {:mvn/version version}},
-     :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"]}))
+  (let [nrepl-version (future (latest-stable-clojars-version 'nrepl/nrepl))
+        cider-nrepl-version (future (latest-stable-clojars-version 'cider/cider-nrepl))
+        refactor-nrepl-version (future (latest-clojars-version 'refactor-nrepl/refactor-nrepl))]
+    {:extra-deps {'nrepl/nrepl {:mvn/version @nrepl-version}
+                  'cider/cider-nrepl {:mvn/version @cider-nrepl-version}
+                  'refactor-nrepl/refactor-nrepl {:mvn/version @refactor-nrepl-version}}
+     :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"
+                 "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]}))
 
 (defn add-nrepl [{:keys [opts] :as cmd}]
   (if (:help opts)
