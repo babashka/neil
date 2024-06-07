@@ -160,7 +160,7 @@
 
   - deps-file-str - string representing deps.edn or bb.edn
   - alias-kw - alias keyword, like :kaocha or :dev
-  - alias-map - string representing alias contents
+  - alias-map - alias map, like {:extra-paths [\"test\"]}
   "
   [deps-file-str alias-kw alias-map]
   (let [edn-nodes (edn-nodes deps-file-str)
