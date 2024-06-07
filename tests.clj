@@ -53,7 +53,9 @@
   (let [{:keys [edn]} (neil "add nrepl")
         {:keys [main-opts extra-deps]} (-> edn :aliases :nrepl)]
     (is (get extra-deps 'nrepl/nrepl))
-    (is (= ["-m" "nrepl.cmdline" "--interactive" "--color"] main-opts))))
+    (is (= ["-m" "nrepl.cmdline" "--interactive" "--color"
+            "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]
+           main-opts))))
 
 (defn run-dep-subcommand [subcommand & args]
   (-> (process (concat ["./neil" "dep" subcommand] args) {:out :string})
