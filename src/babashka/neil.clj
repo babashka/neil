@@ -148,14 +148,7 @@
                         (value->assoc-in-pairs (into root-path [k]) v))
                       value))))
 
-(comment
-
-  (def some-alias (kaocha-alias-latest))
-  (def some-pairs (value->assoc-in-pairs [:aliases :kaocha] some-alias))
-
-  (sort some-pairs)
-
-  :rcf)
+#_ (value->assoc-in-pairs [:aliases :kaocha] (kaocha-alias-latest))
 
 (defn add-alias-str
   "Updates deps-file-str by adding alias contents to alias-kw
