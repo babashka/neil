@@ -77,20 +77,37 @@
     (is (trim= expected-deps-edn
                (:deps-file-str (neil/add-alias-str input-deps-edn :kaocha kaocha-alias))))))
 
+(deftest add-alias-nrepl
+  (let [input-deps-edn (str/trim "
+{:aliases
+ {:dev {}}}
+")
+        expected-deps-edn (str/trim "
+{:aliases
+ {:dev {}
+  :nrepl {:extra-deps {nrepl/nrepl {:mvn/version \"1.1.2\"}
+                       cider/cider-nrepl {:mvn/version \"0.49.0\"}
+                       refactor-nrepl/refactor-nrepl {:mvn/version \"3.10.0\"}}
+          :main-opts [\"-m\" \"nrepl.cmdline\" \"--interactive\" \"--color\" \"--middleware\" \"[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]\"]}}}
+")]
+    (is (trim= expected-deps-edn
+               (:deps-file-str (neil/add-alias-str input-deps-edn :nrepl nrepl-alias)))))
+  )
+
 (comment
-  ;; Some helper code to generate the strings for the tests
+  ;; Some helper code to generate the strings for the tests above
 
-  (defn escape-quote [s]
-    (str/escape s {\" "\\\""}))
-
-  (def println2 (comp println escape-quote))
+  (do
+    (defn escape-quote [s]
+      (str/escape s {\" "\\\""}))
+    (def println2 (comp println escape-quote)))
 
   (let [s (str/trim "
 {:aliases
  {:dev {}}}
 ")
         ]
-    (-> (:deps-file-str (neil/add-alias-str s :kaocha kaocha-alias))
+    (-> (:deps-file-str (neil/add-alias-str s :nrepl nrepl-alias))
         println2))
 
   :rcf)
