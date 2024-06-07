@@ -855,6 +855,7 @@ test
     {:cmds ["add" "build"] :fn add-build}
     {:cmds ["add" "kaocha"] :fn add-kaocha}
     {:cmds ["add" "nrepl"] :fn add-nrepl}
+    {:cmds ["add"] :fn print-help}
     {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
     {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
