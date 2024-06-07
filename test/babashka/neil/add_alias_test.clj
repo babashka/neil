@@ -15,6 +15,15 @@
   '{:extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}},
     :main-opts ["-m" "kaocha.runner"]})
 
+(def nrepl-alias
+  '{:extra-deps
+    {nrepl/nrepl {:mvn/version "1.1.2"},
+     cider/cider-nrepl {:mvn/version "0.49.0"},
+     refactor-nrepl/refactor-nrepl {:mvn/version "3.10.0"}},
+    :main-opts
+    ["-m" "nrepl.cmdline" "--interactive" "--color"
+     "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]})
+
 (defn trim= [s1 s2]
   (= (str/trim s1)
      (str/trim s2)))
