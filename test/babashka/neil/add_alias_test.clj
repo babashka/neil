@@ -12,14 +12,14 @@
   (= (str/trim s1)
      (str/trim s2)))
 
-(deftest add-alias-str-empty-deps-edn
+(deftest add-alias-kaocha-small
     (is (trim= "
 {:aliases {:kaocha {:extra-deps {lambdaisland/kaocha {:mvn/version \"1.91.1392\"}}
                     :main-opts [\"-m\" \"kaocha.runner\"]}}}
 "
                (:deps-file-str (neil/add-alias-str "{}" :kaocha kaocha-alias)))))
 
-(deftest add-alias-str-deps-edn-with-dev-alias
+(deftest add-alias-kaocha-bigger-1
     (is (trim= "
 {:aliases
  {:dev {}
@@ -29,7 +29,7 @@
                (:deps-file-str (neil/add-alias-str "{:aliases
  {:dev {}}}" :kaocha kaocha-alias)))))
 
-(deftest add-alias-str-simplified-neil-deps-edn
+(deftest add-alias-kaocha-bigger-2
   (let [input-deps-edn (str/trim "
 {:deps {org.babashka/http-client {:mvn/version \"0.1.4\"}
         org.babashka/cli {:mvn/version \"0.8.58\"}
