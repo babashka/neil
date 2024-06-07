@@ -231,7 +231,7 @@ chmod +x bin/kaocha
     (print-help cmd)
     (add-alias opts :nrepl (nrepl-alias))))
 
-(defn build-alias [_opts]
+(defn build-alias []
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
@@ -321,7 +321,7 @@ chmod +x bin/kaocha
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
       (ensure-deps-file opts)
-      (let [ba (build-alias opts)]
+      (let [ba (build-alias)]
         (when (= ::update (add-alias opts :build (:alias ba)))
           (println "[neil] Updating tools build to newest git tag + sha.")
           (let [edn-string (edn-string opts)
