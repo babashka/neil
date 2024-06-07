@@ -7,8 +7,8 @@
 (deftest value->assoc-in-pairs-test
   (is (= (neil/value->assoc-in-pairs [:x] 1)
          '([[:x] 1])))
-  (is (= (list [[:p :x] 1]
-               [[:p :y] 2])
+  (is (= '([[:p :x] 1]
+           [[:p :y] 2])
          (neil/value->assoc-in-pairs [] {:p {:x 1 :y 2}}))))
 
 (def kaocha-alias
