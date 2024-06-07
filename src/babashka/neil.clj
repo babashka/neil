@@ -132,7 +132,7 @@
 
     {:p {:x 1 :y 2}}
 
-  into a seq of assoc-in pairs such as ´
+  into a seq of assoc-in pairs such as
 
     '([[:p :x] 1]
       [[:p :y] 2])
