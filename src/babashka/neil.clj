@@ -134,9 +134,8 @@
 
   into a seq of assoc-in pairs such as
 
-    '([[:p :x] 1]
-      [[:p :y] 2])
-  "
+     [[[:p :x] 1]
+      [[:p :y] 2]]"
   [root-path value]
   (assert (vector? root-path) "root-path must be vector")
   (cond (not (map? value))
