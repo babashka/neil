@@ -4,7 +4,9 @@
    [clojure.string :as str]
    [clojure.test :refer [deftest is]]))
 
-(def kaocha-alias "\n{:extra-deps {lambdaisland/kaocha {:mvn/version \"1.91.1392\"}}\n :main-opts [\"-m\" \"kaocha.runner\"]}")
+(def kaocha-alias
+  '{:extra-deps {lambdaisland/kaocha {:mvn/version "1.91.1392"}},
+    :main-opts ["-m" "kaocha.runner"]})
 
 (defn trim= [s1 s2]
   (= (str/trim s1)

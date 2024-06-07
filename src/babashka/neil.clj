@@ -120,12 +120,12 @@
 (defn edn-nodes [edn-string] (r/parse-string edn-string))
 
 (def cognitect-test-runner-alias
-  "
-{:extra-paths [\"test\"]
- :extra-deps {io.github.cognitect-labs/test-runner
-               {:git/tag \"v0.5.0\" :git/sha \"b3fd0d2\"}}
- :main-opts [\"-m\" \"cognitect.test-runner\"]
- :exec-fn cognitect.test-runner.api/test}")
+  '{:extra-paths ["test"],
+    :extra-deps
+    {io.github.cognitect-labs/test-runner
+     {:git/tag "v0.5.0", :git/sha "b3fd0d2"}},
+    :main-opts ["-m" "cognitect.test-runner"],
+    :exec-fn cognitect.test-runner.api/test})
 
 (defn add-alias-str
   "Updates deps-file-str by adding alias contents to alias-kw
@@ -140,11 +140,10 @@
   - alias-kw - alias keyword, like :kaocha or :dev
   - alias-map - string representing alias contents
   "
-  [deps-file-str alias-kw alias-map-or-map-str]
+  [deps-file-str alias-kw alias-map]
   (let [edn-nodes (edn-nodes deps-file-str)
         edn (edn/read-string deps-file-str)
-        existing-aliases (get-in edn [:aliases])
-        alias-map (cond-> alias-map-or-map-str string? edn/read-string)]
+        existing-aliases (get-in edn [:aliases])]
     (assert (map? alias-map) "Alias map must be a map")
     (if-not (get existing-aliases alias-kw)
       (let [node-with-aliases-key (if-not (seq existing-aliases)
@@ -184,7 +183,6 @@
   (if (:help opts)
     (print-help cmd)
     (do (add-alias opts :test cognitect-test-runner-alias)
-
         (when-let [pn (proj/project-name opts)]
           (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
                 test-path (-> (str test-ns)
@@ -205,10 +203,9 @@
 " test-ns (name pn)))))))))
 
 (defn kaocha-alias []
-  (format "
-{:extra-deps {lambdaisland/kaocha {:mvn/version \"%s\"}}
- :main-opts [\"-m\" \"kaocha.runner\"]}"
-          (latest-stable-clojars-version 'lambdaisland/kaocha)))
+  (let [version (latest-stable-clojars-version 'lambdaisland/kaocha)]
+    {:extra-deps {'lambdaisland/kaocha {:mvn/version version}},
+     :main-opts ["-m" "kaocha.runner"]}))
 
 (defn add-kaocha [{:keys [opts] :as cmd}]
   (if (:help opts)
@@ -225,10 +222,9 @@ chmod +x bin/kaocha
 ")))))
 
 (defn nrepl-alias []
-  (format "
-{:extra-deps {nrepl/nrepl {:mvn/version \"%s\"}}
- :main-opts [\"-m\" \"nrepl.cmdline\" \"--interactive\" \"--color\"]}"
-          (latest-stable-clojars-version 'nrepl/nrepl)))
+  (let [version (latest-stable-clojars-version 'nrepl/nrepl)]
+    {:extra-deps {'nrepl/nrepl {:mvn/version version}},
+     :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"]}))
 
 (defn add-nrepl [{:keys [opts] :as cmd}]
   (if (:help opts)
@@ -247,7 +243,11 @@ chmod +x bin/kaocha
                   tag sha slipset-version)]
     {:s s
      :tag tag
-     :sha sha}))
+     :sha sha
+     :alias {:deps
+             {'io.github.clojure/tools.build {:git/tag tag, :git/sha sha},
+              'slipset/deps-deploy {:mvn/version slipset-version}},
+             :ns-default 'build}}))
 
 (defn build-file
   [_opts]
@@ -322,7 +322,7 @@ chmod +x bin/kaocha
         (println "[neil] Project build.clj already exists."))
       (ensure-deps-file opts)
       (let [ba (build-alias opts)]
-        (when (= ::update (add-alias opts :build (:s ba)))
+        (when (= ::update (add-alias opts :build (:alias ba)))
           (println "[neil] Updating tools build to newest git tag + sha.")
           (let [edn-string (edn-string opts)
                 edn (edn/read-string edn-string)
