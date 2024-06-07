@@ -241,8 +241,7 @@ chmod +x bin/kaocha
         slipset/deps-deploy {:mvn/version \"%s\"}}
  :ns-default build}"
                   tag sha slipset-version)]
-    {:s s
-     :tag tag
+    {:tag tag
      :sha sha
      :alias {:deps
              {'io.github.clojure/tools.build {:git/tag tag, :git/sha sha},
