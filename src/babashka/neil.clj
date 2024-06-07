@@ -139,7 +139,7 @@
   [root-path value]
   (assert (vector? root-path) "root-path must be vector")
   (cond (not (map? value))
-        (list [root-path value])
+        [[root-path value]]
 
         :else
         (into []
