@@ -127,6 +127,36 @@
     :main-opts ["-m" "cognitect.test-runner"],
     :exec-fn cognitect.test-runner.api/test})
 
+(defn value->assoc-in-pairs
+  "Convert a Clojure value such as
+
+    {:p {:x 1 :y 2}}
+
+  into a seq of assoc-in pairs such as ´
+
+    '([[:p :x] 1]
+      [[:p :y] 2])
+  "
+  [root-path value]
+  (assert (vector? root-path) "Root path must be vector")
+  (cond (not (map? value))
+        (list [root-path value])
+
+        :else
+        (into []
+              (mapcat (fn [[k v]]
+                        (value->assoc-in-pairs (into root-path [k]) v))
+                      value))))
+
+(comment
+
+  (def some-alias (kaocha-alias-latest))
+  (def some-pairs (value->assoc-in-pairs [:aliases :kaocha] some-alias))
+
+  (sort some-pairs)
+
+  :rcf)
+
 (defn add-alias-str
   "Updates deps-file-str by adding alias contents to alias-kw
 
@@ -149,10 +179,10 @@
       (let [node-with-aliases-key (if-not (seq existing-aliases)
                                     (r/assoc edn-nodes :aliases {})
                                     edn-nodes)
-            node-with-new-alias (reduce (fn [node [k v]]
-                                          (r/assoc-in node [:aliases alias-kw k] v))
+            node-with-new-alias (reduce (fn [node [path value]]
+                                          (r/assoc-in node path value))
                                         node-with-aliases-key
-                                        (into (sorted-map) alias-map))]
+                                        (value->assoc-in-pairs [:aliases alias-kw] alias-map))]
         {:action :replace-str
          :deps-file-str (str (-> node-with-new-alias str rw/clean-trailing-whitespace)
                              "\n")})
