@@ -138,7 +138,7 @@
       [[:p :y] 2])
   "
   [root-path value]
-  (assert (vector? root-path) "Root path must be vector")
+  (assert (vector? root-path) "root-path must be vector")
   (cond (not (map? value))
         (list [root-path value])
 
