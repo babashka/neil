@@ -202,7 +202,7 @@
     (is (= :foo :bar))))
 " test-ns (name pn)))))))))
 
-(defn kaocha-alias []
+(defn kaocha-alias-latest []
   (let [version (latest-stable-clojars-version 'lambdaisland/kaocha)]
     {:extra-deps {'lambdaisland/kaocha {:mvn/version version}},
      :main-opts ["-m" "kaocha.runner"]}))
@@ -211,7 +211,7 @@
   (if (:help opts)
     (print-help cmd)
     (do
-      (add-alias opts :kaocha (kaocha-alias))
+      (add-alias opts :kaocha (kaocha-alias-latest))
       (println (str/trim "
 If you wish to create a `bin/kaocha` file, copy and run the following:
 
@@ -221,7 +221,7 @@ clojure -M:kaocha \"$@\"' > bin/kaocha && \\
 chmod +x bin/kaocha
 ")))))
 
-(defn nrepl-alias []
+(defn nrepl-alias-latest []
   (let [version (latest-stable-clojars-version 'nrepl/nrepl)]
     {:extra-deps {'nrepl/nrepl {:mvn/version version}},
      :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"]}))
@@ -229,9 +229,9 @@ chmod +x bin/kaocha
 (defn add-nrepl [{:keys [opts] :as cmd}]
   (if (:help opts)
     (print-help cmd)
-    (add-alias opts :nrepl (nrepl-alias))))
+    (add-alias opts :nrepl (nrepl-alias-latest))))
 
-(defn build-alias []
+(defn build-alias-latest []
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
@@ -320,7 +320,7 @@ chmod +x bin/kaocha
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
       (ensure-deps-file opts)
-      (let [ba (build-alias)]
+      (let [ba (build-alias-latest)]
         (when (= ::update (add-alias opts :build (:alias ba)))
           (println "[neil] Updating tools build to newest git tag + sha.")
           (let [edn-string (edn-string opts)
