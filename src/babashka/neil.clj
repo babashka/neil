@@ -235,12 +235,7 @@ chmod +x bin/kaocha
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
-        slipset-version (latest-stable-clojars-version 'slipset/deps-deploy)
-        s (format "
-{:deps {io.github.clojure/tools.build {:git/tag \"%s\" :git/sha \"%s\"}
-        slipset/deps-deploy {:mvn/version \"%s\"}}
- :ns-default build}"
-                  tag sha slipset-version)]
+        slipset-version (latest-stable-clojars-version 'slipset/deps-deploy)]
     {:tag tag
      :sha sha
      :alias {:deps
