@@ -34,6 +34,7 @@
            :limit {:coerce :long :desc "When provided, overrides number of versions from Maven/Clojars"}
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}
+           :pin {:coerce :boolean :desc "When provided, pins the version of the selected dependency."}
            :sha {:desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :tag {:desc "When provided, assumes lib refers to Github repo."
