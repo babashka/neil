@@ -42,7 +42,7 @@
       (test-util/neil "dep upgrade" :deps-file test-file-path)
       (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
 
-  (testing "pinned dependencies arent updated"
+  (testing "pinned dependencies aren't updated"
     (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true}}}")
     (test-util/neil "dep upgrade" :deps-file test-file-path)
     (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))))))
