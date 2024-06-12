@@ -750,6 +750,7 @@ Examples:
   neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
 "))
     (System/exit 0))
+
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
         deps-to-check (->> (opts->specified-deps opts)
