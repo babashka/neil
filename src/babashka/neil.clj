@@ -474,8 +474,8 @@ chmod +x bin/kaocha
                     (-> nodes
                         (r/assoc-in (conj path :deps/root) root))
                     nodes)
-            nodes (if (:pin opts)
-                    (r/assoc-in nodes (conj path :neil/pinned) true)
+            nodes (if (not= ::undefined (:pin opts ::undefined))
+                    (r/assoc-in nodes (conj path :neil/pinned) (:pin opts))
                     nodes)
             s (str (str/trim (str nodes)) "\n")]
         (when-not missing?
