@@ -43,12 +43,9 @@
       (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
 
   (testing "pinned dependencies arent updated"
-    (spit test-file-path "{}")
-    (test-util/neil "dep add :lib clj-kondo/clj-kondo" :deps-file test-file-path)
-    )
-
-
-  )
+    (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true}}}")
+    (test-util/neil "dep upgrade" :deps-file test-file-path)
+    (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))))))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"
