@@ -31,7 +31,7 @@
            :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
            :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
            :lib {:desc "Fully qualified library name."}
-           :limit {:coerce :long}
+           :limit {:coerce :long :desc "When provided, overrides number of versions from Maven/Clojars"}
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}
            :sha {:desc "When provided, assumes lib refers to Github repo."
