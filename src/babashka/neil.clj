@@ -759,6 +759,7 @@ Examples:
         alias         (some-> opts :alias)
         deps-to-check (opts->specified-deps opts)
         upgrades      (->> deps-to-check
+                           (remove :neil/pinned)
                            (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
