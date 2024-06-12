@@ -16,30 +16,30 @@
    [clojure.string :as str]
    [clojure.set :as set]))
 
-(def spec {:alias {:ref "<alias>"
-                   :desc "Add to alias <alias>."
-                   :coerce :keyword}
+(def spec {:lib {:desc "Fully qualified library name."}
+           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
+                     :coerce :string}
+           :sha {:desc "When provided, assumes lib refers to Github repo."
+                 :coerce :string}
+           :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
+           :tag {:desc "When provided, assumes lib refers to Github repo."
+                 :coerce :string}
+           :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
+           :deps/root {:desc "Sets deps/root to give value."}
            :as {:desc "Use as dependency name in deps.edn"
                 :coerce :symbol}
+           :alias {:ref "<alias>"
+                   :desc "Add to alias <alias>."
+                   :coerce :keyword}
            :deps-file {:ref "<file>"
                        :desc "Add to <file> instead of deps.edn."
                        :coerce :string
                        :default "deps.edn"}
-           :deps/root {:desc "Sets deps/root to give value."}
+           :limit {:coerce :long}
            :dry-run {:coerce :boolean
                      :desc "dep upgrade only. Prevents updates to deps.edn."}
-           :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
-           :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
-           :lib {:desc "Fully qualified library name."}
-           :limit {:coerce :long :desc "When provided, overrides number of versions from Maven/Clojars"}
            :no-aliases {:coerce :boolean
-                        :desc "Prevents updates to alias :extra-deps when upgrading."}
-           :sha {:desc "When provided, assumes lib refers to Github repo."
-                 :coerce :string}
-           :tag {:desc "When provided, assumes lib refers to Github repo."
-                 :coerce :string}
-           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
-                     :coerce :string}})
+                        :desc "Prevents updates to alias :extra-deps when upgrading."}})
 
 (def windows? (fs/windows?))
 
