@@ -935,8 +935,7 @@ test
      :fn (fn [{:keys [opts] :as m}]
            (if (:version opts)
              (neil-version/print-version)
-             (print-help m)))}
-    {:cmds ["debug"] :fn prn}]
+             (print-help m)))}]
    *command-line-args*
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
