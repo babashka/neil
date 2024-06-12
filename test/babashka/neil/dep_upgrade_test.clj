@@ -40,7 +40,15 @@
 
       ;; after a non-dry-run, the version should be changed
       (test-util/neil "dep upgrade" :deps-file test-file-path)
-      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo)))))))
+      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
+
+  (testing "pinned dependencies arent updated"
+    (spit test-file-path "{}")
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo" :deps-file test-file-path)
+    )
+
+
+  )
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"

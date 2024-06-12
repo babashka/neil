@@ -34,7 +34,6 @@
            :limit {:coerce :long :desc "When provided, overrides number of versions from Maven/Clojars"}
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}
-           :pin {:coerce :boolean :desc "When set, pins the version of the selected dependency."}
            :sha {:desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :tag {:desc "When provided, assumes lib refers to Github repo."
@@ -372,7 +371,7 @@ chmod +x bin/kaocha
   (println "Options:")
   (println (cli/format-opts
             {:spec spec
-             :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :pin]})))
+             :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
 
 (defn log [& xs]
   (binding [*out* *err*]
@@ -473,9 +472,6 @@ chmod +x bin/kaocha
             nodes (if-let [root (and (or git-sha? git-tag?) (:deps/root opts))]
                     (-> nodes
                         (r/assoc-in (conj path :deps/root) root))
-                    nodes)
-            nodes (if (not= ::undefined (:pin opts ::undefined))
-                    (r/assoc-in nodes (conj path :neil/pinned) (:pin opts))
                     nodes)
             s (str (str/trim (str nodes)) "\n")]
         (when-not missing?
