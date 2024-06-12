@@ -474,6 +474,9 @@ chmod +x bin/kaocha
                     (-> nodes
                         (r/assoc-in (conj path :deps/root) root))
                     nodes)
+            nodes (if (:pin opts)
+                    (r/assoc-in nodes (conj path :neil/pinned) true)
+                    nodes)
             s (str (str/trim (str nodes)) "\n")]
         (when-not missing?
           (spit (:deps-file opts) s))))))
@@ -932,7 +935,8 @@ test
      :fn (fn [{:keys [opts] :as m}]
            (if (:version opts)
              (neil-version/print-version)
-             (print-help m)))}]
+             (print-help m)))}
+    {:cmds ["debug"] :fn prn}]
    *command-line-args*
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
