@@ -4,7 +4,8 @@
    [babashka.neil.test-util :as test-util]
    [clojure.edn :as edn]
    [clojure.set :as set]
-   [clojure.test :as t :refer [are deftest is testing]]))
+   [clojure.test :as t :refer [are deftest is testing]]
+   [version-clj.core :as version-clj]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
 
@@ -43,9 +44,13 @@
       (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
 
   (testing "pinned dependencies aren't updated"
-    (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true}}}")
+    (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true} cheshire/cheshire {:mvn/version \"4.0.0\"}}}")
     (test-util/neil "dep upgrade" :deps-file test-file-path)
-    (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))))))
+    (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))) "Pinned deps are left alone")
+    (let [updated-cheshire-version (:mvn/version (get-dep-version 'cheshire/cheshire))]
+      (is (not (nil? updated-cheshire-version)))
+      (is (not= "4.0.0" updated-cheshire-version))
+      (is (version-clj/older? "4.0.0" updated-cheshire-version)))))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"
