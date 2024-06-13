@@ -43,14 +43,11 @@
       (test-util/neil "dep upgrade" :deps-file test-file-path)
       (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
 
-  (testing "pinned dependencies aren't updated"
+  (testing "dependencies can be pinned to avoid updates"
     (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true} cheshire/cheshire {:mvn/version \"4.0.0\"}}}")
     (test-util/neil "dep upgrade" :deps-file test-file-path)
     (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))) "Pinned deps are left alone")
-    (let [updated-cheshire-version (:mvn/version (get-dep-version 'cheshire/cheshire))]
-      (is (not (nil? updated-cheshire-version)))
-      (is (not= "4.0.0" updated-cheshire-version))
-      (is (version-clj/older? "4.0.0" updated-cheshire-version)))))
+    (is (version-clj/older? "4.0.0" (:mvn/version (get-dep-version 'cheshire/cheshire))) "Unpinned, outdated deps are updated")))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"
