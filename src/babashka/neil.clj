@@ -753,11 +753,15 @@ Examples:
 
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
-        deps-to-check (opts->specified-deps opts)
+        deps-to-check (->> (opts->specified-deps opts)
+                           ;; We skip upgrades for pinned dependencies
+                           (remove (fn [{:keys [current]}]
+                                     (:neil/pinned current))))
         upgrades      (->> deps-to-check
                            (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
+
     (when lib
       ;; logging and early-exit when :lib is specified
       (cond (not (seq deps-to-check))
@@ -774,7 +778,8 @@ Examples:
               (println "No remote version found for" lib)
               (System/exit 1))))
 
-    (doseq [dep-upgrade upgrades] (do-dep-upgrade opts dep-upgrade))))
+    (doseq [dep-upgrade upgrades]
+      (do-dep-upgrade opts dep-upgrade))))
 
 (defn print-help [_]
   (println (str/trim "
