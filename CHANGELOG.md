@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.3.66
 
 - [#215](https://github.com/babashka/neil/issues/215): `neil add kaocha` adds `:kaocha` alias with irregular indent ([@teodorlu](https://github.com/teodorlu))
 - [#220](https://github.com/babashka/neil/issues/220): `neil add` print helptext rather than crash ([@teodorlu](https://github.com/teodorlu))
