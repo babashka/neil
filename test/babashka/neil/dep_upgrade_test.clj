@@ -4,7 +4,8 @@
    [babashka.neil.test-util :as test-util]
    [clojure.edn :as edn]
    [clojure.set :as set]
-   [clojure.test :as t :refer [are deftest is testing]]))
+   [clojure.test :as t :refer [are deftest is testing]]
+   [version-clj.core :as version-clj]))
 
 (def test-file-path (str (test-util/test-file "deps.edn")))
 
@@ -40,7 +41,13 @@
 
       ;; after a non-dry-run, the version should be changed
       (test-util/neil "dep upgrade" :deps-file test-file-path)
-      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo)))))))
+      (is (not (= clj-kondo-version-original (get-dep-version 'clj-kondo/clj-kondo))))))
+
+  (testing "dependencies can be pinned to avoid updates"
+    (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true} cheshire/cheshire {:mvn/version \"4.0.0\"}}}")
+    (test-util/neil "dep upgrade" :deps-file test-file-path)
+    (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))) "Pinned deps are left alone")
+    (is (version-clj/older? "4.0.0" (:mvn/version (get-dep-version 'cheshire/cheshire))) "Unpinned, outdated deps are updated")))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"
