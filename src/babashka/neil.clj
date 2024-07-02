@@ -451,12 +451,13 @@ chmod +x bin/kaocha
                     (r/assoc-in edn-nodes (conj path :mvn/version) version)
                     git-sha?
                     ;; multiple steps to force newlines
-                    (-> edn-nodes
-                        (r/assoc-in (conj path :git/url) git-url)
-                        str
-                        r/parse-string
-                        (r/assoc-in (conj path :git/sha) version)
-                        (r/update-in path r/dissoc :sha))
+                    (cond-> edn-nodes
+                      (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
+                                                             git-url)
+                      true str
+                      true r/parse-string
+                      true (r/assoc-in (conj path :git/sha) version)
+                      true (r/update-in path r/dissoc :sha))
 
                     git-tag?
                     ;; multiple steps to force newlines
@@ -724,7 +725,8 @@ details on the search syntax.")))
                               alias   (assoc :alias alias)
                               version (assoc :version version)
                               tag     (assoc :tag tag)
-                              (and (not tag) sha) (assoc :sha sha))}))))))
+                              (and (not tag) sha) (assoc :sha sha)
+                              (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (when (or (:h opts) (:help opts))
