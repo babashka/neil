@@ -28,5 +28,6 @@
    :extra-deps {io.github.cognitect-labs/test-runner
                 {:git/url "https://github.com/cognitect-labs/test-runner"
                  :git/tag "v0.5.1"
-                 :git/sha "dfb30dd"}}}
+                 :git/sha "dfb30dd"}
+                io.github.tonsky/clj-reload {:mvn/version "0.7.1"}}}
   }}
