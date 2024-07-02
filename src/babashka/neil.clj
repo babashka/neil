@@ -610,7 +610,6 @@ details on the search syntax.")))
     ;; => {:git/sha \"...\"}
   "
   [{:keys [lib current unstable]}]
-  ;; for now, just upgrade to stable versions
   (let [current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
     (cond
