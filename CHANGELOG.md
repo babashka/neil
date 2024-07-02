@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- [#230](https://github.com/babashka/neil/issues/230): neil dep upgrade inserts git/url into upgraded dep ([@teodorlu](https://github.com/teodorlu))
+
 ## 0.3.66
 
 - [#215](https://github.com/babashka/neil/issues/215): `neil add kaocha` adds `:kaocha` alias with irregular indent ([@teodorlu](https://github.com/teodorlu))
