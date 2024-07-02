@@ -47,7 +47,16 @@
     (spit test-file-path "{:deps {hiccup/hiccup {:mvn/version \"1.0.0\" :neil/pinned true} cheshire/cheshire {:mvn/version \"4.0.0\"}}}")
     (test-util/neil "dep upgrade" :deps-file test-file-path)
     (is (= "1.0.0" (:mvn/version (get-dep-version 'hiccup/hiccup))) "Pinned deps are left alone")
-    (is (version-clj/older? "4.0.0" (:mvn/version (get-dep-version 'cheshire/cheshire))) "Unpinned, outdated deps are updated")))
+    (is (version-clj/older? "4.0.0" (:mvn/version (get-dep-version 'cheshire/cheshire))) "Unpinned, outdated deps are updated"))
+
+  (testing "pinned git deps are left unchanged"
+    (let [deps '{:deps {io.github.nextjournal/markdown
+                        {:git/sha "6683c48dfdb23404a23057817b6ac3acf0310bca"
+                         :neil/pinned true}}}]
+      (spit test-file-path deps)
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (is (= deps
+             (edn/read-string (slurp test-file-path)))))))
 
 (deftest dep-upgrade-test-one-lib
   (testing "specifying :lib only updates one dep"
