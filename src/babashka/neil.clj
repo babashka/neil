@@ -453,7 +453,7 @@ chmod +x bin/kaocha
                     ;; multiple steps to force newlines
                     (cond-> edn-nodes
                       (not (:dep-add/omit-git-url opts)) (r/assoc-in (conj path :git/url)
-                                                             git-url)
+                                                                     git-url)
                       true str
                       true r/parse-string
                       true (r/assoc-in (conj path :git/sha) version)
