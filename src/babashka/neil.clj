@@ -452,7 +452,7 @@ chmod +x bin/kaocha
                     git-sha?
                     ;; multiple steps to force newlines
                     (cond-> edn-nodes
-                      (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
+                      (not (:dep-add/omit-git-url opts)) (r/assoc-in (conj path :git/url)
                                                              git-url)
                       true str
                       true r/parse-string
@@ -726,7 +726,7 @@ details on the search syntax.")))
                               version (assoc :version version)
                               tag     (assoc :tag tag)
                               (and (not tag) sha) (assoc :sha sha)
-                              (not (:git/url current)) (assoc :omit-git-url true))}))))))
+                              (not (:git/url current)) (assoc :dep-add/omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (when (or (:h opts) (:help opts))
