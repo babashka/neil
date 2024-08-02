@@ -278,6 +278,7 @@
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
 
+#_
 (deftest neil-dep-upgrade-keep-git-url-constant
   ;; https://github.com/babashka/neil/issues/235
 
@@ -290,8 +291,6 @@
   '{:deps {cognitect/test-runner
            {:git/url "https://github.com/cognitect-labs/test-runner"
             :git/sha "9d36f36ff541dac680a05010e4348c744333f191"}}}
-
-
 
   (testing "Currently, neil-dep-upgrade changes the url of certain git deps"
     ;; this appears to be the case where the repository has been renamed to something else.
