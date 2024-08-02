@@ -277,3 +277,50 @@
   (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
+
+(deftest neil-dep-upgrade-keep-git-url-constant
+  ;; https://github.com/babashka/neil/issues/235
+
+  ;; For step 1, I just want to reproduce the current behavior, and produce an error with expected behavior to make sure I understand the problem.
+
+  ;; Problematic EDN files:
+  '{:deps {babashka/pods
+           {:git/url "https://github.com/babashka/babashka.pods"
+            :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}}}
+  '{:deps {cognitect/test-runner
+           {:git/url "https://github.com/cognitect-labs/test-runner"
+            :git/sha "9d36f36ff541dac680a05010e4348c744333f191"}}}
+
+
+
+  (testing "Currently, neil-dep-upgrade changes the url of certain git deps"
+    ;; this appears to be the case where the repository has been renamed to something else.
+    (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
+                            :current {:mvn/version "2023.01.31-alpha"}
+                            :unstable true}))
+    (spit test-file-path "{:deps {clj-kondo/clj-kondo
+                            {:git/url \"https://github.com/clj-kondo/clj-kondo\"
+                             :sha \"6ffc3934cb83d2c4fff16d84198c73b40cd8a078\"}}}")
+    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
+        ;; TODO
+        ))
+    )
+  )
+
+(comment
+  (set! *print-namespace-maps* false)
+
+  (do (spit test-file-path (pr-str '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods" :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}}}))
+      (test-util/neil "dep upgrade" :deps-file test-file-path)
+      (get-dep-version 'babashka/pods))
+  ;; evaluates to
+  {:git/url "https://github.com/babashka/babashka.pods", :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}
+
+  ;; which is NOT what I expect.
+  ;; I expected the URL to be changed to github.com/babashka/pods.
+  ;; This is weird.
+  ;;
+  ;; Next step: try tro reproduce on the command line.
+  )
