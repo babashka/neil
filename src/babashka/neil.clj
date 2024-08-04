@@ -378,7 +378,6 @@ chmod +x bin/kaocha
     (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
-  (tap> opts)
   (if (or (:help opts) (:h opts) (not (:lib opts)))
     (print-dep-add-help)
     (do
