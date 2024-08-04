@@ -278,48 +278,41 @@
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
 
-#_
-(deftest neil-dep-upgrade-keep-git-url-constant
-  ;; https://github.com/babashka/neil/issues/235
+(deftest neil-dep-upgrade-canonicalizes-git-urls
+  ;; This is the current, unwanted behavior.
+  ;; I expect to delete this test before the PR is merged.
+  (let [original-deps '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods"
+                                              :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}
+        canonicalized-url "https://github.com/babashka/pods"]
+    (spit test-file-path original-deps)
+    (test-util/neil "dep upgrade" :test-file-path test-file-path)
+    (is (= canonicalized-url
+           (:git/url (get-dep-version 'babashka/pods))))))
 
-  ;; For step 1, I just want to reproduce the current behavior, and produce an error with expected behavior to make sure I understand the problem.
-
-  ;; Problematic EDN files:
-  '{:deps {babashka/pods
-           {:git/url "https://github.com/babashka/babashka.pods"
-            :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}}}
-  '{:deps {cognitect/test-runner
-           {:git/url "https://github.com/cognitect-labs/test-runner"
-            :git/sha "9d36f36ff541dac680a05010e4348c744333f191"}}}
-
-  (testing "Currently, neil-dep-upgrade changes the url of certain git deps"
-    ;; this appears to be the case where the repository has been renamed to something else.
-    (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
-                            :current {:mvn/version "2023.01.31-alpha"}
-                            :unstable true}))
-    (spit test-file-path "{:deps {clj-kondo/clj-kondo
-                            {:git/url \"https://github.com/clj-kondo/clj-kondo\"
-                             :sha \"6ffc3934cb83d2c4fff16d84198c73b40cd8a078\"}}}")
-    (let [original (get-dep-version 'clj-kondo/clj-kondo)]
-      (test-util/neil "dep upgrade" :deps-file test-file-path)
-      (let [upgraded (get-dep-version 'clj-kondo/clj-kondo)]
-        ;; TODO
-        ))
-    )
-  )
+(deftest neil-dep-upgrade-does-not-touch-git-urls
+  ;; This is the desired behavior.
+  (let [original-git-url "https://github.com/babashka/babashka.pods"
+        original-deps {:deps {'babashka/pods {:git/url original-git-url
+                                              :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}]
+    (spit test-file-path original-deps)
+    (test-util/neil "dep upgrade" :test-file-path test-file-path)
+    (is (= original-git-url
+           (:git/url (get-dep-version 'babashka/pods))))))
 
 (comment
   (set! *print-namespace-maps* false)
 
-  (do (spit test-file-path (pr-str '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods" :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}}}))
-      (test-util/neil "dep upgrade" :deps-file test-file-path)
-      (get-dep-version 'babashka/pods))
-  ;; evaluates to
-  {:git/url "https://github.com/babashka/babashka.pods", :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}
+  ;; We try again.
+  (spit test-file-path '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods"
+                                               :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}})
+  (get-dep-version 'babashka/pods)
+  ;; => {:git/url "https://github.com/babashka/babashka.pods",
+  ;;     :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}
 
-  ;; which is NOT what I expect.
-  ;; I expected the URL to be changed to github.com/babashka/pods.
-  ;; This is weird.
-  ;;
-  ;; Next step: try tro reproduce on the command line.
-  )
+  (test-util/neil "dep upgrade" :deps-file test-file-path)
+
+  (get-dep-version 'babashka/pods)
+  ;; => {:git/url "https://github.com/babashka/pods",
+  ;;     :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}
+
+  :rcf)
