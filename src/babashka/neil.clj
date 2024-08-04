@@ -378,105 +378,113 @@ chmod +x bin/kaocha
     (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
-  (if (or (:help opts) (:h opts) (not (:lib opts)))
-    (print-dep-add-help)
-    (do
-      (ensure-deps-file opts)
-      (let [edn-string (edn-string opts)
-            edn-nodes (edn-nodes edn-string)
-            lib (:lib opts)
-            lib (symbol lib)
-            lib (symbol (or (namespace lib) (name lib))
-                        (name lib))
-            alias (:alias opts)
-            explicit-git-sha? (or (:sha opts) (:latest-sha opts))
-            explicit-git-tag? (or (:tag opts) (:latest-tag opts))
-            [version coord-type?]
-            (cond explicit-git-tag?
-                  [(or (and (:tag opts)
-                            (git/find-github-tag lib (:tag opts)))
-                       (git/latest-github-tag lib)) :git/tag]
-                  explicit-git-sha?
-                  [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
-                  :else
-                  (or
-                   (when-let [v (:version opts)]
-                     [v :mvn])
-                   (when-let [v (latest-stable-clojars-version lib)]
-                     [v :mvn])
-                   (when-let [v (latest-stable-mvn-version lib)]
-                     [v :mvn])
-                   (when-let [v (git/latest-github-sha lib)]
-                     [v :git/sha])
-                   (when-let [v (latest-clojars-version lib)]
-                     [v :mvn])
-                   (when-let [v (latest-mvn-version lib)]
-                     [v :mvn])))
-            _ (when-not version
-                (throw (ex-info (str "Couldn't find version for lib: " lib) {:babashka/exit 1})))
-            missing? (nil? version)
-            mvn? (= :mvn coord-type?)
-            git-sha? (= :git/sha coord-type?)
-            git-tag? (= :git/tag coord-type?)
-            git-url (when (or git-sha? git-tag?)
-                      (or (:git/url opts)
-                          (str "https://github.com/" (git/clean-github-lib lib))))
-            as (or (:as opts) lib)
-            existing-aliases (-> edn-string edn/read-string :aliases)
-            path (if alias
-                   [:aliases
-                    alias
-                    (if (get-in existing-aliases [alias :deps]) :deps :extra-deps)
-                    as]
-                   [:deps as])
-            nl-path (if (and alias
-                             (not (contains? existing-aliases alias)))
-                      [:aliases alias]
-                      path)
-            edn-nodes (if (r/get-in edn-nodes nl-path)
-                        ;; if this dep already exists, don't touch it.
-                        ;; We risk loosing :exclusions and other properties.
-                        edn-nodes
-                        ;; otherwise, force newlines!
-                        ;; force newline in
-                        ;;
-                        ;;     [:deps as] if no alias
-                        ;;     [:aliases alias] if alias DNE
-                        ;;     [:aliases alias :deps as] if :deps present
-                        ;;     [:aliases alias :extra-deps as] if alias exists
-                        (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string))
-            nodes (cond
-                    missing? edn-nodes
-                    mvn?
-                    (r/assoc-in edn-nodes (conj path :mvn/version) version)
-                    git-sha?
-                    ;; multiple steps to force newlines
-                    (cond-> edn-nodes
-                      (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
-                                                             git-url)
-                      true str
-                      true r/parse-string
-                      true (r/assoc-in (conj path :git/sha) version)
-                      true (r/update-in path r/dissoc :sha))
+  (let [trace-id (rand)
+        log (fn [marker]
+              (babashka.neil/log
+               (assoc {:trace-id trace-id
+                       :marker marker})))]
+    (log ::marker-1)
+    (if (or (:help opts) (:h opts) (not (:lib opts)))
+      (print-dep-add-help)
+      (do
+        (ensure-deps-file opts)
+        (let [edn-string (edn-string opts)
+              edn-nodes (edn-nodes edn-string)
+              lib (:lib opts)
+              lib (symbol lib)
+              lib (symbol (or (namespace lib) (name lib))
+                          (name lib))
+              alias (:alias opts)
+              explicit-git-sha? (or (:sha opts) (:latest-sha opts))
+              explicit-git-tag? (or (:tag opts) (:latest-tag opts))
+              [version coord-type?]
+              (cond explicit-git-tag?
+                    [(or (and (:tag opts)
+                              (git/find-github-tag lib (:tag opts)))
+                         (git/latest-github-tag lib)) :git/tag]
+                    explicit-git-sha?
+                    [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
+                    :else
+                    (or
+                     (when-let [v (:version opts)]
+                       [v :mvn])
+                     (when-let [v (latest-stable-clojars-version lib)]
+                       [v :mvn])
+                     (when-let [v (latest-stable-mvn-version lib)]
+                       [v :mvn])
+                     (when-let [v (git/latest-github-sha lib)]
+                       [v :git/sha])
+                     (when-let [v (latest-clojars-version lib)]
+                       [v :mvn])
+                     (when-let [v (latest-mvn-version lib)]
+                       [v :mvn])))
+              _ (when-not version
+                  (throw (ex-info (str "Couldn't find version for lib: " lib) {:babashka/exit 1})))
+              missing? (nil? version)
+              mvn? (= :mvn coord-type?)
+              git-sha? (= :git/sha coord-type?)
+              git-tag? (= :git/tag coord-type?)
+              git-url (when (or git-sha? git-tag?)
+                        (or (:git/url opts)
+                            (str "https://github.com/" (git/clean-github-lib lib))))
+              as (or (:as opts) lib)
+              existing-aliases (-> edn-string edn/read-string :aliases)
+              path (if alias
+                     [:aliases
+                      alias
+                      (if (get-in existing-aliases [alias :deps]) :deps :extra-deps)
+                      as]
+                     [:deps as])
+              nl-path (if (and alias
+                               (not (contains? existing-aliases alias)))
+                        [:aliases alias]
+                        path)
+              edn-nodes (if (r/get-in edn-nodes nl-path)
+                          ;; if this dep already exists, don't touch it.
+                          ;; We risk loosing :exclusions and other properties.
+                          edn-nodes
+                          ;; otherwise, force newlines!
+                          ;; force newline in
+                          ;;
+                          ;;     [:deps as] if no alias
+                          ;;     [:aliases alias] if alias DNE
+                          ;;     [:aliases alias :deps as] if :deps present
+                          ;;     [:aliases alias :extra-deps as] if alias exists
+                          (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string))
+              _ (log ::marker-2)
+              nodes (cond
+                      missing? edn-nodes
+                      mvn?
+                      (r/assoc-in edn-nodes (conj path :mvn/version) version)
+                      git-sha?
+                      ;; multiple steps to force newlines
+                      (cond-> edn-nodes
+                        (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
+                                                               git-url)
+                        true str
+                        true r/parse-string
+                        true (r/assoc-in (conj path :git/sha) version)
+                        true (r/update-in path r/dissoc :sha))
 
-                    git-tag?
-                    ;; multiple steps to force newlines
-                    (-> edn-nodes
-                        (r/assoc-in (conj path :git/url) git-url)
-                        str
-                        r/parse-string
-                        (r/assoc-in (conj path :git/tag) (-> version :name))
-                        str
-                        r/parse-string
-                        (r/assoc-in (conj path :git/sha)
-                                    (some-> version :commit :sha (subs 0 7)))))
-            nodes (if-let [root (and (or git-sha? git-tag?) (:deps/root opts))]
-                    (-> nodes
-                        (r/assoc-in (conj path :deps/root) root))
-                    nodes)
-            s (str (str/trim (str nodes)) "\n")]
-        (when-not missing?
-          (spit (:deps-file opts) s))))))
+                      git-tag?
+                      ;; multiple steps to force newlines
+                      (-> edn-nodes
+                          (r/assoc-in (conj path :git/url) git-url)
+                          str
+                          r/parse-string
+                          (r/assoc-in (conj path :git/tag) (-> version :name))
+                          str
+                          r/parse-string
+                          (r/assoc-in (conj path :git/sha)
+                                      (some-> version :commit :sha (subs 0 7)))))
+              _ (log ::marker-3)
+              nodes (if-let [root (and (or git-sha? git-tag?) (:deps/root opts))]
+                      (-> nodes
+                          (r/assoc-in (conj path :deps/root) root))
+                      nodes)
+              s (str (str/trim (str nodes)) "\n")]
+          (when-not missing?
+            (spit (:deps-file opts) s)))))))
 
 (defn dep-versions [{:keys [opts]}]
   (when (or (:help opts) (:h opts))
