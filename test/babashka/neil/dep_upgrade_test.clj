@@ -278,7 +278,7 @@
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
 
-(deftest neil-dep-upgrade-does-not-touch-git-urls
+(deftest neil-dep-upgrade-does-not-change-git-urls
   (let [original-git-url "https://github.com/babashka/babashka.pods"
         original-deps {:deps {'babashka/pods {:git/url original-git-url
                                               :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}]
