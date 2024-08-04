@@ -300,6 +300,17 @@
            (:git/url (get-dep-version 'babashka/pods))))))
 
 (comment
+  (defonce taps (atom []))
+  (add-tap (partial swap! taps conj))
+  (tap> "hello")
+
+  (neil-dep-upgrade-canonicalizes-git-urls)
+  (last @taps)
+
+
+  :rcf)
+
+(comment
   (set! *print-namespace-maps* false)
 
   ;; We try again.
