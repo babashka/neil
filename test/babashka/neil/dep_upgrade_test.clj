@@ -278,19 +278,7 @@
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
 
-(deftest neil-dep-upgrade-canonicalizes-git-urls
-  ;; This is the current, unwanted behavior.
-  ;; I expect to delete this test before the PR is merged.
-  (let [original-deps '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods"
-                                              :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}
-        canonicalized-url "https://github.com/babashka/pods"]
-    (spit test-file-path original-deps)
-    (test-util/neil "dep upgrade" :test-file-path test-file-path)
-    (is (= canonicalized-url
-           (:git/url (get-dep-version 'babashka/pods))))))
-
 (deftest neil-dep-upgrade-does-not-touch-git-urls
-  ;; This is the desired behavior.
   (let [original-git-url "https://github.com/babashka/babashka.pods"
         original-deps {:deps {'babashka/pods {:git/url original-git-url
                                               :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}]
@@ -298,32 +286,3 @@
     (test-util/neil "dep upgrade" :test-file-path test-file-path)
     (is (= original-git-url
            (:git/url (get-dep-version 'babashka/pods))))))
-
-(comment
-  (defonce taps (atom []))
-  (add-tap (partial swap! taps conj))
-  (tap> "hello")
-
-  (neil-dep-upgrade-canonicalizes-git-urls)
-  (last @taps)
-
-
-  :rcf)
-
-(comment
-  (set! *print-namespace-maps* false)
-
-  ;; We try again.
-  (spit test-file-path '{:deps {babashka/pods {:git/url "https://github.com/babashka/babashka.pods"
-                                               :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}})
-  (get-dep-version 'babashka/pods)
-  ;; => {:git/url "https://github.com/babashka/babashka.pods",
-  ;;     :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}
-
-  (test-util/neil "dep upgrade" :deps-file test-file-path)
-
-  (get-dep-version 'babashka/pods)
-  ;; => {:git/url "https://github.com/babashka/pods",
-  ;;     :git/sha "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e"}
-
-  :rcf)
