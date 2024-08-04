@@ -279,10 +279,11 @@
                           :unstable true})))
 
 (deftest neil-dep-upgrade-does-not-change-git-urls
-  (let [original-git-url "https://github.com/babashka/babashka.pods"
-        original-deps {:deps {'babashka/pods {:git/url original-git-url
-                                              :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}]
-    (spit test-file-path original-deps)
-    (test-util/neil "dep upgrade" :test-file-path test-file-path)
-    (is (= original-git-url
-           (:git/url (get-dep-version 'babashka/pods))))))
+  (testing "When we upgrade a dep with :git/url, we don't want that git url shall not change."
+    (let [original-git-url "https://github.com/babashka/babashka.pods"
+          original-deps {:deps {'babashka/pods {:git/url original-git-url
+                                                :git/sha "6ad6045b94bc871c5107bfc75d39643b6c1bc8ba"}}}]
+      (spit test-file-path original-deps)
+      (test-util/neil "dep upgrade" :test-file-path test-file-path)
+      (is (= original-git-url
+             (:git/url (get-dep-version 'babashka/pods)))))))
