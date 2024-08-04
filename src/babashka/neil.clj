@@ -726,7 +726,7 @@ details on the search syntax.")))
                               version (assoc :version version)
                               tag     (assoc :tag tag)
                               (and (not tag) sha) (assoc :sha sha)
-                              (not (:git/url current)) (assoc :omit-git-url true))}))))))
+                              true (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (when (or (:h opts) (:help opts))
