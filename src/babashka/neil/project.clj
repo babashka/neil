@@ -23,7 +23,7 @@
                         (r/assoc-in [:aliases :neil] (r/parse-string "\n {}"))
                         (not (some-> edn :aliases :neil :project))
                         (r/assoc-in [:aliases :neil :project]
-                          {}))]
+                                    {}))]
         (spit deps-file (str edn-nodes))))))
 
 (defn assoc-project-meta!
