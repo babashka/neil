@@ -2,7 +2,7 @@
   (:require [babashka.fs :as fs]
             [babashka.neil.project :refer [assoc-project-meta!]]
             [clojure.string :as str]
-            [clojure.test :refer :all]))
+            [clojure.test :refer [deftest is testing]]))
 
 (deftest assoc-project-meta!-test
   (let [deps-dir (-> (fs/create-temp-dir {:prefix "neil"}) .toFile)
