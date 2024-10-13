@@ -23,7 +23,8 @@
 (def test-namespaces
   '[tests
     babashka.neil.version-test
-    babashka.neil.dep-upgrade-test])
+    babashka.neil.dep-upgrade-test
+    babashka.neil.project-test])
 
 (doseq [ns test-namespaces]
   (require ns))
