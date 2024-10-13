@@ -52,14 +52,17 @@
 
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
-(def github-user (or (System/getenv "NEIL_GITHUB_USER")
-                     (System/getenv "BABASHKA_NEIL_DEV_GITHUB_USER")))
-(def github-token (or (System/getenv "NEIL_GITHUB_TOKEN")
-                      (System/getenv "BABASHKA_NEIL_DEV_GITHUB_TOKEN")))
+(def github-user-envvars ["NEIL_GITHUB_USER" "BABASHKA_NEIL_DEV_GITHUB_USER"])
+(def github-token-envvars ["NEIL_GITHUB_TOKEN" "BABASHKA_NEIL_DEV_GITHUB_TOKEN"])
+
+(def github-user (some #(System/getenv %) github-user-envvars))
+(def github-token (some #(System/getenv %) github-token-envvars))
+
+(def github-basic-auth-enabled? (and github-user github-token))
 
 (def curl-opts
   (merge {:throw false}
-         (when (and github-user github-token)
+         (when github-basic-auth-enabled?
            {:basic-auth [github-user github-token]})))
 
 (defn curl-get-json
@@ -81,6 +84,17 @@
          (println "You've hit the github rate-limit (60 reqs/hr).
   You can set an API Token to increase the limit.
   See neil's README for details.")
+         nil #_(System/exit 1))
+
+       (and (= 401 (:status response))
+            (string/includes? url "api.github")
+            (string/includes? (:message parsed-body) "Bad credentials")
+            github-basic-auth-enabled?)
+       (binding [*out* *err*]
+         (println "Your neil github token is invalid or expired.")
+         (when-let [token-envvar (first (filter #(System/getenv %) github-token-envvars))]
+           (println "Please double check your " token-envvar " environment variable."))
+         (println "See neil's README for more details.")
          nil #_(System/exit 1))
 
        (contains? unexceptional-statuses (:status response))
@@ -225,38 +239,41 @@
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]))
 
-(defn resolve-deps-file [dir deps-file]
-  (if dir
-    (fs/file dir deps-file)
-    deps-file))
+(defn resolve-deps-file 
+  "Returns a file object for `deps-file` in the `dir` directory if that file exists, else nil."
+  [dir deps-file]
+  (let [resolved (if dir
+                   (fs/file dir deps-file)
+                   (fs/file deps-file))]
+    (when (fs/exists? resolved) resolved)))
 
 (defn ensure-neil-project [{:keys [dir deps-file]}]
-  (let [deps-file (resolve-deps-file dir deps-file)
-        deps-edn (slurp deps-file)
-        edn (edn/read-string deps-edn)]
-    (when-not (some-> edn :aliases :neil :project)
-      (let [existing-aliases (:aliases edn)
-            edn-nodes (r/parse-string deps-edn)
-            edn-nodes (cond-> edn-nodes
-                        (not (:aliases edn))
-                        (r/assoc :aliases (r/parse-string "\n {}"))
-                        (contains? existing-aliases :neil)
-                        (r/assoc-in [:aliases :neil] (r/parse-string "\n {}"))
-                        (not (some-> edn :aliases :neil :project))
-                        (r/assoc-in [:aliases :neil :project]
-                                    {}))]
-        (spit deps-file (str edn-nodes))))))
+  (when-let [deps-file (resolve-deps-file dir deps-file)]
+    (let [deps-edn (slurp deps-file)
+          edn (edn/read-string deps-edn)]
+      (when-not (some-> edn :aliases :neil :project)
+        (let [existing-aliases (:aliases edn)
+              edn-nodes (r/parse-string deps-edn)
+              edn-nodes (cond-> edn-nodes
+                          (not (:aliases edn))
+                          (r/assoc :aliases (r/parse-string "\n {}"))
+                          (contains? existing-aliases :neil)
+                          (r/assoc-in [:aliases :neil] (r/parse-string "\n {}"))
+                          (not (some-> edn :aliases :neil :project))
+                          (r/assoc-in [:aliases :neil :project]
+                                      {}))]
+          (spit deps-file (str edn-nodes)))))))
 
 (defn assoc-project-meta!
   "Updates deps-file's :neil :project `k` with `v`"
   [{:keys [dir deps-file k v]
     :as opts}]
   (ensure-neil-project opts)
-  (let [deps-file (resolve-deps-file dir deps-file)
-        deps-edn (slurp deps-file)
-        nodes (r/parse-string deps-edn)
-        nodes (r/assoc-in nodes [:aliases :neil :project k] v)]
-    (spit deps-file (str nodes))))
+  (when-let [deps-file (resolve-deps-file dir deps-file)]
+    (let [deps-edn (slurp deps-file)
+          nodes (r/parse-string deps-edn)
+          nodes (r/assoc-in nodes [:aliases :neil :project k] v)]
+      (spit deps-file (str nodes)))))
 
 (defn project-name [{:keys [deps-file]}]
   (-> (edn/read-string (slurp deps-file))
@@ -1309,12 +1326,13 @@ chmod +x bin/kaocha
                     (r/assoc-in edn-nodes (conj path :mvn/version) version)
                     git-sha?
                     ;; multiple steps to force newlines
-                    (-> edn-nodes
-                        (r/assoc-in (conj path :git/url) git-url)
-                        str
-                        r/parse-string
-                        (r/assoc-in (conj path :git/sha) version)
-                        (r/update-in path r/dissoc :sha))
+                    (cond-> edn-nodes
+                      (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
+                                                             git-url)
+                      true str
+                      true r/parse-string
+                      true (r/assoc-in (conj path :git/sha) version)
+                      true (r/update-in path r/dissoc :sha))
 
                     git-tag?
                     ;; multiple steps to force newlines
@@ -1468,7 +1486,6 @@ details on the search syntax.")))
     ;; => {:git/sha \"...\"}
   "
   [{:keys [lib current unstable]}]
-  ;; for now, just upgrade to stable versions
   (let [current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
     (cond
@@ -1583,7 +1600,8 @@ details on the search syntax.")))
                               alias   (assoc :alias alias)
                               version (assoc :version version)
                               tag     (assoc :tag tag)
-                              (and (not tag) sha) (assoc :sha sha))}))))))
+                              (and (not tag) sha) (assoc :sha sha)
+                              (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (when (or (:h opts) (:help opts))
