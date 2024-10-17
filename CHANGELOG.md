@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.3.68
 
 - [#230](https://github.com/babashka/neil/issues/230): neil dep upgrade inserts git/url into upgraded dep ([@teodorlu](https://github.com/teodorlu))
 - [#237](https://github.com/babashka/neil/issues/230): more specific error reporting on invalid github token ([@teodorlu](https://github.com/teodorlu))
