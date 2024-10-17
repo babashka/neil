@@ -204,6 +204,31 @@
         (is (= (edn/read-string (slurp (fs/file "test-resources/new/my-scratch/deps.edn")))
                (edn/read-string (slurp (fs/file (str target-dir "/deps.edn"))))))))))
 
+(deftest deps-file-write-test
+  ; create a minimal template at a local root
+  (let [template-dir (fs/create-temp-dir {:prefix "neilnew"}) 
+        _ (fs/copy-tree "test-resources/new/minimal-template/" template-dir)]
+    (testing "creating from a template with a deps.edn file adds a neil alias"
+      (let [target-dir (fs/create-temp-dir)]
+        (run-new-command "emptyish/emptyish" "foo/bar" (str target-dir)
+          "--local/root" (str template-dir)
+          "--overwrite" "true")
+        (is (str/includes? (slurp (fs/file target-dir "deps.edn")) ":neil"))
+        (fs/delete-tree target-dir)))
+    ; remove deps.edn from the template output
+    (fs/delete (fs/file template-dir "resources" "emptyish" "emptyish" "root" "deps.edn"))
+    (testing "creating from a template without deps.edn doesn't throw"
+      (let [target-dir (fs/create-temp-dir)]
+        (run-new-command "emptyish/emptyish" "foo/bar" (str target-dir)
+          "--local/root" (str template-dir)
+          "--overwrite" "true")
+        (is (not (fs/exists? (fs/file target-dir "deps.edn"))))
+        (fs/delete-tree target-dir)))
+    ; delete that template we created
+    (fs/delete-tree template-dir)))
+      
+    
+
 (deftest clj-neil-new-test
   (let [{:keys [out err]} @(deps/clojure ["-M:neil" "new" "--help"]
                                          {:dir "tests-clj"

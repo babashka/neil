@@ -8,6 +8,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 - [#230](https://github.com/babashka/neil/issues/230): neil dep upgrade inserts git/url into upgraded dep ([@teodorlu](https://github.com/teodorlu))
 - [#237](https://github.com/babashka/neil/issues/230): more specific error reporting on invalid github token ([@teodorlu](https://github.com/teodorlu))
+- [#241](https://github.com/babashka/neil/issues/241): ignore missing deps file (instead of throwing) in `neil new` ([@bobisageek](https://github.com/bobisageek))
 
 ## 0.3.66
 
