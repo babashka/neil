@@ -36,8 +36,8 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 Add the following alias to your global or project-local `deps.edn`:
 
 ``` clojure
-:neil {:deps {io.github.babashka/neil {:git/tag "v0.1.41"
-                                       :git/sha "77288d4"}}
+:neil {:deps {io.github.babashka/neil {:git/tag "v0.3.68"
+                                       :git/sha "78ffab1"}}
        :main-opts ["-m" "babashka.neil"]}
 ```
 
