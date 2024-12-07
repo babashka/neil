@@ -113,7 +113,12 @@ the dependency to the project (deps.edn only)."
                                   (when desc `(description . ,desc)))))))
                res))))
 
-         (exe (if-let ((exe (executable-find (or neil-executable-path "neil"))))
+         (exe (if-let* ((exe (thread-first
+                               neil-executable-path
+                               (or "neil")
+                               split-string
+                               car
+                               executable-find)))
                   exe (user-error "Cannot find 'neil' cmd-line utility!")))
 
          (res (funcall perform-action exe (concat "dep search " (shell-quote-argument term))))
