@@ -23,7 +23,7 @@
 (describe "neil-find-clojure-package, no neil"
   (it "throws error when neil cmd-line executable not found"
     (spy-on #'executable-find :and-return-value nil)
-    (expect (funcall #'neil-find-clojure-package "foo") :to-throw 'error)))
+    (expect (funcall #'neil--find-exe) :to-throw 'error)))
 
 (describe "neil-find-clojure-package, happy path"
   :var (prompt-calls shell-cmd-calls)
@@ -41,13 +41,13 @@
               (setf shell-cmd-calls (1+ shell-cmd-calls))
               (cond
                ((eq shell-cmd-calls 1)
-                (expect command :to-equal "/bin/neil dep search test-pkg")
+                (expect command :to-equal (concat (neil--find-exe) " dep search test-pkg"))
                 (concat
                  ":lib foo/test-pkg :version \"1.0.0\" :description \"good lib\"\n"
                  ":lib bar/awesome-test-pkg :version \"2.1.0\" :description \"better lib\"\n"))
 
                ((eq shell-cmd-calls 2)
-                 (expect command :to-equal "/bin/neil dep versions foo/test-pkg")
+                (expect command :to-equal (concat (neil--find-exe) " dep versions foo/test-pkg"))
                  (concat
                   ":lib foo/test-pkg :version \"1.0.0\"\n"
                   ":lib bar/awesome-test-pkg :version \"2.1.0\"\n")))))
@@ -79,6 +79,11 @@
 
   (it "shouldn't throw 'executable not found' error"
     (expect (neil-find-clojure-package "test-pkg") :not :to-throw))
+
+  (it "should work for clj -M:neil"
+    (let* ((neil-executable-path "clj -M:neil"))
+      (expect (neil-find-clojure-package "test-pkg") :to-equal
+               "foo/test-pkg {:mvn/version \"1.0.0\"}")))
 
   (it "for clojure-cli, without version prompt"
     (spy-on #'neil--identify-project-build-tool :and-return-value '(clojure-cli))
