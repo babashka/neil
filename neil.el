@@ -66,13 +66,13 @@ Otherwise uses the given value."
   "Returns absolute path to neil executable."
   (if-let* ((exe (cond
                   ((and (stringp neil-executable-path)
-                        (string-match-p "^clj\\s-" neil-executable-path))
+                        (string-match "^\\(clj\\|clojure\\)\\s-" neil-executable-path))
                    (replace-regexp-in-string
-                    "^clj"
-                    (executable-find "clj")
+                    "^\\(clj\\|clojure\\)"
+                    (executable-find (match-string 1 neil-executable-path))
                     neil-executable-path))
                   (t (executable-find (or neil-executable-path "neil"))))))
-      exe (user-error "Cannot find 'neil' executable. Ensure either 'neil', or 'clj' with :neil alias is available")))
+      exe (user-error "Cannot find 'neil' executable. Ensure either 'neil', or 'clojure|clj' with :neil alias is available")))
 
 ;;;###autoload
 (defun neil-find-clojure-package (&optional term)

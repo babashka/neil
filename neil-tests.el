@@ -20,10 +20,20 @@
 (require 'buttercup)
 (require 'neil)
 
-(describe "neil-find-clojure-package, no neil"
+(describe "neil executable lookup"
   (it "throws error when neil cmd-line executable not found"
     (spy-on #'executable-find :and-return-value nil)
-    (expect (funcall #'neil--find-exe) :to-throw 'error)))
+    (expect (funcall #'neil--find-exe) :to-throw 'error))
+  (it "Properly resolves to absolute exec path"
+    (let ((neil-executable-path "neil"))
+      (spy-on #'executable-find :and-return-value "/usr/bin/neil")
+      (expect (funcall #'neil--find-exe) :to-equal "/usr/bin/neil"))
+    (let ((neil-executable-path "clj -M:neil"))
+      (spy-on #'executable-find :and-return-value "/usr/bin/clj")
+      (expect (funcall #'neil--find-exe) :to-equal "/usr/bin/clj -M:neil"))
+    (let ((neil-executable-path "clojure -M:neil"))
+      (spy-on #'executable-find :and-return-value "/usr/bin/clojure")
+      (expect (funcall #'neil--find-exe) :to-equal "/usr/bin/clojure -M:neil"))))
 
 (describe "neil-find-clojure-package, happy path"
   :var (prompt-calls shell-cmd-calls)
