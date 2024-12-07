@@ -62,6 +62,18 @@ Otherwise uses the given value."
   (let-alist (cdr (assoc s minibuffer-completion-table))
     (concat "   " .version "    " .description)))
 
+(defun neil--find-exe ()
+  "Returns absolute path to neil executable."
+  (if-let* ((exe (cond
+                  ((and (stringp neil-executable-path)
+                        (string-match-p "^clj\\s-" neil-executable-path))
+                   (replace-regexp-in-string
+                    "^clj"
+                    (executable-find "clj")
+                    neil-executable-path))
+                  (t (executable-find (or neil-executable-path "neil"))))))
+      exe (user-error "Cannot find 'neil' executable. Ensure either 'neil', or 'clj' with :neil alias is available")))
+
 ;;;###autoload
 (defun neil-find-clojure-package (&optional term)
   "Find Clojure dependency by supplying TERM to neil cmd-line tool.
@@ -74,7 +86,7 @@ the dependency to the project (deps.edn only)."
           "Search for Clojure libs: "
           (when (member (file-name-nondirectory (or (buffer-file-name) ""))
                         '("deps.edn" "project.clj"))
-            (when-let ((sym (symbol-at-point)))
+            (when-let* ((sym (symbol-at-point)))
               (symbol-name sym))))))
   (let* ((format-dep-str
           (lambda (lib-name version)
@@ -113,13 +125,7 @@ the dependency to the project (deps.edn only)."
                                   (when desc `(description . ,desc)))))))
                res))))
 
-         (exe (if-let* ((exe (thread-first
-                               neil-executable-path
-                               (or "neil")
-                               split-string
-                               car
-                               executable-find)))
-                  exe (user-error "Cannot find 'neil' cmd-line utility!")))
+         (exe (neil--find-exe))
 
          (res (funcall perform-action exe (concat "dep search " (shell-quote-argument term))))
          (lib-name (let ((completion-extra-properties
