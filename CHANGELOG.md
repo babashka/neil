@@ -4,8 +4,12 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## 0.3.68
+## Unreleased
+
 - [#245](https://github.com/babashka/neil/issues/245): neil.el - neil-executable-path now can be set to `clj -M:neil`
+
+## 0.3.68
+
 - [#230](https://github.com/babashka/neil/issues/230): neil dep upgrade inserts git/url into upgraded dep ([@teodorlu](https://github.com/teodorlu))
 - [#237](https://github.com/babashka/neil/issues/230): more specific error reporting on invalid github token ([@teodorlu](https://github.com/teodorlu))
 - [#241](https://github.com/babashka/neil/issues/241): ignore missing deps file (instead of throwing) in `neil new` ([@bobisageek](https://github.com/bobisageek))
