@@ -65,14 +65,17 @@ Otherwise uses the given value."
 (defun neil--find-exe ()
   "Returns absolute path to neil executable."
   (if-let* ((exe (cond
+                  ;; it should work for `neil-executable-path' values like:
+                  ;; "clj -M:neil" or "bb -Sdeps '...' -m babashka.neil"
+                  ;; as well as simple: "neil" or "neil-cmd" likes.
                   ((and (stringp neil-executable-path)
-                        (string-match "^\\(clj\\|clojure\\)\\s-" neil-executable-path))
+                        (string-match "^\\([^ ]+\\)\\s-" neil-executable-path))
                    (replace-regexp-in-string
-                    "^\\(clj\\|clojure\\)"
+                    "^\\([^ ]+\\)"
                     (executable-find (match-string 1 neil-executable-path))
                     neil-executable-path))
                   (t (executable-find (or neil-executable-path "neil"))))))
-      exe (user-error "Cannot find 'neil' executable. Ensure either 'neil', or 'clojure|clj' with :neil alias is available")))
+      exe (user-error "Cannot find executable set in 'neil-executable-path'")))
 
 ;;;###autoload
 (defun neil-find-clojure-package (&optional term)
