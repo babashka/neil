@@ -5,8 +5,8 @@
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Created: April 20, 2022
-;; Modified: April 20, 2022
-;; Version: 0.0.1
+;; Modified: December 07, 2024
+;; Version: 0.3.68
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
 ;; Package-Requires: ((emacs "27.1"))
@@ -62,6 +62,21 @@ Otherwise uses the given value."
   (let-alist (cdr (assoc s minibuffer-completion-table))
     (concat "   " .version "    " .description)))
 
+(defun neil--find-exe ()
+  "Returns absolute path to neil executable."
+  (if-let* ((exe (cond
+                  ;; it should work for `neil-executable-path' values like:
+                  ;; "clj -M:neil" or "bb -Sdeps '...' -m babashka.neil"
+                  ;; as well as simple: "neil" or "neil-cmd" likes.
+                  ((and (stringp neil-executable-path)
+                        (string-match "^\\([^ ]+\\)\\s-" neil-executable-path))
+                   (replace-regexp-in-string
+                    "^\\([^ ]+\\)"
+                    (executable-find (match-string 1 neil-executable-path))
+                    neil-executable-path))
+                  (t (executable-find (or neil-executable-path "neil"))))))
+      exe (user-error "Cannot find executable set in 'neil-executable-path'")))
+
 ;;;###autoload
 (defun neil-find-clojure-package (&optional term)
   "Find Clojure dependency by supplying TERM to neil cmd-line tool.
@@ -74,7 +89,7 @@ the dependency to the project (deps.edn only)."
           "Search for Clojure libs: "
           (when (member (file-name-nondirectory (or (buffer-file-name) ""))
                         '("deps.edn" "project.clj"))
-            (when-let ((sym (symbol-at-point)))
+            (when-let* ((sym (symbol-at-point)))
               (symbol-name sym))))))
   (let* ((format-dep-str
           (lambda (lib-name version)
@@ -113,8 +128,7 @@ the dependency to the project (deps.edn only)."
                                   (when desc `(description . ,desc)))))))
                res))))
 
-         (exe (if-let ((exe (executable-find (or neil-executable-path "neil"))))
-                  exe (user-error "Cannot find 'neil' cmd-line utility!")))
+         (exe (neil--find-exe))
 
          (res (funcall perform-action exe (concat "dep search " (shell-quote-argument term))))
          (lib-name (let ((completion-extra-properties
