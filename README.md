@@ -257,8 +257,14 @@ Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
   :config 
   (setq neil-prompt-for-version-p nil
         neil-inject-dep-to-project-p t))
-
+        
+;; by default it attempts to find "neil" somewhere in the $PATH, 
+;; but you can set the executable explicitly, e.g., 
+(setq neil-executable-path "neil-cmd")
+;; or:
+(setq neil-executable-path "clj -M:neil")
 ```
+
 
 ## Github's Rate Limit
 
