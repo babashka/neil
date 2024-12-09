@@ -30,8 +30,15 @@ $ nix-shell -p neil
 # Alternatively, if your nix channel doesn't have neil yet:
 $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 ```
+### [BBin](https://github.com/babashka/bbin/)
+
+```bash
+$ bbin install io.github.babashka/neil
+```
 
 ### Clojure
+
+If possible, use the above methods instead, as this would have a much slower startup. Another problem is that the global `:neil` alias can be overridden by a local one, making it [impossible to use inside the neil repo itself](https://github.com/babashka/neil/issues/246).
 
 Add the following alias to your global or project-local `deps.edn`:
 
@@ -201,8 +208,8 @@ will return libraries with 'test framework' in their description.
 
 ### license list
 
-List/search for licenses that can be added to a project with `neil`. This functionality uses Github's license API, 
-which is also used by [choosealicense.com](https://choosealicense.com/). With no search term, a list of 
+List/search for licenses that can be added to a project with `neil`. This functionality uses Github's license API,
+which is also used by [choosealicense.com](https://choosealicense.com/). With no search term, a list of
 commonly-used licenses is returned:
 
 ```
@@ -241,9 +248,11 @@ $ neil license add epl-1.0
 Will create a LICENSE file in the current directory with the EPL 1.0 text.
 
 ## Emacs Integration
+[![MELPA status](https://melpa.org/packages/neil-badge.svg)](https://melpa.org/#/neil)
 
 [neil.el](https://github.com/babashka/neil/blob/main/neil.el) is a companion Emacs package.
 
+### Installation
 Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 
 ```emacs-lisp
@@ -254,16 +263,45 @@ Load it using your preferred Emacs package manager, e.g., for Doom Emacs:
 ;; config.el
 
 (use-package! neil
-  :config 
+  :config
   (setq neil-prompt-for-version-p nil
         neil-inject-dep-to-project-p t))
-        
-;; by default it attempts to find "neil" somewhere in the $PATH, 
-;; but you can set the executable explicitly, e.g., 
+
+;; by default it attempts to find "neil" somewhere in the $PATH,
+;; but you can set the executable explicitly, e.g.,
 (setq neil-executable-path "neil-cmd")
 ;; or:
 (setq neil-executable-path "clj -M:neil")
+;; see the full list of customizations below
 ```
+For a built-in package.el manager you can install it from from [MELPA](https://melpa.org/#/neil) with `M-x package-install` or with `:ensure` keyword from `use-package`.
+
+```emacs-lisp
+(use-package neil
+  :defer t
+  :ensure t
+  :custom
+  (neil-prompt-for-version-p nil)
+  (neil-inject-dep-to-project-p t))
+```
+
+### Usage
+
+So far, neil.el provides a command `M-x neil-find-clojure-package` that searches for the packages (using `neil dep search`), and generates a dependency string for different Clojure project types.
+
+### Customization
+
+* `neil-prompt-for-version-p` (default `t`)
+
+  When non-nil, select from available versions of a lib. Otherwise, use the latest found.
+
+* `neil-inject-dep-to-project-p` (default `nil`)
+
+    When non-nil, try to add library dependency to current project. Otherwise, simply store the dependency string in the `kill-ring'. Works only for deps.edn projects.
+
+* `neil-executable-path` (default `nil`)
+
+    If nil, tries to find neil executable in the PATH. Otherwise uses the given value.
 
 
 ## Github's Rate Limit
