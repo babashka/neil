@@ -29,7 +29,7 @@ Otherwise, use the latest found."
   :group 'neil)
 
 (defcustom neil-inject-dep-to-project-p nil
-  "When non-til, try to add library dependency to current project.
+  "When non-nil, try to add library dependency to current project.
 Otherwise, simply store the dependency string in the `kill-ring'.
 Works only for deps.edn projects."
   :type 'boolean
