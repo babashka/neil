@@ -7,6 +7,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## Unreleased
 
 - [#245](https://github.com/babashka/neil/issues/245): neil.el - neil-executable-path now can be set to `clj -M:neil`
+- [#255](https://github.com/babashka/neil/issues/255): update maven search URL
 
 ## 0.3.68
 
