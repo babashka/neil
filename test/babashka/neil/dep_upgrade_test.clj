@@ -217,9 +217,9 @@
 
 (deftest prefer-stable-test
   (are [upgrade dep] (= upgrade (neil/dep->upgrade dep))
-    nil                    {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}}
-    {:mvn/version "1.0.5"} {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}}
-    nil                    {:mvn/version "2.0.0-alpha2"})
+    {:mvn/version "2.0.0"} {:lib 'hiccup/hiccup :current {:mvn/version "1.0.5"}}
+    {:mvn/version "2.0.0"} {:lib 'hiccup/hiccup :current {:mvn/version "1.0.4"}}
+    {:mvn/version "2.0.0"} {:lib 'hiccup/hiccup :current {:mvn/version "2.0.0-alpha2"}})
 
   (is (some? (neil/dep->upgrade {:lib 'com.google.apis/google-api-services-sheets
                                  :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
@@ -247,7 +247,7 @@
       (is (not (:git/tag kondo-upgrade)) ", there is no tag.")))
 
   (testing "when --unstable is set, upgrade to unstable hiccup versions"
-    (is (= {:mvn/version "2.0.0-RC4"}
+    (is (= {:mvn/version "2.0.0"}
            (neil/dep->upgrade {:lib 'hiccup/hiccup
                                :current {:mvn/version "1.0.0"}
                                :unstable true})))))
