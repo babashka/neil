@@ -78,7 +78,7 @@
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
-    (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&wt=json"
+    (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
             (namespace qlib)
             (name qlib)
             (str limit)))))
@@ -91,6 +91,8 @@
 
 (defn latest-stable-mvn-version [qlib]
   (first-stable-version (mvn-versions qlib {:limit 100})))
+
+#_(mvn-versions 'org.clojure/clojure {:limit 100})
 
 (defn latest-mvn-version [qlib]
   (first (mvn-versions qlib {:limit 100})))
