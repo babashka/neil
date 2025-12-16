@@ -7,7 +7,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## 0.3.69
 
 - [#245](https://github.com/babashka/neil/issues/245): neil.el - neil-executable-path now can be set to `clj -M:neil`
-- [#251](https://github.com/babashka/neil/issues/251): Upgrade library deps-new to 0.5.0 to support :post-process-fn
+- [#251](https://github.com/babashka/neil/issues/251): Upgrade library deps-new to 0.10.3
 - [#255](https://github.com/babashka/neil/issues/255): update maven search URL
 
 ## 0.3.68
