@@ -1,12 +1,14 @@
 (ns babashka.neil.version-test
-  (:require [babashka.neil.git :as git]
-            [babashka.neil.meta :as meta]
-            [babashka.neil.version :as version]
-            [babashka.neil.test-util :refer [neil read-deps-edn set-deps-edn!
-                                             reset-test-dir test-dir test-file]]
-            [clojure.string :as str]
-            [clojure.test :refer [deftest is testing]])
-  (:import (clojure.lang ExceptionInfo)))
+  (:require
+   [babashka.neil.git :as git]
+   [babashka.neil.meta :as meta]
+   [babashka.neil.test-util :refer [neil read-deps-edn reset-test-dir
+                                    set-deps-edn! test-dir test-file]]
+   [babashka.neil.version :as version]
+   [clojure.string :as str]
+   [clojure.test :refer [deftest is testing]])
+  (:import
+   (clojure.lang ExceptionInfo)))
 
 (defn- read-version-string []
   (version/deps-edn->project-version-string (read-deps-edn)))

@@ -7,14 +7,14 @@
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
-   [babashka.neil.utils :refer [req-resolve]]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
+   [babashka.neil.utils :refer [req-resolve]]
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
-   [clojure.string :as str]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -78,7 +78,7 @@
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
-    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&wt=json"
+    (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
             (namespace qlib)
             (name qlib)
             (str limit)))))
@@ -91,6 +91,8 @@
 
 (defn latest-stable-mvn-version [qlib]
   (first-stable-version (mvn-versions qlib {:limit 100})))
+
+#_(mvn-versions 'org.clojure/clojure {:limit 100})
 
 (defn latest-mvn-version [qlib]
   (first (mvn-versions qlib {:limit 100})))
@@ -540,7 +542,7 @@ details on the search syntax.")))
 
 (defn dep-search-maven [search-term]
   (let [url (format
-             "https://search.maven.org/solrsearch/select?q=%s&rows=20&wt=json"
+             "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
              (url-encode search-term))
         keys-m {:g :group_name
                 :a :jar_name
