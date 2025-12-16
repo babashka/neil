@@ -1,6 +1,7 @@
 (ns babashka.neil.new
   {:no-doc true}
   (:require
+   [babashka.fs :as fs]
    [babashka.neil.git :as git]
    [babashka.neil.project :as proj]
    [babashka.neil.utils :refer [req-resolve]]
@@ -237,4 +238,5 @@ Examples:
             (when template-deps (deps-new-add-template-deps template-deps))
             (when bb? (deps-new-set-classpath))
             (deps-new-create create-opts)
-            (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name))))))))
+            (when (fs/exists? (proj/resolve-deps-file dir (:deps-file opts)))
+              (proj/assoc-project-meta! (assoc opts :dir dir :k :name :v project-name)))))))))

@@ -7,14 +7,14 @@
    [babashka.neil.git :as git]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
-   [babashka.neil.utils :refer [req-resolve]]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
+   [babashka.neil.utils :refer [req-resolve]]
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
-   [clojure.string :as str]
-   [clojure.set :as set]))
+   [clojure.set :as set]
+   [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
@@ -78,7 +78,7 @@
 (defn- search-mvn [qlib limit]
   (:response
    (curl-get-json
-    (format "https://search.maven.org/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&wt=json"
+    (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
             (namespace qlib)
             (name qlib)
             (str limit)))))
@@ -91,6 +91,8 @@
 
 (defn latest-stable-mvn-version [qlib]
   (first-stable-version (mvn-versions qlib {:limit 100})))
+
+#_(mvn-versions 'org.clojure/clojure {:limit 100})
 
 (defn latest-mvn-version [qlib]
   (first (mvn-versions qlib {:limit 100})))
@@ -451,12 +453,13 @@ chmod +x bin/kaocha
                     (r/assoc-in edn-nodes (conj path :mvn/version) version)
                     git-sha?
                     ;; multiple steps to force newlines
-                    (-> edn-nodes
-                        (r/assoc-in (conj path :git/url) git-url)
-                        str
-                        r/parse-string
-                        (r/assoc-in (conj path :git/sha) version)
-                        (r/update-in path r/dissoc :sha))
+                    (cond-> edn-nodes
+                      (not (:omit-git-url opts)) (r/assoc-in (conj path :git/url)
+                                                             git-url)
+                      true str
+                      true r/parse-string
+                      true (r/assoc-in (conj path :git/sha) version)
+                      true (r/update-in path r/dissoc :sha))
 
                     git-tag?
                     ;; multiple steps to force newlines
@@ -539,7 +542,7 @@ details on the search syntax.")))
 
 (defn dep-search-maven [search-term]
   (let [url (format
-             "https://search.maven.org/solrsearch/select?q=%s&rows=20&wt=json"
+             "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
              (url-encode search-term))
         keys-m {:g :group_name
                 :a :jar_name
@@ -610,7 +613,6 @@ details on the search syntax.")))
     ;; => {:git/sha \"...\"}
   "
   [{:keys [lib current unstable]}]
-  ;; for now, just upgrade to stable versions
   (let [current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
     (cond
@@ -725,7 +727,8 @@ details on the search syntax.")))
                               alias   (assoc :alias alias)
                               version (assoc :version version)
                               tag     (assoc :tag tag)
-                              (and (not tag) sha) (assoc :sha sha))}))))))
+                              (and (not tag) sha) (assoc :sha sha)
+                              (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
   (when (or (:h opts) (:help opts))

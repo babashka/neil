@@ -9,8 +9,8 @@
                         org.babashka/spec.alpha {:git/url "https://github.com/babashka/spec.alpha"
                                                  :git/sha "1a841c4cc1d4f6dab7505a98ed2d532dd9d56b78"}
                         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
-                                                         :git/tag "v0.5.0"
-                                                         :git/sha "48bf01e"}
+                                                         :git/tag "v0.10.3"
+                                                         :git/sha "2c012c4"}
                         org.babashka/cli {:mvn/version "0.8.58"}
                         version-clj/version-clj {:mvn/version "2.0.2"}
                         org.babashka/http-client {:mvn/version "0.1.4"}}})

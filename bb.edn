@@ -15,10 +15,12 @@
       :task (do
               (log/info "bb run lint")
               (run 'lint)
-              (log/info "bb run tests")
-              (run 'tests)
-              (log/info "bb run tests-emacs")
-              (run 'tests-emacs))}
+              (log/info "bb run test:bb")
+              (run 'test:bb)
+              (log/info "bb run test:clj")
+              (run 'test:clj)
+              (log/info "bb run test:emacs")
+              (run 'test:emacs))}
   lint (shell "clj-kondo --lint .")
 
   gen-script {:doc "Build the neil script"

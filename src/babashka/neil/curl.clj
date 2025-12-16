@@ -12,14 +12,17 @@
 
 (defn url-encode [s] (URLEncoder/encode s "UTF-8"))
 
-(def github-user (or (System/getenv "NEIL_GITHUB_USER")
-                     (System/getenv "BABASHKA_NEIL_DEV_GITHUB_USER")))
-(def github-token (or (System/getenv "NEIL_GITHUB_TOKEN")
-                      (System/getenv "BABASHKA_NEIL_DEV_GITHUB_TOKEN")))
+(def github-user-envvars ["NEIL_GITHUB_USER" "BABASHKA_NEIL_DEV_GITHUB_USER"])
+(def github-token-envvars ["NEIL_GITHUB_TOKEN" "BABASHKA_NEIL_DEV_GITHUB_TOKEN"])
+
+(def github-user (some #(System/getenv %) github-user-envvars))
+(def github-token (some #(System/getenv %) github-token-envvars))
+
+(def github-basic-auth-enabled? (and github-user github-token))
 
 (def curl-opts
   (merge {:throw false}
-         (when (and github-user github-token)
+         (when github-basic-auth-enabled?
            {:basic-auth [github-user github-token]})))
 
 (defn curl-get-json
@@ -41,6 +44,17 @@
          (println "You've hit the github rate-limit (60 reqs/hr).
   You can set an API Token to increase the limit.
   See neil's README for details.")
+         nil #_(System/exit 1))
+
+       (and (= 401 (:status response))
+            (string/includes? url "api.github")
+            (string/includes? (:message parsed-body) "Bad credentials")
+            github-basic-auth-enabled?)
+       (binding [*out* *err*]
+         (println "Your neil github token is invalid or expired.")
+         (when-let [token-envvar (first (filter #(System/getenv %) github-token-envvars))]
+           (println "Please double check your " token-envvar " environment variable."))
+         (println "See neil's README for more details.")
          nil #_(System/exit 1))
 
        (contains? unexceptional-statuses (:status response))
