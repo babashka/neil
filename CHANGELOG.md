@@ -4,6 +4,11 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## 0.3.70
+
+- neil.el - a hook that runs after finding a package ([@agzam](https://github.com/agzam))
+- neil.el - adds a function for injecting a found package into current CIDER session ([@agzam](https://github.com/agzam))
+
 ## 0.3.69
 
 - [#245](https://github.com/babashka/neil/issues/245): neil.el - neil-executable-path now can be set to `clj -M:neil`

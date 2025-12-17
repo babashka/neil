@@ -5,11 +5,11 @@
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Created: May, 2022
-;; Modified: May, 2022
-;; Version: 0.0.1
+;; Modified: December, 2025
+;; Version: 0.3.70
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
-;; Package-Requires: ((emacs "27.1"))
+;; Package-Requires: ((emacs "29.4"))
 ;;
 ;;; Commentary:
 ;;
@@ -117,6 +117,72 @@
     (spy-on #'neil--identify-project-build-tool :and-return-value '(lein))
     (let ((neil-prompt-for-version-p t))
       (expect (neil-find-clojure-package "test-pkg") :to-equal
-              "[foo/test-pkg \"1.0.0\"]"))))
+              "[foo/test-pkg \"1.0.0\"]")))
+
+  (describe "testing hooks"
+    (before-each
+      (add-hook 'neil-after-find-clojure-package-hook 'test-hook-fn))
+    (after-each
+      (remove-hook 'neil-after-find-clojure-package-hook 'test-hook-fn))
+    (it "after hook runs"
+      (spy-on #'test-hook-fn :and-call-fake
+              (lambda (coords)
+                (expect (string= "foo/test-pkg {:mvn/version \"1.0.0\"}"
+                                 coords))))
+      (neil-find-clojure-package "test-pkg"))))
+
+(describe "hot loading"
+  (before-each
+    (spy-on #'message))
+  (it "cider not installed"
+    (spy-on #'fboundp :and-return-value nil)
+    (neil-cider-load-lib "foo")
+    (expect #'message :to-have-been-called-with "CIDER not installed"))
+
+  (it "cider not connected"
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p))))
+    (spy-on #'cider-connected-p :and-return-value nil)
+    (neil-cider-load-lib "foo")
+    (expect #'message :to-have-been-called-with "CIDER not connected"))
+
+  (it "not a deps.edn project"
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type))))
+    (spy-on #'cider-connected-p :and-return-value t)
+    (spy-on #'cider-project-type :and-return-value 'non-clojure-cli)
+    (neil-cider-load-lib "foo")
+    (expect #'message :to-have-been-called-with
+            "Has to be deps.edn project for hot-loading"))
+
+  (it "clojure version not supported"
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type cider--clojure-version))))
+    (spy-on #'cider-connected-p :and-return-value t)
+    (spy-on #'cider-project-type :and-return-value 'clojure-cli)
+    (spy-on #'cider--clojure-version :and-return-value "1.11")
+    (neil-cider-load-lib "foo")
+    (expect #'message :to-have-been-called-with
+            "You need at least 1.12.0-alpha2 of Clojure for hot-loading dependencies"))
+
+  (it "attempts to load"
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type cider--clojure-version
+                         nrepl-dict-get cider-sync-tooling-eval))))
+    (spy-on #'cider-connected-p :and-return-value t)
+    (spy-on #'cider-project-type :and-return-value 'clojure-cli)
+    (spy-on #'cider--clojure-version :and-return-value "1.12.0-alpha3")
+    (spy-on #'nrepl-dict-get :and-return-value nil)
+    (spy-on #'cider-sync-tooling-eval :and-call-fake
+            (lambda (input)
+              (expect input :to-equal
+                      "(add-libs '{cheshire/cheshire {:mvn/version \"5.13.0\"}})")))
+    (neil-cider-load-lib "cheshire/cheshire {:mvn/version \"5.13.0\"}")))
+
+
 
 ;;; neil-tests.el ends here
