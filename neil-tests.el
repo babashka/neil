@@ -5,11 +5,11 @@
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Created: May, 2022
-;; Modified: May, 2022
-;; Version: 0.0.1
+;; Modified: December, 2025
+;; Version: 0.3.70
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
-;; Package-Requires: ((emacs "28.1"))
+;; Package-Requires: ((emacs "29.4"))
 ;;
 ;;; Commentary:
 ;;

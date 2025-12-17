@@ -5,11 +5,11 @@
 ;; Author: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Maintainer: Ag Ibragimov <agzam.ibragimov@gmail.com>
 ;; Created: April 20, 2022
-;; Modified: December 07, 2024
-;; Version: 0.3.68
+;; Modified: December 16, 2025
+;; Version: 0.3.70
 ;; Keywords: convenience tools
 ;; Homepage: https://github.com/babashka/neil
-;; Package-Requires: ((emacs "28.1"))
+;; Package-Requires: ((emacs "29.4"))
 ;; SPDX-License-Identifier: MIT
 
 ;;; Commentary:
