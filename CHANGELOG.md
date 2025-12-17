@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## 0.3.70
+## ...
 
 - neil.el - a hook that runs after finding a package ([@agzam](https://github.com/agzam))
 - neil.el - adds a function for injecting a found package into current CIDER session ([@agzam](https://github.com/agzam))
