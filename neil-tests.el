@@ -135,18 +135,22 @@
   (before-each
     (spy-on #'message))
   (it "cider not installed"
-    (spy-on #'fboundp :and-call-through)
+    (spy-on #'fboundp :and-return-value nil)
     (neil-cider-load-lib "foo")
     (expect #'message :to-have-been-called-with "CIDER not installed"))
 
   (it "cider not connected"
-    (spy-on #'fboundp :and-call-fake (lambda (_) t))
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p))))
     (spy-on #'cider-connected-p :and-return-value nil)
     (neil-cider-load-lib "foo")
     (expect #'message :to-have-been-called-with "CIDER not connected"))
 
   (it "not a deps.edn project"
-    (spy-on #'fboundp :and-call-fake (lambda (_) t))
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type))))
     (spy-on #'cider-connected-p :and-return-value t)
     (spy-on #'cider-project-type :and-return-value 'non-clojure-cli)
     (neil-cider-load-lib "foo")
@@ -154,7 +158,9 @@
             "Has to be deps.edn project for hot-loading"))
 
   (it "clojure version not supported"
-    (spy-on #'fboundp :and-call-fake (lambda (_) t))
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type cider--clojure-version))))
     (spy-on #'cider-connected-p :and-return-value t)
     (spy-on #'cider-project-type :and-return-value 'clojure-cli)
     (spy-on #'cider--clojure-version :and-return-value "1.11")
@@ -163,7 +169,10 @@
             "You need at least 1.12.0-alpha2 of Clojure for hot-loading dependencies"))
 
   (it "attempts to load"
-    (spy-on #'fboundp :and-call-fake (lambda (_) t))
+    (spy-on #'fboundp :and-call-fake
+            (lambda (fn)
+              (memq fn '(cider cider-connected-p cider-project-type cider--clojure-version
+                         nrepl-dict-get cider-sync-tooling-eval))))
     (spy-on #'cider-connected-p :and-return-value t)
     (spy-on #'cider-project-type :and-return-value 'clojure-cli)
     (spy-on #'cider--clojure-version :and-return-value "1.12.0-alpha3")
