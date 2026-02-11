@@ -6,6 +6,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## ...
 
+- [#258](https://github.com/babashka/neil/issues/258): `neil test` now exits with non-zero exit code when tests fail
 - neil.el - a hook that runs after finding a package ([@agzam](https://github.com/agzam))
 - neil.el - adds a function for injecting a found package into current CIDER session ([@agzam](https://github.com/agzam))
 

@@ -31,7 +31,9 @@
    :h :test-help})
 
 (defn clojure [& args]
-  #?(:bb @(deps/clojure (vec args) {:inherit true})
+  #?(:bb (let [exit (:exit @(deps/clojure (vec args) {:inherit true}))]
+           (when (not (zero? exit))
+             (System/exit exit)))
      :clj (apply shell {} "bb clojure" args)))
 
 (defn normalize-opts [opts]
