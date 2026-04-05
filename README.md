@@ -298,7 +298,7 @@ $ brew reinstall --build-from-source ./neil.rb
 Or install a development version with [bbin][bbin]:
 
 ```
-$ bbin install . --as neil-dev --main-opts '["-m" babashka.neil/-main]'
+$ bbin install . --as neil-dev --main-opts '["-m" "babashka.neil/-main"]'
 ```
 
 You can choose your own binary name with the `--as YOUR_BINARY` option.
