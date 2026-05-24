@@ -6,4 +6,4 @@
 (deftest latest-version-test
   (is (= "2.0.0" (neil/latest-stable-clojars-version 'hiccup/hiccup)))
   (is (= "2.0.0" (neil/latest-clojars-version 'hiccup/hiccup)))
-  (is (= "1.12.4" (neil/latest-stable-mvn-version 'org.clojure/clojure))))
+  (is (= "1.12.5" (neil/latest-stable-mvn-version 'org.clojure/clojure))))

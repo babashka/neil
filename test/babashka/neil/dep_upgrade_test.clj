@@ -224,6 +224,15 @@
   (is (some? (neil/dep->upgrade {:lib 'com.google.apis/google-api-services-sheets
                                  :current {:mvn/version "v4-rev20220927-2.0.0"}}))))
 
+(deftest upgrade-unstable-to-unstable-test
+  ;; https://github.com/babashka/neil/issues/261
+  ;; When no newer stable version exists, upgrade to a newer unstable version.
+  ;; The result must be a {:mvn/version ...} map, not a bare version string.
+  (let [upgrade (neil/dep->upgrade {:lib 'dev.data-star.clojure/sdk
+                                    :current {:mvn/version "1.0.0-RC8"}})]
+    (is (map? upgrade) "an upgrade map is returned, not a bare string")
+    (is (string? (:mvn/version upgrade)) "the upgrade has a :mvn/version")))
+
 (deftest first-stable-version-test
   (are [all-versions first-stable] (= first-stable (neil/first-stable-version all-versions))
     ["1.0.4"] "1.0.4"
