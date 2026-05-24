@@ -1417,9 +1417,17 @@ See http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for
 details on the search syntax.")))
 
 (defn dep-search-maven [search-term]
-  (let [url (format
+  (let [;; A fully-qualified lib (group/artifact) can't be passed to Solr
+        ;; verbatim: the `/` is a special character (starts a regex) and makes
+        ;; central.sonatype.com return a 500. Search by the `a:` field instead
+        ;; (which aggregates to latest versions) and filter to the group below.
+        search-term (str/replace search-term #"^\"|\"$" "") ; strip surrounding quotes
+        [group artifact] (when (str/includes? search-term "/")
+                           (str/split search-term #"/" 2))
+        query (if group (str "a:" artifact) search-term)
+        url (format
              "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
-             (url-encode search-term))
+             (url-encode query))
         keys-m {:g :group_name
                 :a :jar_name
                 :timestamp :created
@@ -1431,11 +1439,12 @@ details on the search syntax.")))
                     m :description
                     (format "%s/%s on Maven" group_name jar_name)))
         res (->> url curl-get-json :response :docs
-                    (map #(some->
-                           %
-                           (clojure.set/rename-keys keys-m)
-                           (select-keys (vals keys-m))
-                           add-desc)))]
+                 (filter (fn [{:keys [g]}] (or (nil? group) (= group g))))
+                 (map #(some->
+                        %
+                        (clojure.set/rename-keys keys-m)
+                        (select-keys (vals keys-m))
+                        add-desc)))]
     (if (empty? res)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Maven."))

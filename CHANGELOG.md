@@ -7,6 +7,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## ...
 
 - [#261](https://github.com/babashka/neil/issues/261): `neil dep upgrade` now upgrades unstable deps (e.g. release candidates) to a newer unstable version when no newer stable version exists
+- `neil dep search` for a fully-qualified lib (e.g. `org.clojure/clojurescript`) no longer fails: a `/` in the Solr query made central.sonatype.com return a 500
 - [#258](https://github.com/babashka/neil/issues/258): `neil test` now exits with non-zero exit code when tests fail
 - neil.el - a hook that runs after finding a package ([@agzam](https://github.com/agzam))
 - neil.el - adds a function for injecting a found package into current CIDER session ([@agzam](https://github.com/agzam))
