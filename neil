@@ -1548,7 +1548,7 @@ details on the search syntax.")))
          ;; otherwise, provide a more recent unstable
          (when-let [candidate (or (first clojars-candidates) (first maven-candidates))]
            (when (v-older? (:mvn/version current) candidate)
-             candidate))
+             {:mvn/version candidate}))
 
          ;; otherwise, do nothing (fall through to nil)
          )))))
