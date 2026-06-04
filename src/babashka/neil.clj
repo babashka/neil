@@ -835,8 +835,7 @@ Examples:
     :fn (fn [{:keys [opts] :as m}]
           (if (:version opts)
             (neil-version/print-version)
-            (print-help m)))
-    :epilog "Most subcommands also accept --alias and --deps-file."}])
+            (print-help m)))}])
 
 (defn -main [& _args]
   (cli/dispatch dispatch-table

@@ -74,8 +74,6 @@ Options:
   --version
 
 Run "neil <command> --help" for more information on a command.
-
-Most subcommands also accept --alias and --deps-file.
 ```
 
 ### add dep
