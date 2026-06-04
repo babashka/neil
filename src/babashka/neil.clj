@@ -203,47 +203,42 @@
 
 (declare print-help)
 
-(defn add-cognitect-test-runner [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do (add-alias opts :test cognitect-test-runner-alias)
-        (when-let [pn (proj/project-name opts)]
-          (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
-                test-path (-> (str test-ns)
-                              (str/replace "-" "_")
-                              (str/replace "." fs/file-separator)
-                              (str ".clj"))
-                test-path (fs/file "test" test-path)]
-            (when (or (not (fs/exists? "test"))
-                      (zero? (count (fs/list-dir "test"))))
-              (fs/create-dirs (fs/parent test-path))
-              (spit test-path
-                    (format "(ns %s
+(defn add-cognitect-test-runner [{:keys [opts]}]
+  (add-alias opts :test cognitect-test-runner-alias)
+  (when-let [pn (proj/project-name opts)]
+    (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
+          test-path (-> (str test-ns)
+                        (str/replace "-" "_")
+                        (str/replace "." fs/file-separator)
+                        (str ".clj"))
+          test-path (fs/file "test" test-path)]
+      (when (or (not (fs/exists? "test"))
+                (zero? (count (fs/list-dir "test"))))
+        (fs/create-dirs (fs/parent test-path))
+        (spit test-path
+              (format "(ns %s
   (:require [clojure.test :as t :refer [deftest is testing]]))
 
 (deftest %s-test
   (testing \"TODO: fix\"
     (is (= :foo :bar))))
-" test-ns (name pn)))))))))
+" test-ns (name pn)))))))
 
 (defn kaocha-alias-latest []
   (let [version (latest-stable-clojars-version 'lambdaisland/kaocha)]
     {:extra-deps {'lambdaisland/kaocha {:mvn/version version}},
      :main-opts ["-m" "kaocha.runner"]}))
 
-(defn add-kaocha [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do
-      (add-alias opts :kaocha (kaocha-alias-latest))
-      (println (str/trim "
+(defn add-kaocha [{:keys [opts]}]
+  (add-alias opts :kaocha (kaocha-alias-latest))
+  (println (str/trim "
 If you wish to create a `bin/kaocha` file, copy and run the following:
 
 mkdir -p bin && \\
 echo '#!/usr/bin/env bash
 clojure -M:kaocha \"$@\"' > bin/kaocha && \\
 chmod +x bin/kaocha
-")))))
+")))
 
 (defn nrepl-alias-latest []
   (let [nrepl-version (future (latest-stable-clojars-version 'nrepl/nrepl))
@@ -255,10 +250,8 @@ chmod +x bin/kaocha
      :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"
                  "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]}))
 
-(defn add-nrepl [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (add-alias opts :nrepl (nrepl-alias-latest))))
+(defn add-nrepl [{:keys [opts]}]
+  (add-alias opts :nrepl (nrepl-alias-latest)))
 
 (defn build-alias-latest []
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
@@ -336,11 +329,8 @@ chmod +x bin/kaocha
 "]
     base))
 
-(defn add-build [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do
-      (if-not (fs/exists? "build.clj")
+(defn add-build [{:keys [opts]}]
+  (if-not (fs/exists? "build.clj")
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
       (ensure-deps-file opts)
@@ -366,7 +356,7 @@ chmod +x bin/kaocha
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
                                       (:sha ba))
                     s (str (str/trim (str nodes)) "\n")]
-                (spit (:deps-file opts) s)))))))))
+                (spit (:deps-file opts) s)))))))
 
 (defn log [& xs]
   (binding [*out* *err*]
