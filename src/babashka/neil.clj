@@ -752,7 +752,7 @@ chmod +x bin/kaocha
 
 (def dispatch-table
   [{:cmds ["add"] :doc "Add a dep, test runner, build or nREPL alias."}
-   {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :doc "Alias for `dep add`."}
+   {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :require [:lib] :doc "Alias for `dep add`."}
    {:cmds ["add" "test"] :fn add-cognitect-test-runner :doc "Add the cognitect test runner to the :test alias."}
    {:cmds ["add" "build"] :fn add-build :doc "Add a tools.build build.clj and :build alias."}
    {:cmds ["add" "kaocha"] :fn add-kaocha :doc "Add the kaocha test runner to the :kaocha alias."}
@@ -821,7 +821,7 @@ Examples:
     :spec (reduce-kv (fn [m k v] (assoc m k (assoc v :inherit true)))
                      {} neil-version/version-spec)}
    {:cmds ["version" "tag"] :fn (partial neil-version/neil-version :tag) :doc "Tag the current version in git."}
-   {:cmds ["version" "set"] :fn (partial neil-version/neil-version :set) :args->opts [:version] :doc "Set the project version."}
+   {:cmds ["version" "set"] :fn (partial neil-version/neil-version :set) :args->opts [:version] :require [:version] :doc "Set the project version."}
    {:cmds ["version" "major"] :fn (partial neil-version/neil-version :major) :args->opts [:version] :doc "Bump the major version."}
    {:cmds ["version" "minor"] :fn (partial neil-version/neil-version :minor) :args->opts [:version] :doc "Bump the minor version."}
    {:cmds ["version" "patch"] :fn (partial neil-version/neil-version :patch) :args->opts [:version] :doc "Bump the patch version."}
