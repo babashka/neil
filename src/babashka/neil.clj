@@ -836,7 +836,7 @@ Examples:
           (if (:version opts)
             (neil-version/print-version)
             (print-help m)))
-    :epilog "Most subcommands also accept --alias and --deps-file. Run `neil <command> --help` for a command's options."}])
+    :epilog "Most subcommands also accept --alias and --deps-file."}])
 
 (defn -main [& _args]
   (cli/dispatch dispatch-table
