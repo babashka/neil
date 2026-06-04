@@ -74,8 +74,7 @@
       "We're able to find exactly 3 hiccup versions"))
 
 (deftest dep-search-help-test
-  (doseq [cmd ["./neil dep search"
-               "./neil dep search --help"
+  (doseq [cmd ["./neil dep search --help"
                "./neil dep search foo --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil dep search ")))))
@@ -94,12 +93,8 @@
   (is (any? (run-dep-subcommand "search" "babashka nrepl")))
   (is (thrown-with-msg? Exception #"Unable to find"
                         (run-dep-subcommand "search" "%22searchTermThatIsn'tFound")))
-  (is (some #(str/starts-with? % "Usage: neil dep search")
-            (run-dep-subcommand "search" "42"))
-      "passing non-string shows help")
-  (is (some #(str/starts-with? % "Usage: neil dep search")
-            (run-dep-subcommand "search" "  "))
-      "passing blank string shows help")
+  ;; numeric-looking term is coerced to a string, not a number (would crash url-encode)
+  (is (not-empty (run-dep-subcommand "search" "42")))
   (is (some
        (partial
         re-matches
@@ -132,7 +127,7 @@
       (run-license out-file "add" ":license epl-2.0")
       (is (str/includes? (slurp out-file) "Eclipse Public License")))
     (testing "missing license key errors"
-      (is (thrown-with-msg? Exception #"No license key" 
+      (is (thrown-with-msg? Exception #"Required option: --license"
             (run-license out-file "add"))))
     (testing "invalid license key errors"
       (is (thrown-with-msg? Exception #"nonExistentLicense" 

@@ -767,6 +767,7 @@ chmod +x bin/kaocha
    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]
     :doc "Search Clojars for a string in any attribute of an artifact."
     :require [:search-term]
+    :spec {:search-term {:coerce :string}}
     :epilog (str/trim "
 Examples:
 
