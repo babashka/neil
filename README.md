@@ -71,12 +71,11 @@ Commands:
   help    Show this help.
 
 Options:
-      --version
-  -h, --help    Show this help
-
-Most subcommands also accept --alias and --deps-file. Run `neil <command> --help` for a command's options.
+  --version
 
 Run "neil <command> --help" for more information on a command.
+
+Most subcommands also accept --alias and --deps-file.
 ```
 
 ### add dep

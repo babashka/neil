@@ -12,7 +12,7 @@
                                                          :git/tag "v0.10.3"
                                                          :git/sha "2c012c4"}
                         org.babashka/cli {:git/url "https://github.com/babashka/cli"
-                                          :git/sha "de19235af79da89c57696d5079a8a9899fd66229"}
+                                          :git/sha "45cf0775e6348020cfc0f63390bc30c56f467eff"}
                         version-clj/version-clj {:mvn/version "2.0.2"}
                         org.babashka/http-client {:mvn/version "0.1.4"}}})
 
@@ -1716,7 +1716,7 @@ Examples:
           (if (:version opts)
             (neil-version/print-version)
             (print-help m)))
-    :epilog "Most subcommands also accept --alias and --deps-file. Run `neil <command> --help` for a command's options."}])
+    :epilog "Most subcommands also accept --alias and --deps-file."}])
 
 (defn -main [& _args]
   (cli/dispatch dispatch-table
