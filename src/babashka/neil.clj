@@ -481,24 +481,6 @@ chmod +x bin/kaocha
           (spit (:deps-file opts) s))))))
 
 (defn dep-versions [{:keys [opts]}]
-  (when (or (:help opts) (:h opts))
-    (println (str/trim "
-Usage: neil dep versions LIB
-
-List available versions of a Clojure dependency. Only supports Clojars.
-
-  $ neil dep versions http-kit/http-kit
-  :lib http-kit/http-kit :version 2.7.0-alpha1
-  :lib http-kit/http-kit :version 2.7.0-SNAPSHOT
-  :lib http-kit/http-kit :version 2.6.0
-  :lib http-kit/http-kit :version 2.6.0-RC1
-  :lib http-kit/http-kit :version 2.6.0-alpha1
-  :lib http-kit/http-kit :version 2.5.3
-  :lib http-kit/http-kit :version 2.5.3-SNAPSHOT
-  :lib http-kit/http-kit :version 2.5.2
-  :lib http-kit/http-kit :version 2.5.1
-  :lib http-kit/http-kit :version 2.5.0"))
-    (System/exit 0))
   (let [lib (:lib opts)
         lib (symbol lib)
         versions (or (seq (clojars-versions lib opts))
@@ -586,21 +568,17 @@ details on the search syntax.")))
       search-results)))
 
 (defn dep-search [{:keys [opts]}]
-  (let [{:keys [search-term]} opts]
-    (if (or (:help opts)
-            (not (string? search-term))
-            (str/blank? search-term))
-      (print-dep-search-help)
-      (let [search-results (->> [dep-search-maven
-                                 dep-search-clojars]
-                                (map #(% search-term))
-                                (apply concat))]
-        (when (empty? search-results) (System/exit 1))
-        (doseq [search-result search-results]
-          (prn :lib (symbol (:group_name search-result)
-                            (:jar_name search-result))
-               :version (:version search-result)
-               :description (:description search-result)))))))
+  (let [{:keys [search-term]} opts
+        search-results (->> [dep-search-maven
+                             dep-search-clojars]
+                            (map #(% search-term))
+                            (apply concat))]
+    (when (empty? search-results) (System/exit 1))
+    (doseq [search-result search-results]
+      (prn :lib (symbol (:group_name search-result)
+                        (:jar_name search-result))
+           :version (:version search-result)
+           :description (:description search-result)))))
 
 (defn git-url->lib [git-url]
   (when git-url
@@ -740,29 +718,6 @@ details on the search syntax.")))
                               (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
-  (when (or (:h opts) (:help opts))
-    (println "Usage: neil dep upgrade [lib] [options]")
-    (println "")
-    (println "  neil dep upgrade [options]            Upgrade all libraries")
-    (println "  neil dep upgrade LIB [options]        Upgrade a single library")
-    (println "  neil dep upgrade --lib LIB [options]  Upgrade a single library")
-    (println "")
-    (println "Options:")
-    (println "")
-    (println (cli/format-opts
-              {:spec spec
-               :order [:lib :dry-run :alias :no-aliases]}))
-    (println "")
-    (println (str/trim "
-Examples:
-
-  neil dep upgrade                           ; upgrade all deps.
-  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
-  neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
-  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
-"))
-    (System/exit 0))
-
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
         deps-to-check (->> (opts->specified-deps opts)
@@ -900,10 +855,43 @@ test
     {:cmds ["add" "kaocha"] :fn add-kaocha}
     {:cmds ["add" "nrepl"] :fn add-nrepl}
     {:cmds ["add"] :fn print-help}
-    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
-    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
-    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
-    {:cmds ["dep" "upgrade"] :fn dep-upgrade}
+    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]
+     :doc "List available versions of a library (Clojars only)."
+     :require [:lib]
+     :epilog (str/trim "
+Examples:
+
+  $ neil dep versions http-kit/http-kit
+  :lib http-kit/http-kit :version 2.7.0
+  :lib http-kit/http-kit :version 2.6.0
+  ...")}
+    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]
+     :doc "Add a dependency to deps.edn :deps."
+     :spec spec
+     :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
+    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]
+     :doc "Search Clojars for a string in any attribute of an artifact."
+     :require [:search-term]
+     :epilog (str/trim "
+Examples:
+
+  $ neil dep search \"babashka.nrepl\"
+  :lib babashka/babashka.nrepl :version 0.0.6
+
+Search for a fully ns-qualified library, all artifacts in a group
+(\"group-id:babashka\"), or a term in a library's description. See
+http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for the syntax.")}
+    {:cmds ["dep" "upgrade"] :fn dep-upgrade
+     :doc "Upgrade libs in deps.edn (all, or a single lib)."
+     :spec spec
+     :order [:lib :dry-run :alias :no-aliases :help]
+     :epilog (str/trim "
+Examples:
+
+  neil dep upgrade                           ; upgrade all deps.
+  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
+  neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
+  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.")}
     {:cmds ["dep" "update"] :fn dep-upgrade} ;; supported as an alias
     {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
@@ -951,7 +939,9 @@ test
              (print-help m)))}]
    *command-line-args*
    {:spec spec
-    :exec-args {:deps-file "deps.edn"}})
+    :exec-args {:deps-file "deps.edn"}
+    :prog "neil"
+    :help true})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
