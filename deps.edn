@@ -4,7 +4,7 @@
         rewrite-clj/rewrite-clj {:mvn/version "1.1.46"}
         borkdude/rewrite-edn {:mvn/version "0.4.8"}
         org.babashka/cli {:git/url "https://github.com/babashka/cli"
-                          :git/sha "6cf99436baa8b5954bf9b56be80e8f21d2ae13b9"}
+                          :git/sha "e9536272a28df41c7a2838839cc06fd0240eeac5"}
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
                                          :git/tag "v0.10.3"
