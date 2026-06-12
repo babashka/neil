@@ -14,6 +14,14 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 $ brew install babashka/brew/neil
 ```
 
+If you installed neil before Homebrew introduced [tap
+trust](https://docs.brew.sh/Tap-Trust), you may see a warning like `Skipping
+neil: tap formula is not trusted`. To fix this, run:
+
+```
+$ brew trust babashka/brew/neil
+```
+
 ### Scoop (Windows)
 
 ```
