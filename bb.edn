@@ -37,11 +37,21 @@
                            (neil/-main)))}
 
   update-readme {:depends [gen-script]
-                 :task (let [help (:out (shell {:out :string} "./neil"))]
-                         (without-escaping
-                          (->> (p/render (slurp "README.template.md")
-                                         {:help (str/trim help)})
-                               (spit "README.md"))))}
+                 :task
+                 ;; Pins the latest tag, which during publish is the previous
+                 ;; release, since the new tag does not exist yet. tools.deps
+                 ;; rejects a :git/tag without a :git/sha, so both are pinned.
+                 (let [help (:out (shell {:out :string} "./neil"))
+                       git (fn [& args]
+                             (str/trim (:out (apply shell {:out :string} "git" args))))
+                       tag (git "describe" "--tags" "--abbrev=0")
+                       sha (git "rev-parse" "--short=7" (str tag "^{commit}"))]
+                   (without-escaping
+                    (->> (p/render (slurp "README.template.md")
+                                   {:help (str/trim help)
+                                    :tag tag
+                                    :sha sha})
+                         (spit "README.md"))))}
   test:bb {:depends [gen-script]
            :requires ([babashka.neil.test-runner])
            :task (exec 'babashka.neil.test-runner/run-tests)}

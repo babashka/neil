@@ -35,7 +35,7 @@
       (throw (ex-info "Failed to parse :git/url" {:git/url git-url})))))
 
 (defn- git-url->lib-sym [git-url]
-  (when-let [{:keys [gh-user repo-name]} (parse-git-url git-url)]
+  (let [{:keys [gh-user repo-name]} (parse-git-url git-url)]
     (symbol (str "io.github." gh-user) repo-name)))
 
 (def lib-opts->template-deps-fn
@@ -127,7 +127,7 @@
   the :name option instead."
   [cli-opts]
   (let [no-template (not (:template cli-opts))
-        scratch-template (= (str (:template cli-opts)) "scratch")]
+        scratch-template (= "scratch" (str (:template cli-opts)))]
     (merge (when (or no-template scratch-template)
              {:template "scratch"
               :scratch (:name cli-opts)})
