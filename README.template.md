@@ -14,6 +14,14 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 $ brew install babashka/brew/neil
 ```
 
+If you installed neil before Homebrew introduced [tap
+trust](https://docs.brew.sh/Tap-Trust), you may see a warning like `Skipping
+neil: tap formula is not trusted`. To fix this, run:
+
+```
+$ brew trust babashka/brew/neil
+```
+
 ### Scoop (Windows)
 
 ```
@@ -36,8 +44,8 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 Add the following alias to your global or project-local `deps.edn`:
 
 ``` clojure
-:neil {:deps {io.github.babashka/neil {:git/tag "v0.1.41"
-                                       :git/sha "77288d4"}}
+:neil {:deps {io.github.babashka/neil {:git/tag "{{tag}}"
+                                       :git/sha "{{sha}}"}}
        :main-opts ["-m" "babashka.neil"]}
 ```
 
