@@ -186,8 +186,8 @@
   (testing "upgrading an alias's :extra-deps works as expected"
     (spit test-file-path "{}")
     ;; here we add the same dep to two aliases
-    (test-util/neil "dep add :lib clj-kondo/clj-kondo --alias lint --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078" :deps-file test-file-path)
-    (test-util/neil "dep add :lib clj-kondo/clj-kondo --alias other-lint --version 2020.01.01" :deps-file test-file-path)
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :alias lint :sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078" :deps-file test-file-path)
+    (test-util/neil "dep add :lib clj-kondo/clj-kondo :alias other-lint :version 2020.01.01" :deps-file test-file-path)
     (let [initial-versions (get-alias-versions 'clj-kondo/clj-kondo)]
       (test-util/neil "dep upgrade" :deps-file test-file-path)
       (let [upgraded-versions (get-alias-versions 'clj-kondo/clj-kondo)
@@ -204,7 +204,7 @@
     (spit test-file-path "{}")
     ;; here we add the same dep to two aliases
     (test-util/neil (str "dep add :lib clj-kondo/clj-kondo"
-                         " --alias lint --sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078")
+                         " :alias lint :sha 6ffc3934cb83d2c4fff16d84198c73b40cd8a078")
                     :deps-file test-file-path)
     (test-util/neil "dep add :lib babashka/fs :version 0.0.1" :deps-file test-file-path)
     (let [initial-clj-kondo-v (first (get-alias-versions 'clj-kondo/clj-kondo))

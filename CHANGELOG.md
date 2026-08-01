@@ -4,6 +4,10 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
+## Unreleased
+
+- Auto-generated CLI help via babashka.cli
+
 ## 0.3.70
 
 - [#261](https://github.com/babashka/neil/issues/261): `neil dep upgrade` now upgrades unstable deps (e.g. release candidates) to a newer unstable version when no newer stable version exists

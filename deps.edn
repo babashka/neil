@@ -3,12 +3,13 @@
         babashka/process {:mvn/version "0.4.16"}
         rewrite-clj/rewrite-clj {:mvn/version "1.1.46"}
         borkdude/rewrite-edn {:mvn/version "0.4.8"}
-        org.babashka/cli {:mvn/version "0.8.58"}
+        org.babashka/cli {:mvn/version "0.10.69"}
         cheshire/cheshire {:mvn/version "5.11.0"}
         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
                                          :git/tag "v0.10.3"
                                          :git/sha "2c012c4"}
-        version-clj/version-clj {:mvn/version "2.0.2"}}
+        version-clj/version-clj {:mvn/version "2.0.2"}
+        clj-kondo/clj-kondo {:mvn/version "2026.05.25"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases
  {:neil
