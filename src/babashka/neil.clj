@@ -17,16 +17,21 @@
    [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
-           :version {:desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
+           :version {:ref "<version>"
+                     :desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
                      :coerce :string}
-           :sha {:desc "When provided, assumes lib refers to Github repo."
+           :sha {:ref "<sha>"
+                 :desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
-           :tag {:desc "When provided, assumes lib refers to Github repo."
+           :tag {:ref "<tag>"
+                 :desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
-           :deps/root {:desc "Sets deps/root to give value."}
-           :as {:desc "Use as dependency name in deps.edn"
+           :deps/root {:ref "<path>"
+                       :desc "Sets :deps/root to <path>."}
+           :as {:ref "<name>"
+                :desc "Uses <name> as the dependency name in deps.edn."
                 :coerce :symbol}
            :alias {:ref "<alias>"
                    :desc "Add to alias <alias>."
@@ -35,7 +40,9 @@
                        :desc "Add to <file> instead of deps.edn."
                        :coerce :string
                        :default "deps.edn"}
-           :limit {:coerce :long}
+           :limit {:ref "<n>"
+                   :desc "Lists at most <n> versions. Defaults to 10."
+                   :coerce :long}
            :dry-run {:coerce :boolean
                      :desc "dep upgrade only. Prevents updates to deps.edn."}
            :no-aliases {:coerce :boolean
@@ -44,6 +51,15 @@
 (def global-spec (select-keys spec [:deps-file]))
 
 (def add-alias-spec (select-keys spec [:alias]))
+
+(def dep-upgrade-spec
+  (merge (select-keys spec [:no-aliases])
+         {:lib {:desc "Upgrades only this library."}
+          :dry-run {:coerce :boolean
+                    :desc "Prints the upgrades without changing deps.edn."}
+          :alias {:ref "<alias>"
+                  :desc "Upgrades only the deps of alias <alias>."
+                  :coerce :keyword}}))
 
 (def windows? (fs/windows?))
 
@@ -784,7 +800,7 @@ Search for a fully ns-qualified library, all artifacts in a group
 (\"group-id:babashka\"), or a term in a library's description. See
 http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for the syntax.")}
    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]
-    :doc "List available versions of a library (Clojars only)."
+    :doc "List available versions of a library from Clojars or Maven Central."
     :require [:lib]
     :spec (select-keys spec [:lib :limit])
     :epilog (str/trim "
@@ -796,7 +812,7 @@ Examples:
   ...")}
    {:cmds ["dep" "upgrade"] :fn dep-upgrade
     :doc "Upgrade libs in deps.edn (all, or a single lib)."
-    :spec spec
+    :spec dep-upgrade-spec
     :order [:lib :dry-run :alias :no-aliases :help]
     :epilog (str/trim "
 Examples:
@@ -806,7 +822,7 @@ Examples:
   neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
   neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.")}
    {:cmds ["dep" "update"] :fn dep-upgrade :doc "Alias for `dep upgrade`."
-    :spec spec
+    :spec dep-upgrade-spec
     :order [:lib :dry-run :alias :no-aliases :help]}
 
    {:cmds ["license"] :doc "Find and add a license."}
@@ -822,10 +838,8 @@ Examples:
    {:cmds ["new"] :fn new/run-deps-new
     :args->opts [:template :name :target-dir]
     :doc "Create a project from a deps-new template."
-    :spec (merge (select-keys spec [:sha :latest-sha :tag :latest-tag])
-                 {:name {:coerce proj/coerce-project-name}
-                  :dry-run {:coerce :boolean
-                            :desc "Prints the plan instead of creating the project."}})}
+    :spec (assoc (select-keys spec [:sha :latest-sha :tag :latest-tag :dry-run])
+                 :name {:coerce proj/coerce-project-name})}
 
    {:cmds ["version"] :fn neil-version/neil-version
     :doc "Show or manage the project version."
