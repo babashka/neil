@@ -6,7 +6,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## Unreleased
 
-- [#269](https://github.com/babashka/neil/issues/269): bump deps-new to `v0.17.0-rc1`. `neil new` requires babashka 1.13.226 or later
+- [#269](https://github.com/babashka/neil/issues/269): bump deps-new to `v0.17.0`. `neil new` requires babashka 1.13.226 or later
 
 ## 0.3.70
 
