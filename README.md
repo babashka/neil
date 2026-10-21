@@ -67,54 +67,21 @@ version to version.
 Type `neil` to see the help:
 
 ```
-Usage: neil <subcommand> <options>
+Usage: neil [options] <command>
 
-Most subcommands support the options:
-  --alias      Override alias name.
-  --deps-file  Override deps.edn file name.
+Commands:
+  add     Add a dep, test runner, build or nREPL alias.
+  dep     Manage dependencies.
+  license Find and add a license.
+  new     Create a project from a deps-new template.
+  version Show or manage the project version.
+  test    Run tests (assumes `neil add test`).
+  help    Show this help.
 
-Subcommands:
+Options:
+  --version
 
-add
-  dep    Alias for `neil dep add`.
-  test   adds cognitect test runner to :test alias.
-  build  adds tools.build build.clj file and :build alias.
-  kaocha adds kaocha test runner to :kaocha alias.
-  nrepl  adds nrepl server to :nrepl alias.
-
-dep
-  add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
-    Run `neil dep add --help` to see all options.
-
-  search: Search Clojars for a string in any attribute of an artifact
-    Run `neil dep search --help` to see all options.
-
-  upgrade: Upgrade libs in the deps.edn file.
-    Run `neil dep upgrade --help` to see all options.
-
-  versions: List available versions of a library (Clojars libraries only)
-    Run `neil dep versions -h` to see all options.
-
-  update: Alias for `upgrade`.
-
-license
-  list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
-  search Alias for `list`
-  add    Writes license text to a file
-    Options:
-    --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
-    --file    The file to write. Defaults to 'LICENSE'.
-
-new
-  Create a project using deps-new
-    Run `neil new --help` to see all options.
-
-version
-  Commands for managing the :version key in the deps.edn project config.
-    Run `neil version --help` to see all options.
-
-test
-  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
+Run "neil <command> --help" for more information on a command.
 ```
 
 ### add dep
