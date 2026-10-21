@@ -11,7 +11,7 @@
        :default_branch))
 
 (defn clean-github-lib [lib]
-  (let [lib (str/replace lib "com.github." "")
+  (let [lib (str/replace (str lib) "com.github." "")
         lib (str/replace lib "io.github." "")
         lib (symbol lib)]
     lib))
