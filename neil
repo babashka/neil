@@ -1749,13 +1749,23 @@ Examples:
             (neil-version/print-version)
             (print-help m)))}])
 
+(defn- print-command-help
+  "Prints help for the command at dispatch.
+  neil new prints its own help, which lists the deps-new templates and options."
+  [{:keys [tree dispatch prog inherit] :as data}]
+  (if (= ["new"] dispatch)
+    (new/print-new-help)
+    (println (cli/format-command-help {:table tree :cmds (or dispatch []) :prog prog
+                                       :inherit inherit :spec (:babashka.cli/global-spec data)}))))
+
 (defn -main [& _args]
   (cli/dispatch dispatch-table
                 *command-line-args*
                 {:spec global-spec
                  :exec-args {:deps-file "deps.edn"}
                  :prog "neil"
-                 :help true})
+                 :help true
+                 :help-fn print-command-help})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))

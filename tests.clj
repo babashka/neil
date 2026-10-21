@@ -144,7 +144,8 @@
                "./neil new scratch --help"
                "./neil new scratch my-scratch --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
-      (is (str/starts-with? out "Usage: neil new")))))
+      (is (str/starts-with? out "Usage: neil new"))
+      (is (str/includes? out "The provided built-in templates are:")))))
 
 (deftest new-name-only-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]
