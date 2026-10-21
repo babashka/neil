@@ -6,8 +6,20 @@
    [babashka.neil.project :as proj]
    [babashka.neil.utils :refer [req-resolve]]
    [clojure.edn :as edn]
+   [clojure.java.io :as io]
    [clojure.set :as set]
    [clojure.string :as str]))
+
+(def bb? (System/getProperty "babashka.version"))
+
+(defn- require-deps-new
+  "Requires org.corfield.new.
+  Loads clojure.tools.deps.config from the classpath first in babashka, since
+  babashka 1.13.226 and older does not load it from a jar."
+  []
+  (when (and bb? (not (find-ns 'clojure.tools.deps.config)))
+    (some-> (io/resource "clojure/tools/deps/config.clj") slurp load-string))
+  (require 'org.corfield.new))
 
 (defn- built-in-template?
   "Returns true if the template name maps to a function in org.corfield.new."
@@ -15,7 +27,7 @@
   (contains? (set (map name (keys (ns-publics 'org.corfield.new)))) template))
 
 (defn- built-in-templates []
-  (require 'org.corfield.new)
+  (require-deps-new)
   (let [non-templates #{'create}]
     (->> (ns-publics 'org.corfield.new)
          (remove (fn [[sym _]] (contains? non-templates sym)))
@@ -111,8 +123,6 @@
     (if-not template-deps-fn
       (throw (invalid-lib-opts-error lib-opts))
       (template-deps-fn lib-sym lib-opts))))
-
-(def bb? (System/getProperty "babashka.version"))
 
 (def create-opts-deny-list
   [:deps-file :dry-run :git/sha :git/url :latest-sha :local/root :sha])
@@ -226,7 +236,7 @@ Examples:
   (if (or (:help opts) (not (:name opts)))
     (print-new-help)
     (do
-      (require 'org.corfield.new)
+      (require-deps-new)
       (let [plan (deps-new-plan opts)
             {:keys [template-deps create-opts]} plan
             project-name (symbol (:name create-opts))
