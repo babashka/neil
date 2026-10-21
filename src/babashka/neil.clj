@@ -41,6 +41,10 @@
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}})
 
+(def global-spec (select-keys spec [:deps-file]))
+
+(def add-alias-spec (select-keys spec [:alias]))
+
 (def windows? (fs/windows?))
 
 (def bb? (System/getProperty "babashka.version"))
@@ -752,11 +756,13 @@ chmod +x bin/kaocha
 
 (def dispatch-table
   [{:cmds ["add"] :doc "Add a dep, test runner, build or nREPL alias."}
-   {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :require [:lib] :doc "Alias for `dep add`."}
-   {:cmds ["add" "test"] :fn add-cognitect-test-runner :doc "Add the cognitect test runner to the :test alias."}
-   {:cmds ["add" "build"] :fn add-build :doc "Add a tools.build build.clj and :build alias."}
-   {:cmds ["add" "kaocha"] :fn add-kaocha :doc "Add the kaocha test runner to the :kaocha alias."}
-   {:cmds ["add" "nrepl"] :fn add-nrepl :doc "Add an nrepl server to the :nrepl alias."}
+   {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :require [:lib] :doc "Alias for `dep add`."
+    :spec spec
+    :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
+   {:cmds ["add" "test"] :fn add-cognitect-test-runner :spec add-alias-spec :doc "Add the cognitect test runner to the :test alias."}
+   {:cmds ["add" "build"] :fn add-build :spec add-alias-spec :doc "Add a tools.build build.clj and :build alias."}
+   {:cmds ["add" "kaocha"] :fn add-kaocha :spec add-alias-spec :doc "Add the kaocha test runner to the :kaocha alias."}
+   {:cmds ["add" "nrepl"] :fn add-nrepl :spec add-alias-spec :doc "Add an nrepl server to the :nrepl alias."}
 
    {:cmds ["dep"] :doc "Manage dependencies."}
    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]
@@ -780,6 +786,7 @@ http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for the syntax.")
    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]
     :doc "List available versions of a library (Clojars only)."
     :require [:lib]
+    :spec (select-keys spec [:lib :limit])
     :epilog (str/trim "
 Examples:
 
@@ -798,7 +805,9 @@ Examples:
   neil dep upgrade --dry-run                 ; print deps that would be upgraded.
   neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
   neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.")}
-   {:cmds ["dep" "update"] :fn dep-upgrade :doc "Alias for `dep upgrade`."}
+   {:cmds ["dep" "update"] :fn dep-upgrade :doc "Alias for `dep upgrade`."
+    :spec spec
+    :order [:lib :dry-run :alias :no-aliases :help]}
 
    {:cmds ["license"] :doc "Find and add a license."}
    {:cmds ["license" "list"] :fn license-search :args->opts [:search-term] :doc "List commonly-used licenses (optional filter term)."}
@@ -813,7 +822,10 @@ Examples:
    {:cmds ["new"] :fn new/run-deps-new
     :args->opts [:template :name :target-dir]
     :doc "Create a project from a deps-new template."
-    :spec {:name {:coerce proj/coerce-project-name}}}
+    :spec (merge (select-keys spec [:sha :latest-sha :tag :latest-tag])
+                 {:name {:coerce proj/coerce-project-name}
+                  :dry-run {:coerce :boolean
+                            :desc "Prints the plan instead of creating the project."}})}
 
    {:cmds ["version"] :fn neil-version/neil-version
     :doc "Show or manage the project version."
@@ -840,7 +852,7 @@ Examples:
 (defn -main [& _args]
   (cli/dispatch dispatch-table
                 *command-line-args*
-                {:spec spec
+                {:spec global-spec
                  :exec-args {:deps-file "deps.edn"}
                  :prog "neil"
                  :help true})
