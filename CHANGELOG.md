@@ -13,6 +13,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - [#254](https://github.com/babashka/neil/issues/254): auto-generated CLI help and shell completions via babashka.cli. `neil dep --help` no longer throws
 - `neil test -e` excludes tests with the given metadata instead of running only those. `neil test --help` also prints the help of the test runner
 - [#235](https://github.com/babashka/neil/issues/235): `neil dep upgrade` keeps the `:git/url` of a git dep
+- [#249](https://github.com/babashka/neil/issues/249): `neil dep add` removes the keys of the previous coordinate type, such as `:git/sha` when it adds `:mvn/version`
 
 ## 0.3.70
 
