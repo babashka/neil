@@ -65,6 +65,14 @@
          (when github-basic-auth-enabled?
            {:basic-auth [github-user github-token]})))
 
+(def invalid-token-warning
+  (delay
+    (binding [*out* *err*]
+      (println "Your neil github token is invalid or expired.")
+      (when-let [token-envvar (first (filter #(System/getenv %) github-token-envvars))]
+        (println (str "Please double check your " token-envvar " environment variable.")))
+      (println "See neil's README for more details."))))
+
 (defn get-json
   ([url] (get-json url nil))
   ([url opts]
@@ -90,12 +98,8 @@
             (string/includes? url "api.github")
             (string/includes? (:message parsed-body) "Bad credentials")
             github-basic-auth-enabled?)
-       (binding [*out* *err*]
-         (println "Your neil github token is invalid or expired.")
-         (when-let [token-envvar (first (filter #(System/getenv %) github-token-envvars))]
-           (println "Please double check your " token-envvar " environment variable."))
-         (println "See neil's README for more details.")
-         nil #_(System/exit 1))
+       (do (force invalid-token-warning)
+           nil #_(System/exit 1))
 
        (contains? unexceptional-statuses (:status response))
        parsed-body
