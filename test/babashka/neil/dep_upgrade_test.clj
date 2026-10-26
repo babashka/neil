@@ -82,6 +82,18 @@
         (is (not (= clj-kondo-original clj-kondo-upgraded)))
         (is (= fs-original fs-upgraded))))))
 
+(deftest dep-upgrade-test-positional-lib
+  (doseq [cmd ["upgrade" "update"]]
+    (testing (str "dep " cmd " LIB updates only LIB")
+      (spit test-file-path "{}")
+      (test-util/neil "dep add :lib clj-kondo/clj-kondo :version 2022.01.01" :deps-file test-file-path)
+      (test-util/neil "dep add :lib babashka/fs :version 0.0.1" :deps-file test-file-path)
+      (let [clj-kondo-original (get-dep-version 'clj-kondo/clj-kondo)
+            fs-original        (get-dep-version 'babashka/fs)]
+        (test-util/neil (str "dep " cmd " clj-kondo/clj-kondo") :deps-file test-file-path)
+        (is (not= clj-kondo-original (get-dep-version 'clj-kondo/clj-kondo)))
+        (is (= fs-original (get-dep-version 'babashka/fs)))))))
+
 (deftest dep-upgrade-test-using-git-tags
   (testing "deps can be added with --latest-tag"
     (spit test-file-path "{}")
