@@ -892,7 +892,7 @@ test
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
-(defn -main [& _args]
+(defn -main [& args]
   (cli/dispatch
    [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
     {:cmds ["add" "test"] :fn add-cognitect-test-runner}
@@ -949,10 +949,10 @@ test
            (if (:version opts)
              (neil-version/print-version)
              (print-help m)))}]
-   *command-line-args*
+   args
    {:spec spec
     :exec-args {:deps-file "deps.edn"}})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
-  (-main))
+  (apply -main *command-line-args*))
