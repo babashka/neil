@@ -15,21 +15,13 @@
                      :test-help {:coerce :boolean :desc "Prints the help of the test runner."}})
 
 (def neil-test-aliases
-  {:dir :dirs
-   :d :dirs
-   :namespace :nses
+  {:d :dirs
    :n :nses
    :r :patterns
-   :namespace-regex :patterns
    :v :vars
-   :var :vars
-   :include :includes
    :i :includes
-   :exclude :includes
-   :e :includes
-   :H :test-help
-   :help :test-help
-   :h :test-help})
+   :e :excludes
+   :H :test-help})
 
 (defn clojure [& args]
   #?(:bb (let [exit (:exit @(deps/clojure (vec args) {:inherit true}))]
@@ -43,6 +35,12 @@
       (assoc opts :nses [only])
       (assoc opts :vars [only]))
     opts))
+
+(defn test-alias?
+  "Returns true if deps-file has a :test alias."
+  [deps-file]
+  (and (fs/exists? deps-file)
+       (some-> (edn/read-string (slurp deps-file)) :aliases :test)))
 
 (defn neil-test [opts]
   (let [opts (normalize-opts opts)]

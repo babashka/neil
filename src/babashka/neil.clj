@@ -881,12 +881,17 @@ Examples:
 
 (defn- print-command-help
   "Prints help for the command at dispatch.
-  neil new prints its own help, which lists the deps-new templates and options."
+  neil new prints its own help, which lists the deps-new templates and options.
+  neil test also prints the help of the test runner in the :test alias of deps.edn."
   [{:keys [tree dispatch prog inherit] :as data}]
   (if (= ["new"] dispatch)
     (new/print-new-help)
-    (println (cli/format-command-help {:table tree :cmds (or dispatch []) :prog prog
-                                       :inherit inherit :spec (:babashka.cli/global-spec data)}))))
+    (do (println (cli/format-command-help {:table tree :cmds (or dispatch []) :prog prog
+                                           :inherit inherit :spec (:babashka.cli/global-spec data)}))
+        (when (and (= ["test"] dispatch) (neil-test/test-alias? "deps.edn"))
+          (println)
+          (println "Test runner options:")
+          (neil-test/clojure "-M:test" "--test-help")))))
 
 (defn -main [& args]
   (cli/dispatch dispatch-table
