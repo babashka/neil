@@ -74,11 +74,33 @@
       "We're able to find exactly 3 hiccup versions"))
 
 (deftest dep-search-help-test
-  (doseq [cmd ["./neil dep search"
-               "./neil dep search --help"
+  (doseq [cmd ["./neil dep search --help"
                "./neil dep search foo --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil dep search ")))))
+
+(deftest test-help-deps-file-test
+  (let [deps-file (test-file "deps.edn")]
+    (spit deps-file "{}")
+    (let [{:keys [out]} @(process ["./neil" "test" "--help" "--deps-file" (str deps-file)]
+                                  {:out :string})]
+      (is (str/starts-with? out "Usage: neil test"))
+      (is (not (str/includes? out "Test runner options:"))))))
+
+(defn- completion-options [words]
+  (let [{:keys [out]} @(process (str "./neil org.babashka.cli/completions complete --shell zsh -- " words)
+                                {:out :string})]
+    (set (map #(first (str/split % #"\t")) (str/split-lines out)))))
+
+(deftest completions-test
+  (testing "dep add completes only its own options"
+    (let [opts (completion-options "dep add --")]
+      (is (contains? opts "--version"))
+      (is (not-any? opts ["--dry-run" "--limit" "--no-aliases"]))))
+  (testing "new completes template options instead of dep add options"
+    (let [opts (completion-options "new --")]
+      (is (contains? opts "--git/url"))
+      (is (not-any? opts ["--tag" "--latest-tag"])))))
 
 (deftest dep-search-test
   (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
@@ -94,12 +116,8 @@
   (is (any? (run-dep-subcommand "search" "babashka nrepl")))
   (is (thrown-with-msg? Exception #"Unable to find"
                         (run-dep-subcommand "search" "%22searchTermThatIsn'tFound")))
-  (is (some #(str/starts-with? % "Usage: neil dep search")
-            (run-dep-subcommand "search" "42"))
-      "passing non-string shows help")
-  (is (some #(str/starts-with? % "Usage: neil dep search")
-            (run-dep-subcommand "search" "  "))
-      "passing blank string shows help")
+  ;; numeric-looking term is coerced to a string, not a number (would crash url-encode)
+  (is (not-empty (run-dep-subcommand "search" "42")))
   (is (some
        (partial
         re-matches
@@ -132,7 +150,7 @@
       (run-license out-file "add" ":license epl-2.0")
       (is (str/includes? (slurp out-file) "Eclipse Public License")))
     (testing "missing license key errors"
-      (is (thrown-with-msg? Exception #"No license key" 
+      (is (thrown-with-msg? Exception #"Required option: --license"
             (run-license out-file "add"))))
     (testing "invalid license key errors"
       (is (thrown-with-msg? Exception #"nonExistentLicense" 
@@ -149,7 +167,8 @@
                "./neil new scratch --help"
                "./neil new scratch my-scratch --help"]]
     (let [{:keys [out]} @(process cmd {:out :string})]
-      (is (str/starts-with? out "Usage: neil new")))))
+      (is (str/starts-with? out "Usage: neil new"))
+      (is (str/includes? out "The provided built-in templates are:")))))
 
 (deftest new-name-only-test
   (let [target-dir (str (fs/temp-dir) "/my-scratch")]

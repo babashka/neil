@@ -17,29 +17,75 @@
    [clojure.string :as str]))
 
 (def spec {:lib {:desc "Fully qualified library name."}
-           :version {:desc "Optional. When not provided, picks newest version from Maven Central, Clojars or :mvn/repos."
+           :version {:ref "<version>"
+                     :desc "Optional. When not provided, picks newest version from Maven Central, Clojars or :mvn/repos."
                      :coerce :string}
-           :sha {:desc "When provided, assumes lib refers to Github repo."
+           :sha {:ref "<sha>"
+                 :desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :latest-sha {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest SHA from it."}
-           :tag {:desc "When provided, assumes lib refers to Github repo."
+           :tag {:ref "<tag>"
+                 :desc "When provided, assumes lib refers to Github repo."
                  :coerce :string}
            :latest-tag {:coerce :boolean :desc "When provided, assumes lib refers to Github repo and then picks latest tag from it."}
-           :deps/root {:desc "Sets deps/root to give value."}
-           :as {:desc "Use as dependency name in deps.edn"
+           :deps/root {:ref "<path>"
+                       :desc "Sets :deps/root to <path>."}
+           :as {:ref "<name>"
+                :desc "Uses <name> as the dependency name in deps.edn."
                 :coerce :symbol}
            :alias {:ref "<alias>"
                    :desc "Add to alias <alias>."
                    :coerce :keyword}
            :deps-file {:ref "<file>"
-                       :desc "Add to <file> instead of deps.edn."
+                       :desc "Uses <file> instead of deps.edn."
                        :coerce :string
                        :default "deps.edn"}
-           :limit {:coerce :long}
+           :limit {:ref "<n>"
+                   :desc "Lists at most <n> versions. Defaults to 10."
+                   :coerce :long}
            :dry-run {:coerce :boolean
-                     :desc "dep upgrade only. Prevents updates to deps.edn."}
+                     :desc "Prints the changes without writing deps.edn."}
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}})
+
+(def global-spec (select-keys spec [:deps-file]))
+
+(def add-alias-spec (select-keys spec [:alias]))
+
+(def dep-add-spec
+  (select-keys spec [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]))
+
+(def new-spec
+  {:name {:ref "<name>"
+          :desc "Project name, such as myorg/mylib."
+          :coerce proj/coerce-project-name}
+   :local/root {:ref "<path>"
+                :desc "Uses the template at <path>."}
+   :git/url {:ref "<url>"
+             :desc "Overrides the :git/url of the template."}
+   :git/tag {:ref "<tag>"
+             :desc "Overrides the :git/tag of the template."
+             :coerce :string}
+   :sha {:ref "<sha>"
+         :desc "Overrides the :git/sha of the template."
+         :coerce :string}
+   :git/sha {:ref "<sha>"
+             :desc "Overrides the :git/sha of the template."
+             :coerce :string}
+   :latest-sha {:coerce :boolean
+                :desc "Uses the latest SHA of the default branch of the template."}
+   :overwrite {:desc "Overwrites an existing target directory, or deletes it first if :delete."}
+   :dry-run {:coerce :boolean
+             :desc "Prints the plan without creating the project."}})
+
+(def dep-upgrade-spec
+  (merge (select-keys spec [:no-aliases])
+         {:lib {:desc "Upgrades only this library."}
+          :dry-run {:coerce :boolean
+                    :desc "Prints the upgrades without changing deps.edn."}
+          :alias {:ref "<alias>"
+                  :desc "Upgrades only the deps of alias <alias>."
+                  :coerce :keyword}}))
 
 (def windows? (fs/windows?))
 
@@ -199,47 +245,42 @@
 
 (declare print-help)
 
-(defn add-cognitect-test-runner [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do (add-alias opts :test cognitect-test-runner-alias)
-        (when-let [pn (proj/project-name opts)]
-          (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
-                test-path (-> (str test-ns)
-                              (str/replace "-" "_")
-                              (str/replace "." fs/file-separator)
-                              (str ".clj"))
-                test-path (fs/file "test" test-path)]
-            (when (or (not (fs/exists? "test"))
-                      (zero? (count (fs/list-dir "test"))))
-              (fs/create-dirs (fs/parent test-path))
-              (spit test-path
-                    (format "(ns %s
+(defn add-cognitect-test-runner [{:keys [opts]}]
+  (add-alias opts :test cognitect-test-runner-alias)
+  (when-let [pn (proj/project-name opts)]
+    (let [test-ns (symbol (str (str/replace pn "/" ".") "-test"))
+          test-path (-> (str test-ns)
+                        (str/replace "-" "_")
+                        (str/replace "." fs/file-separator)
+                        (str ".clj"))
+          test-path (fs/file "test" test-path)]
+      (when (or (not (fs/exists? "test"))
+                (zero? (count (fs/list-dir "test"))))
+        (fs/create-dirs (fs/parent test-path))
+        (spit test-path
+              (format "(ns %s
   (:require [clojure.test :as t :refer [deftest is testing]]))
 
 (deftest %s-test
   (testing \"TODO: fix\"
     (is (= :foo :bar))))
-" test-ns (name pn)))))))))
+" test-ns (name pn)))))))
 
 (defn kaocha-alias-latest []
   (let [version (latest-stable-mvn-version 'lambdaisland/kaocha (mvn-config {}))]
     {:extra-deps {'lambdaisland/kaocha {:mvn/version version}},
      :main-opts ["-m" "kaocha.runner"]}))
 
-(defn add-kaocha [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do
-      (add-alias opts :kaocha (kaocha-alias-latest))
-      (println (str/trim "
+(defn add-kaocha [{:keys [opts]}]
+  (add-alias opts :kaocha (kaocha-alias-latest))
+  (println (str/trim "
 If you wish to create a `bin/kaocha` file, copy and run the following:
 
 mkdir -p bin && \\
 echo '#!/usr/bin/env bash
 clojure -M:kaocha \"$@\"' > bin/kaocha && \\
 chmod +x bin/kaocha
-")))))
+")))
 
 (defn nrepl-alias-latest []
   (let [config (mvn-config {})
@@ -252,10 +293,8 @@ chmod +x bin/kaocha
      :main-opts ["-m" "nrepl.cmdline" "--interactive" "--color"
                  "--middleware" "[cider.nrepl/cider-middleware,refactor-nrepl.middleware/wrap-refactor]"]}))
 
-(defn add-nrepl [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (add-alias opts :nrepl (nrepl-alias-latest))))
+(defn add-nrepl [{:keys [opts]}]
+  (add-alias opts :nrepl (nrepl-alias-latest)))
 
 (defn build-alias-latest []
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
@@ -333,11 +372,8 @@ chmod +x bin/kaocha
 "]
     base))
 
-(defn add-build [{:keys [opts] :as cmd}]
-  (if (:help opts)
-    (print-help cmd)
-    (do
-      (if-not (fs/exists? "build.clj")
+(defn add-build [{:keys [opts]}]
+  (if-not (fs/exists? "build.clj")
         (spit "build.clj" (build-file opts))
         (println "[neil] Project build.clj already exists."))
       (ensure-deps-file opts)
@@ -363,25 +399,15 @@ chmod +x bin/kaocha
                     nodes (r/assoc-in nodes [:aliases :build :deps 'io.github.clojure/tools.build sha-key]
                                       (:sha ba))
                     s (str (str/trim (str nodes)) "\n")]
-                (spit (:deps-file opts) s)))))))))
-
-(defn print-dep-add-help []
-  (println "Usage: neil add dep [lib] [options]")
-  (println "Options:")
-  (println (cli/format-opts
-            {:spec spec
-             :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]})))
+                (spit (:deps-file opts) s)))))))
 
 (defn log [& xs]
   (binding [*out* *err*]
     (apply prn xs)))
 
 (defn dep-add [{:keys [opts]}]
-  (if (or (:help opts) (:h opts) (not (:lib opts)))
-    (print-dep-add-help)
-    (do
-      (ensure-deps-file opts)
-      (let [edn-string (edn-string opts)
+  (ensure-deps-file opts)
+  (let [edn-string (edn-string opts)
             edn-nodes (edn-nodes edn-string)
             lib (:lib opts)
             lib (symbol lib)
@@ -473,25 +499,9 @@ chmod +x bin/kaocha
                     nodes)
             s (str (str/trim (str nodes)) "\n")]
         (when-not missing?
-          (spit (:deps-file opts) s))))))
+          (spit (:deps-file opts) s))))
 
 (defn dep-versions [{:keys [opts]}]
-  (when (or (:help opts) (:h opts))
-    (println (str/trim "
-Usage: neil dep versions LIB
-
-List available release versions of a Clojure dependency in Maven Central, Clojars and the :mvn/repos of deps.edn.
-
-  $ neil dep versions http-kit/http-kit
-  :lib http-kit/http-kit :version 2.7.0-alpha1
-  :lib http-kit/http-kit :version 2.6.0
-  :lib http-kit/http-kit :version 2.6.0-RC1
-  :lib http-kit/http-kit :version 2.6.0-alpha1
-  :lib http-kit/http-kit :version 2.5.3
-  :lib http-kit/http-kit :version 2.5.2
-  :lib http-kit/http-kit :version 2.5.1
-  :lib http-kit/http-kit :version 2.5.0"))
-    (System/exit 0))
   (let [lib (:lib opts)
         lib (symbol lib)
         versions (seq (take (:limit opts 10) (mvn-versions lib (mvn-config opts))))]
@@ -501,36 +511,6 @@ List available release versions of a Clojure dependency in Maven Central, Clojar
         (System/exit 1))
       (doseq [v versions]
         (println :lib lib :version v)))))
-
-(defn print-dep-search-help []
-  (println (str/trim "
-Usage: neil dep search [lib]
-
-Search Clojars for a string in any attribute of an artifact:
-
-  $ neil dep search \"babashka.nrepl\"
-  :lib babashka/babashka.nrepl :version 0.0.6
-
-You can also search for the fully ns-qualified library:
-
-  $ neil dep search \"babashka/babashka.nrepl\"
-  :lib babashka/babashka.nrepl :version 0.0.6
-
-To search for all artifacts in a group:
-
-  $ neil dep search \"group-id:babashka\"
-  :lib babashka/babashka :version 1.1.173
-  :lib babashka/fs :version 0.2.15
-  ...
-
-A search string can also be matched in a library's description:
-
-  $ neil dep search \"test framework\"
-
-will return libraries with 'test framework' in their description.
-
-See http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for
-details on the search syntax.")))
 
 (defn dep-search-maven [search-term]
   (let [;; A fully-qualified lib (group/artifact) can't be passed to Solr
@@ -578,21 +558,17 @@ details on the search syntax.")))
       search-results)))
 
 (defn dep-search [{:keys [opts]}]
-  (let [{:keys [search-term]} opts]
-    (if (or (:help opts)
-            (not (string? search-term))
-            (str/blank? search-term))
-      (print-dep-search-help)
-      (let [search-results (->> [dep-search-maven
-                                 dep-search-clojars]
-                                (map #(% search-term))
-                                (apply concat))]
-        (when (empty? search-results) (System/exit 1))
-        (doseq [search-result search-results]
-          (prn :lib (symbol (:group_name search-result)
-                            (:jar_name search-result))
-               :version (:version search-result)
-               :description (:description search-result)))))))
+  (let [{:keys [search-term]} opts
+        search-results (->> [dep-search-maven
+                             dep-search-clojars]
+                            (map #(% search-term))
+                            (apply concat))]
+    (when (empty? search-results) (System/exit 1))
+    (doseq [search-result search-results]
+      (prn :lib (symbol (:group_name search-result)
+                        (:jar_name search-result))
+           :version (:version search-result)
+           :description (:description search-result)))))
 
 (defn git-url->lib [git-url]
   (when git-url
@@ -728,29 +704,6 @@ details on the search syntax.")))
                               (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
-  (when (or (:h opts) (:help opts))
-    (println "Usage: neil dep upgrade [lib] [options]")
-    (println "")
-    (println "  neil dep upgrade [options]            Upgrade all libraries")
-    (println "  neil dep upgrade LIB [options]        Upgrade a single library")
-    (println "  neil dep upgrade --lib LIB [options]  Upgrade a single library")
-    (println "")
-    (println "Options:")
-    (println "")
-    (println (cli/format-opts
-              {:spec spec
-               :order [:lib :dry-run :alias :no-aliases]}))
-    (println "")
-    (println (str/trim "
-Examples:
-
-  neil dep upgrade                           ; upgrade all deps.
-  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
-  neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
-  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.
-"))
-    (System/exit 0))
-
   (let [lib           (some-> opts :lib symbol)
         alias         (some-> opts :alias)
         deps-to-check (->> (opts->specified-deps opts)
@@ -782,57 +735,10 @@ Examples:
     (doseq [dep-upgrade upgrades]
       (do-dep-upgrade opts dep-upgrade))))
 
+(declare dispatch-table)
+
 (defn print-help [_]
-  (println (str/trim "
-Usage: neil <subcommand> <options>
-
-Most subcommands support the options:
-  --alias      Override alias name.
-  --deps-file  Override deps.edn file name.
-
-Subcommands:
-
-add
-  dep    Alias for `neil dep add`.
-  test   adds cognitect test runner to :test alias.
-  build  adds tools.build build.clj file and :build alias.
-  kaocha adds kaocha test runner to :kaocha alias.
-  nrepl  adds nrepl server to :nrepl alias.
-
-dep
-  add: Adds --lib, a fully qualified symbol, to deps.edn :deps.
-    Run `neil dep add --help` to see all options.
-
-  search: Search Clojars for a string in any attribute of an artifact
-    Run `neil dep search --help` to see all options.
-
-  upgrade: Upgrade libs in the deps.edn file.
-    Run `neil dep upgrade --help` to see all options.
-
-  versions: List available versions of a library
-    Run `neil dep versions -h` to see all options.
-
-  update: Alias for `upgrade`.
-
-license
-  list   Lists commonly-used licenses available to be added to project. Takes an optional search string to filter results.
-  search Alias for `list`
-  add    Writes license text to a file
-    Options:
-    --license The key of the license to use (e.g. epl-1.0, mit, unlicense). --license option name may be elided when license key is provided as first argument.
-    --file    The file to write. Defaults to 'LICENSE'.
-
-new
-  Create a project using deps-new
-    Run `neil new --help` to see all options.
-
-version
-  Commands for managing the :version key in the deps.edn project config.
-    Run `neil version --help` to see all options.
-
-test
-  Run tests. Assumes `neil add test`. Run `neil test --help` to see all options.
-")))
+  (println (cli/format-command-help {:table dispatch-table :prog "neil"})))
 
 ;; licenses
 (def licenses-api-url "https://api.github.com/licenses")
@@ -881,66 +787,120 @@ test
 (defn neil-test [{:keys [opts]}]
   (neil-test/neil-test opts))
 
+(def dispatch-table
+  [{:cmds ["add"] :doc "Add a dep, test runner, build or nREPL alias."}
+   {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :require [:lib] :doc "Alias for `dep add`."
+    :spec dep-add-spec
+    :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
+   {:cmds ["add" "test"] :fn add-cognitect-test-runner :spec add-alias-spec :doc "Add the cognitect test runner to the :test alias."}
+   {:cmds ["add" "build"] :fn add-build :spec add-alias-spec :doc "Add a tools.build build.clj and :build alias."}
+   {:cmds ["add" "kaocha"] :fn add-kaocha :spec add-alias-spec :doc "Add the kaocha test runner to the :kaocha alias."}
+   {:cmds ["add" "nrepl"] :fn add-nrepl :spec add-alias-spec :doc "Add an nrepl server to the :nrepl alias."}
+
+   {:cmds ["dep"] :doc "Manage dependencies."}
+   {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]
+    :doc "Add a dependency to deps.edn :deps."
+    :require [:lib]
+    :spec dep-add-spec
+    :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
+   {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]
+    :doc "Search Clojars for a string in any attribute of an artifact."
+    :require [:search-term]
+    :spec {:search-term {:coerce :string}}
+    :epilog (str/trim "
+Examples:
+
+  $ neil dep search \"babashka.nrepl\"
+  :lib babashka/babashka.nrepl :version 0.0.6
+
+Search for a fully ns-qualified library, all artifacts in a group
+(\"group-id:babashka\"), or a term in a library's description. See
+http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for the syntax.")}
+   {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]
+    :doc "List available release versions of a library from Maven Central, Clojars or :mvn/repos."
+    :require [:lib]
+    :spec (select-keys spec [:lib :limit])
+    :epilog (str/trim "
+Examples:
+
+  $ neil dep versions http-kit/http-kit
+  :lib http-kit/http-kit :version 2.7.0
+  :lib http-kit/http-kit :version 2.6.0
+  ...")}
+   {:cmds ["dep" "upgrade"] :fn dep-upgrade :args->opts [:lib]
+    :doc "Upgrade libs in deps.edn (all, or a single lib)."
+    :spec dep-upgrade-spec
+    :order [:lib :dry-run :alias :no-aliases :help]
+    :epilog (str/trim "
+Examples:
+
+  neil dep upgrade                           ; upgrade all deps.
+  neil dep upgrade --dry-run                 ; print deps that would be upgraded.
+  neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
+  neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.")}
+   {:cmds ["dep" "update"] :fn dep-upgrade :args->opts [:lib] :doc "Alias for `dep upgrade`."
+    :spec dep-upgrade-spec
+    :order [:lib :dry-run :alias :no-aliases :help]}
+
+   {:cmds ["license"] :doc "Find and add a license."}
+   {:cmds ["license" "list"] :fn license-search :args->opts [:search-term] :doc "List commonly-used licenses (optional filter term)."}
+   {:cmds ["license" "search"] :fn license-search :args->opts [:search-term] :doc "Alias for `license list`."}
+   {:cmds ["license" "add"] :fn add-license :args->opts [:license]
+    :doc "Write a license file."
+    :require [:license]
+    :spec {:license {:ref "<key>" :desc "License key (e.g. epl-1.0, mit, unlicense)."}
+           :file {:ref "<file>" :desc "File to write. Defaults to LICENSE."}}
+    :order [:license :file :help]}
+
+   {:cmds ["new"] :fn new/run-deps-new
+    :args->opts [:template :name :target-dir]
+    :doc "Create a project from a deps-new template."
+    :spec new-spec}
+
+   {:cmds ["version"] :fn neil-version/neil-version
+    :doc "Show or manage the project version."
+    ;; declare version options once here, inherited by the subcommands below
+    :spec (reduce-kv (fn [m k v] (assoc m k (assoc v :inherit true)))
+                     {} neil-version/version-spec)}
+   {:cmds ["version" "tag"] :fn (partial neil-version/neil-version :tag) :doc "Tag the current version in git."}
+   {:cmds ["version" "set"] :fn (partial neil-version/neil-version :set) :args->opts [:version] :require [:version] :doc "Set the project version."}
+   {:cmds ["version" "major"] :fn (partial neil-version/neil-version :major) :args->opts [:version] :doc "Bump the major version."}
+   {:cmds ["version" "minor"] :fn (partial neil-version/neil-version :minor) :args->opts [:version] :doc "Bump the minor version."}
+   {:cmds ["version" "patch"] :fn (partial neil-version/neil-version :patch) :args->opts [:version] :doc "Bump the patch version."}
+
+   {:cmds ["test"] :fn neil-test :spec neil-test/neil-test-spec :alias neil-test/neil-test-aliases
+    :doc "Run tests (assumes `neil add test`)."}
+
+   {:cmds ["help"] :fn print-help :doc "Show this help."}
+   {:cmds []
+    :spec {:version {:coerce :boolean}}
+    :fn (fn [{:keys [opts] :as m}]
+          (if (:version opts)
+            (neil-version/print-version)
+            (print-help m)))}])
+
+(defn- print-command-help
+  "Prints help for the command at dispatch.
+  neil new prints its own help, which lists the deps-new templates and options.
+  neil test also prints the help of the test runner in the :test alias of the deps file."
+  [{:keys [tree dispatch prog inherit opts] :as data}]
+  (if (= ["new"] dispatch)
+    (new/print-new-help)
+    (do (println (cli/format-command-help {:table tree :cmds (or dispatch []) :prog prog
+                                           :inherit inherit :spec (:babashka.cli/global-spec data)}))
+        (when (and (= ["test"] dispatch) (neil-test/test-alias? (:deps-file opts "deps.edn")))
+          (println)
+          (println "Test runner options:")
+          (neil-test/clojure "-M:test" "--test-help")))))
+
 (defn -main [& args]
-  (cli/dispatch
-   [{:cmds ["add" "dep"] :fn dep-add :args->opts [:lib]}
-    {:cmds ["add" "test"] :fn add-cognitect-test-runner}
-    {:cmds ["add" "build"] :fn add-build}
-    {:cmds ["add" "kaocha"] :fn add-kaocha}
-    {:cmds ["add" "nrepl"] :fn add-nrepl}
-    {:cmds ["add"] :fn print-help}
-    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
-    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
-    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
-    {:cmds ["dep" "upgrade"] :fn dep-upgrade :args->opts [:lib]}
-    {:cmds ["dep" "update"] :fn dep-upgrade :args->opts [:lib]} ;; supported as an alias
-    {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
-    {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
-    {:cmds ["license" "add"] :fn add-license :args->opts [:license]}
-    {:cmds ["new"] :fn new/run-deps-new
-     :args->opts [:template :name :target-dir]
-     :spec {:name {:coerce proj/coerce-project-name}}}
-    {:cmds ["version" "tag"]
-     :fn (partial neil-version/neil-version :tag)
-     :aliases {:h :help}
-     :spec neil-version/version-spec}
-    {:cmds ["version" "set"]
-     :fn (partial neil-version/neil-version :set)
-     :args->opts [:version]
-     :spec neil-version/version-spec
-     :aliases {:h :help}}
-    {:cmds ["version" "major"]
-     :fn (partial neil-version/neil-version :major)
-     :args->opts [:version]
-     :spec neil-version/version-spec
-     :aliases {:h :help}}
-    {:cmds ["version" "minor"]
-     :fn (partial neil-version/neil-version :minor)
-     :args->opts [:version]
-     :spec neil-version/version-spec
-     :aliases {:h :help}}
-    {:cmds ["version" "patch"]
-     :fn (partial neil-version/neil-version :patch)
-     :spec neil-version/version-spec
-     :args->opts [:version]
-     :aliases {:h :help}}
-    {:cmds ["version"]
-     :fn neil-version/neil-version
-     :aliases {:h :help}
-     :spec neil-version/version-spec}
-    {:cmds ["help"] :fn print-help}
-    {:cmds ["test"] :fn neil-test
-     :spec neil-test/neil-test-spec
-     :alias neil-test/neil-test-aliases}
-    {:cmds []
-     :spec {:version {:coerce :boolean}}
-     :fn (fn [{:keys [opts] :as m}]
-           (if (:version opts)
-             (neil-version/print-version)
-             (print-help m)))}]
-   args
-   {:spec spec
-    :exec-args {:deps-file "deps.edn"}})
+  (cli/dispatch dispatch-table
+                args
+                {:spec global-spec
+                 :exec-args {:deps-file "deps.edn"}
+                 :prog "neil"
+                 :help true
+                 :help-fn print-command-help})
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))

@@ -10,6 +10,12 @@ jobs:
         uses: DeLaGuardo/setup-clojure@9.4
         with:
           bb: latest
+      - name: Install babashka dev build
+        run: |
+          bash <(curl -sL https://raw.githubusercontent.com/babashka/babashka/master/install) --dev-build --dir "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
       - run: |
+          bb --version
+
           NEIL_GITHUB_TOKEN=${{ secrets.GITHUB_TOKEN }} \
           NEIL_GITHUB_USER=${{ secrets.GITHUB_ACTOR }} bb run test:bb
