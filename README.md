@@ -57,6 +57,28 @@ Then invoke `clj -M:neil`.
 - Download the [`neil`](https://raw.githubusercontent.com/babashka/neil/main/neil) script to somewhere on your `PATH`. In Windows, also
   download the [`neil.bat`](https://raw.githubusercontent.com/babashka/neil/main/neil.bat) script and place it in the `PATH`.
 
+## Shell completions
+
+`neil` completes commands and options in bash, zsh, fish, PowerShell and nushell.
+Load the completions from the init file of your shell:
+
+```bash
+# ~/.bashrc
+source <(neil org.babashka.cli/completions snippet --shell bash)
+```
+
+```zsh
+# ~/.zshrc, after compinit
+source <(neil org.babashka.cli/completions snippet --shell zsh)
+```
+
+```fish
+# ~/.config/fish/config.fish
+neil org.babashka.cli/completions snippet --shell fish | source
+```
+
+For PowerShell and nushell, see the [babashka.cli completions docs](https://github.com/babashka/cli#completions).
+
 ## Status
 
 As we're still finding out the best UX, `neil` may undergo breaking changes from

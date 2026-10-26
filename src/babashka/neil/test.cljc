@@ -5,13 +5,14 @@
    [babashka.process :refer [shell]]
    [clojure.edn :as edn]))
 
-(def neil-test-spec {:dirs {:coerce []}
-                     :nses {:coerce []}
-                     :patterns {:coerce []}
-                     :vars {:coerce []}
-                     :only {:coerce :symbol}
-                     :includes {:coerce []}
-                     :excludes {:coerce []}})
+(def neil-test-spec {:dirs {:coerce [] :ref "<dir>" :desc "Directory to search for tests. Defaults to test."}
+                     :nses {:coerce [] :ref "<ns>" :desc "Namespace to test."}
+                     :patterns {:coerce [] :ref "<regex>" :desc "Regex of namespaces to test."}
+                     :vars {:coerce [] :ref "<var>" :desc "Fully qualified var to test."}
+                     :only {:coerce :symbol :ref "<sym>" :desc "Var or namespace to test."}
+                     :includes {:coerce [] :ref "<kw>" :desc "Runs only tests with metadata <kw>."}
+                     :excludes {:coerce [] :ref "<kw>" :desc "Skips tests with metadata <kw>."}
+                     :test-help {:coerce :boolean :desc "Prints the help of the test runner."}})
 
 (def neil-test-aliases
   {:dir :dirs

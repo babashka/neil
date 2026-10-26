@@ -79,6 +79,21 @@
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil dep search ")))))
 
+(defn- completion-options [words]
+  (let [{:keys [out]} @(process (str "./neil org.babashka.cli/completions complete --shell zsh -- " words)
+                                {:out :string})]
+    (set (map #(first (str/split % #"\t")) (str/split-lines out)))))
+
+(deftest completions-test
+  (testing "dep add completes only its own options"
+    (let [opts (completion-options "dep add --")]
+      (is (contains? opts "--version"))
+      (is (not-any? opts ["--dry-run" "--limit" "--no-aliases"]))))
+  (testing "new completes template options instead of dep add options"
+    (let [opts (completion-options "new --")]
+      (is (contains? opts "--git/url"))
+      (is (not-any? opts ["--tag" "--latest-tag"])))))
+
 (deftest dep-search-test
   (is (thrown? java.lang.Exception (run-dep-subcommand "search" "someBougusLibThatDoesntExist")))
   (is (not-empty (run-dep-subcommand "search" "hiccups")))

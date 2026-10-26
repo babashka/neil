@@ -37,20 +37,46 @@
                    :desc "Add to alias <alias>."
                    :coerce :keyword}
            :deps-file {:ref "<file>"
-                       :desc "Add to <file> instead of deps.edn."
+                       :desc "Uses <file> instead of deps.edn."
                        :coerce :string
                        :default "deps.edn"}
            :limit {:ref "<n>"
                    :desc "Lists at most <n> versions. Defaults to 10."
                    :coerce :long}
            :dry-run {:coerce :boolean
-                     :desc "dep upgrade only. Prevents updates to deps.edn."}
+                     :desc "Prints the changes without writing deps.edn."}
            :no-aliases {:coerce :boolean
                         :desc "Prevents updates to alias :extra-deps when upgrading."}})
 
 (def global-spec (select-keys spec [:deps-file]))
 
 (def add-alias-spec (select-keys spec [:alias]))
+
+(def dep-add-spec
+  (select-keys spec [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file]))
+
+(def new-spec
+  {:name {:ref "<name>"
+          :desc "Project name, such as myorg/mylib."
+          :coerce proj/coerce-project-name}
+   :local/root {:ref "<path>"
+                :desc "Uses the template at <path>."}
+   :git/url {:ref "<url>"
+             :desc "Overrides the :git/url of the template."}
+   :git/tag {:ref "<tag>"
+             :desc "Overrides the :git/tag of the template."
+             :coerce :string}
+   :sha {:ref "<sha>"
+         :desc "Overrides the :git/sha of the template."
+         :coerce :string}
+   :git/sha {:ref "<sha>"
+             :desc "Overrides the :git/sha of the template."
+             :coerce :string}
+   :latest-sha {:coerce :boolean
+                :desc "Uses the latest SHA of the default branch of the template."}
+   :overwrite {:desc "Overwrites an existing target directory, or deletes it first if :delete."}
+   :dry-run {:coerce :boolean
+             :desc "Prints the plan without creating the project."}})
 
 (def dep-upgrade-spec
   (merge (select-keys spec [:no-aliases])
@@ -764,7 +790,7 @@ chmod +x bin/kaocha
 (def dispatch-table
   [{:cmds ["add"] :doc "Add a dep, test runner, build or nREPL alias."}
    {:cmds ["add" "dep"] :fn dep-add :args->opts [:lib] :require [:lib] :doc "Alias for `dep add`."
-    :spec spec
+    :spec dep-add-spec
     :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
    {:cmds ["add" "test"] :fn add-cognitect-test-runner :spec add-alias-spec :doc "Add the cognitect test runner to the :test alias."}
    {:cmds ["add" "build"] :fn add-build :spec add-alias-spec :doc "Add a tools.build build.clj and :build alias."}
@@ -775,7 +801,7 @@ chmod +x bin/kaocha
    {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]
     :doc "Add a dependency to deps.edn :deps."
     :require [:lib]
-    :spec spec
+    :spec dep-add-spec
     :order [:lib :version :sha :latest-sha :tag :latest-tag :deps/root :as :alias :deps-file :help]}
    {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]
     :doc "Search Clojars for a string in any attribute of an artifact."
@@ -829,8 +855,7 @@ Examples:
    {:cmds ["new"] :fn new/run-deps-new
     :args->opts [:template :name :target-dir]
     :doc "Create a project from a deps-new template."
-    :spec (assoc (select-keys spec [:sha :latest-sha :tag :latest-tag :dry-run])
-                 :name {:coerce proj/coerce-project-name})}
+    :spec new-spec}
 
    {:cmds ["version"] :fn neil-version/neil-version
     :doc "Show or manage the project version."
