@@ -903,8 +903,8 @@ test
     {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]}
     {:cmds ["dep" "add"] :fn dep-add :args->opts [:lib]}
     {:cmds ["dep" "search"] :fn dep-search :args->opts [:search-term]}
-    {:cmds ["dep" "upgrade"] :fn dep-upgrade}
-    {:cmds ["dep" "update"] :fn dep-upgrade} ;; supported as an alias
+    {:cmds ["dep" "upgrade"] :fn dep-upgrade :args->opts [:lib]}
+    {:cmds ["dep" "update"] :fn dep-upgrade :args->opts [:lib]} ;; supported as an alias
     {:cmds ["license" "list"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "search"] :fn license-search :args->opts [:search-term]}
     {:cmds ["license" "add"] :fn add-license :args->opts [:license]}
