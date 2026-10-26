@@ -40,7 +40,7 @@ Neil is developed as modular source files but distributed as a single executable
 ### Source Modules (src/babashka/neil/)
 
 - `neil.clj` — Main CLI entry point. Uses `babashka.cli/dispatch` for command routing. Contains most business logic for dep operations (add, search, upgrade, versions) and license management.
-- `curl.clj` — HTTP client wrapper with GitHub API auth (`NEIL_GITHUB_TOKEN`/`NEIL_GITHUB_USER`)
+- `http.clj` — HTTP client wrapper with GitHub API auth (`NEIL_GITHUB_TOKEN`/`NEIL_GITHUB_USER`)
 - `git.clj` — Git operations (tags, SHAs, repo URL construction)
 - `new.clj` — Project scaffolding via deps-new
 - `version.clj` — Semantic versioning (set, bump major/minor/patch, tag)

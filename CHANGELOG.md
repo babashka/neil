@@ -7,7 +7,10 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 ## Unreleased
 
 - [#269](https://github.com/babashka/neil/issues/269): bump deps-new to `v0.17.0`. `neil new` requires babashka 1.13.226 or later
-- Auto-generated CLI help via babashka.cli
+- [#272](https://github.com/babashka/neil/issues/272): make `babashka.neil/-main` easier to call from code ([@lread](https://github.com/lread))
+- [#268](https://github.com/babashka/neil/issues/268): `neil dep upgrade LIB` upgrades only `LIB` instead of all deps
+- [#267](https://github.com/babashka/neil/issues/267): `neil dep add`, `dep upgrade` and `dep versions` find versions in the `:mvn/repos` of `deps.edn`. `dep versions` no longer lists snapshots
+- [#254](https://github.com/babashka/neil/issues/254): auto-generated CLI help via babashka.cli. `neil dep --help` no longer throws
 
 ## 0.3.70
 

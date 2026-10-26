@@ -13,4 +13,4 @@
                                                          :git/sha "657fca6"}
                         org.babashka/cli {:mvn/version "0.12.91"}
                         version-clj/version-clj {:mvn/version "2.0.3"}
-                        org.babashka/http-client {:mvn/version "0.4.25"}}})
+                        org.babashka/http-client {:mvn/version "0.4.26"}}})

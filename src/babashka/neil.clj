@@ -3,13 +3,13 @@
   (:require
    [babashka.cli :as cli]
    [babashka.fs :as fs]
-   [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
+   [babashka.neil.http :as http]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
    [babashka.neil.test :as neil-test]
-   [babashka.neil.utils :refer [req-resolve]]
+   [babashka.neil.utils :refer [req-resolve serialized-require]]
    [babashka.neil.version :as neil-version]
    [borkdude.rewrite-edn :as r]
    [clojure.edn :as edn]
@@ -18,7 +18,7 @@
 
 (def spec {:lib {:desc "Fully qualified library name."}
            :version {:ref "<version>"
-                     :desc "Optional. When not provided, picks newest version from Clojars or Maven Central."
+                     :desc "Optional. When not provided, picks newest version from Maven Central, Clojars or :mvn/repos."
                      :coerce :string}
            :sha {:ref "<sha>"
                  :desc "When provided, assumes lib refers to Github repo."
@@ -65,11 +65,6 @@
 
 (def bb? (System/getProperty "babashka.version"))
 
-(defn- get-clojars-artifact [qlib]
-  (curl-get-json
-   (format "https://clojars.org/api/artifacts/%s"
-           qlib)))
-
 (defn stable-version?
   [version-str]
   (let [vparse (req-resolve 'version-clj.core/parse)] ; We lazy-load version-clj to improve average script startup time
@@ -81,41 +76,42 @@
        (filter stable-version?)
        first))
 
-(defn clojars-versions [qlib {:keys [limit] :or {limit 10}}]
-  (let [body (get-clojars-artifact qlib)]
-    (->> body
-         :recent_versions
-         (map :version)
-         (take limit))))
+(def default-mvn-repos
+  {"central" {:url "https://repo1.maven.org/maven2/"}
+   "clojars" {:url "https://repo.clojars.org/"}})
 
-(defn latest-stable-clojars-version
-  [qlib]
-  (first-stable-version (clojars-versions qlib {:limit 100})))
+(defn mvn-config
+  "Returns a tools.deps config with Maven Central, Clojars and the :mvn/repos of the deps file in opts.
+  Each repository has update policy :always unless it sets :releases or :snapshots.
+  :mvn/local-repo is a neil cache directory."
+  [opts]
+  (let [deps-file (:deps-file opts)
+        repos (when (and deps-file (fs/exists? deps-file))
+                (:mvn/repos (edn/read-string (slurp deps-file))))]
+    {:mvn/repos (into {}
+                      (keep (fn [[id repo]]
+                              (when repo
+                                [id (merge {:releases {:update :always}
+                                            :snapshots {:update :always}}
+                                           repo)])))
+                      (merge default-mvn-repos repos))
+     :mvn/local-repo (str (fs/path (fs/xdg-cache-home "neil") "m2"))}))
 
-(defn latest-clojars-version [qlib]
-  (first (clojars-versions qlib {:limit 100})))
+(defn mvn-versions
+  "Returns the release versions of qlib in the repositories of config, newest first."
+  [qlib config]
+  (serialized-require 'clojure.tools.deps.extensions.maven)
+  (let [find-versions (req-resolve 'clojure.tools.deps.extensions/find-versions)]
+    (binding [*err* (java.io.StringWriter.)]
+      (->> (find-versions qlib nil :mvn config)
+           (map :mvn/version)
+           reverse))))
 
-(defn- search-mvn [qlib limit]
-  (:response
-   (curl-get-json
-    (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
-            (namespace qlib)
-            (name qlib)
-            (str limit)))))
+(defn latest-stable-mvn-version [qlib config]
+  (first-stable-version (mvn-versions qlib config)))
 
-(defn mvn-versions [qlib {:keys [limit] :or {limit 10}}]
-  (let [payload (search-mvn qlib limit)]
-    (->> payload
-         :docs
-         (map :v))))
-
-(defn latest-stable-mvn-version [qlib]
-  (first-stable-version (mvn-versions qlib {:limit 100})))
-
-#_(mvn-versions 'org.clojure/clojure {:limit 100})
-
-(defn latest-mvn-version [qlib]
-  (first (mvn-versions qlib {:limit 100})))
+(defn latest-mvn-version [qlib config]
+  (first (mvn-versions qlib config)))
 
 (def deps-template
   (str/triml "
@@ -245,7 +241,7 @@
 " test-ns (name pn)))))))
 
 (defn kaocha-alias-latest []
-  (let [version (latest-stable-clojars-version 'lambdaisland/kaocha)]
+  (let [version (latest-stable-mvn-version 'lambdaisland/kaocha (mvn-config {}))]
     {:extra-deps {'lambdaisland/kaocha {:mvn/version version}},
      :main-opts ["-m" "kaocha.runner"]}))
 
@@ -261,9 +257,10 @@ chmod +x bin/kaocha
 ")))
 
 (defn nrepl-alias-latest []
-  (let [nrepl-version (future (latest-stable-clojars-version 'nrepl/nrepl))
-        cider-nrepl-version (future (latest-stable-clojars-version 'cider/cider-nrepl))
-        refactor-nrepl-version (future (latest-clojars-version 'refactor-nrepl/refactor-nrepl))]
+  (let [config (mvn-config {})
+        nrepl-version (future (latest-stable-mvn-version 'nrepl/nrepl config))
+        cider-nrepl-version (future (latest-stable-mvn-version 'cider/cider-nrepl config))
+        refactor-nrepl-version (future (latest-mvn-version 'refactor-nrepl/refactor-nrepl config))]
     {:extra-deps {'nrepl/nrepl {:mvn/version @nrepl-version}
                   'cider/cider-nrepl {:mvn/version @cider-nrepl-version}
                   'refactor-nrepl/refactor-nrepl {:mvn/version @refactor-nrepl-version}}
@@ -277,7 +274,7 @@ chmod +x bin/kaocha
   (let [latest-tag (git/latest-github-tag 'clojure/tools.build)
         tag (:name latest-tag)
         sha (-> latest-tag :commit :sha (subs 0 7))
-        slipset-version (latest-stable-clojars-version 'slipset/deps-deploy)]
+        slipset-version (latest-stable-mvn-version 'slipset/deps-deploy (mvn-config {}))]
     {:tag tag
      :sha sha
      :alias {:deps
@@ -404,16 +401,14 @@ chmod +x bin/kaocha
                   (or
                    (when-let [v (:version opts)]
                      [v :mvn])
-                   (when-let [v (latest-stable-clojars-version lib)]
-                     [v :mvn])
-                   (when-let [v (latest-stable-mvn-version lib)]
-                     [v :mvn])
-                   (when-let [v (git/latest-github-sha lib)]
-                     [v :git/sha])
-                   (when-let [v (latest-clojars-version lib)]
-                     [v :mvn])
-                   (when-let [v (latest-mvn-version lib)]
-                     [v :mvn])))
+                   (let [versions (mvn-versions lib (mvn-config opts))]
+                     (or
+                      (when-let [v (first-stable-version versions)]
+                        [v :mvn])
+                      (when-let [v (git/latest-github-sha lib)]
+                        [v :git/sha])
+                      (when-let [v (first versions)]
+                        [v :mvn])))))
             _ (when-not version
                 (throw (ex-info (str "Couldn't find version for lib: " lib) {:babashka/exit 1})))
             missing? (nil? version)
@@ -483,11 +478,10 @@ chmod +x bin/kaocha
 (defn dep-versions [{:keys [opts]}]
   (let [lib (:lib opts)
         lib (symbol lib)
-        versions (or (seq (clojars-versions lib opts))
-                     (seq (mvn-versions lib opts)))]
+        versions (seq (take (:limit opts 10) (mvn-versions lib (mvn-config opts))))]
     (if-not versions
       (binding [*out* *err*]
-        (println "Unable to find" lib "on Clojars or Maven.")
+        (println "Unable to find" lib "in the Maven repositories.")
         (System/exit 1))
       (doseq [v versions]
         (println :lib lib :version v)))))
@@ -503,7 +497,7 @@ chmod +x bin/kaocha
         query (if group (str "a:" artifact) search-term)
         url (format
              "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
-             (url-encode query))
+             (http/url-encode query))
         keys-m {:g :group_name
                 :a :jar_name
                 :timestamp :created
@@ -514,7 +508,7 @@ chmod +x bin/kaocha
                    (assoc
                     m :description
                     (format "%s/%s on Maven" group_name jar_name)))
-        res (->> url curl-get-json :response :docs
+        res (->> url http/get-json :response :docs
                  (filter (fn [{:keys [g]}] (or (nil? group) (= group g))))
                  (map #(some->
                         %
@@ -529,9 +523,9 @@ chmod +x bin/kaocha
 (defn dep-search-clojars [search-term]
   (let [url (format
              "https://clojars.org/search?format=json&q=%s"
-             (url-encode search-term))
+             (http/url-encode search-term))
         {search-results :results
-         results-count :count} (curl-get-json url)]
+         results-count :count} (http/get-json url)]
     (if (zero? results-count)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Clojars."))
@@ -569,8 +563,9 @@ chmod +x bin/kaocha
     (dep->upgrade {:lib 'clj-kondo/clj-kondo :current {:git/sha \"247e538\"}})
     ;; => {:git/sha \"...\"}
   "
-  [{:keys [lib current unstable]}]
-  (let [current (set/rename-keys current {:sha :git/sha
+  [{:keys [lib current unstable] config :mvn-config}]
+  (let [versions (delay (mvn-versions lib (or config (mvn-config {}))))
+        current (set/rename-keys current {:sha :git/sha
                                           :tag :git/tag})]
     (cond
       ;; if there's a git tag, find the latest git tag.
@@ -592,8 +587,7 @@ chmod +x bin/kaocha
 
       ;; when :unstable is set, find the lastest version whatsoever
       unstable
-      (when-let [version (or (first (clojars-versions lib {:limit 100}))
-                             (first (mvn-versions lib {:limit 100})))]
+      (when-let [version (first @versions)]
         (let [v-older? (req-resolve 'version-clj.core/older?)]
           (when (v-older? (:mvn/version current) version)
             {:mvn/version version})))
@@ -601,8 +595,7 @@ chmod +x bin/kaocha
       ;; if `current` is a stable maven/clojars version, find the latest stable
       ;; maven clojars dep
       (and (:mvn/version current) (stable-version? (:mvn/version current)))
-      (when-let [version (or (first (filter stable-version? (clojars-versions lib {:limit 100})))
-                             (first (filter stable-version? (mvn-versions lib {:limit 100}))))]
+      (when-let [version (first-stable-version @versions)]
         ;; only upgrade to a newer version than the current. Useful when
         ;; developing a new version locally.
         (let [v-older? (req-resolve 'version-clj.core/older?)]
@@ -616,18 +609,15 @@ chmod +x bin/kaocha
       ;; Useful when depending on an unstable version under active development.
       (and (:mvn/version current)
            (not (stable-version? (:mvn/version current))))
-      (let [clojars-candidates (clojars-versions lib {:limit 100})
-            maven-candidates (mvn-versions lib {:limit 100})
-            v-older? (req-resolve 'version-clj.core/older?)]
+      (let [v-older? (req-resolve 'version-clj.core/older?)]
         (or
          ;; prefer a more recent stable
-         (when-let [candidate (or (first (filter stable-version? clojars-candidates))
-                                  (first (filter stable-version? maven-candidates)))]
+         (when-let [candidate (first-stable-version @versions)]
            (when (v-older? (:mvn/version current) candidate)
              {:mvn/version candidate}))
 
          ;; otherwise, provide a more recent unstable
-         (when-let [candidate (or (first clojars-candidates) (first maven-candidates))]
+         (when-let [candidate (first @versions)]
            (when (v-older? (:mvn/version current) candidate)
              {:mvn/version candidate}))
 
@@ -694,8 +684,9 @@ chmod +x bin/kaocha
                            ;; We skip upgrades for pinned dependencies
                            (remove (fn [{:keys [current]}]
                                      (:neil/pinned current))))
+        config        (mvn-config opts)
         upgrades      (->> deps-to-check
-                           (pmap (fn [dep] (merge dep {:latest (dep->upgrade dep)})))
+                           (pmap (fn [dep] (merge dep {:latest (dep->upgrade (assoc dep :mvn-config config))})))
                            ;; keep if :latest version was found
                            (filter (fn [dep] (some? (:latest dep)))))]
 
@@ -729,7 +720,7 @@ chmod +x bin/kaocha
 (defn license-search [{:keys [opts]}]
   (let [search-term (:search-term opts)
         license-vec (->> (str licenses-api-url "?per_page=50")
-                         curl-get-json
+                         http/get-json
                          (map #(select-keys % [:key :name])))
         search-results (if search-term
                          (filter #(str/includes?
@@ -747,9 +738,9 @@ chmod +x bin/kaocha
 (defn license-to-file [{:keys [opts]}]
   (let [license-key (:license opts)
         output-file (or (:file opts) "LICENSE")
-        {:keys [message name body]} (some->> license-key url-encode
+        {:keys [message name body]} (some->> license-key http/url-encode
                                              (str licenses-api-url "/")
-                                             curl-get-json)]
+                                             http/get-json)]
     (cond
       (not license-key) (throw (ex-info "No license key provided." {}))
       (= "Not Found" message)
@@ -800,7 +791,7 @@ Search for a fully ns-qualified library, all artifacts in a group
 (\"group-id:babashka\"), or a term in a library's description. See
 http://github.com/clojars/clojars-web/wiki/Search-Query-Syntax for the syntax.")}
    {:cmds ["dep" "versions"] :fn dep-versions :args->opts [:lib]
-    :doc "List available versions of a library from Clojars or Maven Central."
+    :doc "List available release versions of a library from Maven Central, Clojars or :mvn/repos."
     :require [:lib]
     :spec (select-keys spec [:lib :limit])
     :epilog (str/trim "
@@ -810,7 +801,7 @@ Examples:
   :lib http-kit/http-kit :version 2.7.0
   :lib http-kit/http-kit :version 2.6.0
   ...")}
-   {:cmds ["dep" "upgrade"] :fn dep-upgrade
+   {:cmds ["dep" "upgrade"] :fn dep-upgrade :args->opts [:lib]
     :doc "Upgrade libs in deps.edn (all, or a single lib)."
     :spec dep-upgrade-spec
     :order [:lib :dry-run :alias :no-aliases :help]
@@ -821,7 +812,7 @@ Examples:
   neil dep upgrade --dry-run                 ; print deps that would be upgraded.
   neil dep upgrade --alias lint              ; update only deps for the `lint` alias.
   neil dep upgrade :lib clj-kondo/clj-kondo  ; update a single dep.")}
-   {:cmds ["dep" "update"] :fn dep-upgrade :doc "Alias for `dep upgrade`."
+   {:cmds ["dep" "update"] :fn dep-upgrade :args->opts [:lib] :doc "Alias for `dep upgrade`."
     :spec dep-upgrade-spec
     :order [:lib :dry-run :alias :no-aliases :help]}
 
@@ -872,9 +863,9 @@ Examples:
     (println (cli/format-command-help {:table tree :cmds (or dispatch []) :prog prog
                                        :inherit inherit :spec (:babashka.cli/global-spec data)}))))
 
-(defn -main [& _args]
+(defn -main [& args]
   (cli/dispatch dispatch-table
-                *command-line-args*
+                args
                 {:spec global-spec
                  :exec-args {:deps-file "deps.edn"}
                  :prog "neil"
@@ -883,4 +874,4 @@ Examples:
   nil)
 
 (when (= *file* (System/getProperty "babashka.file"))
-  (-main))
+  (apply -main *command-line-args*))

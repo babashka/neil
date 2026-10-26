@@ -82,6 +82,18 @@
         (is (not (= clj-kondo-original clj-kondo-upgraded)))
         (is (= fs-original fs-upgraded))))))
 
+(deftest dep-upgrade-test-positional-lib
+  (doseq [cmd ["upgrade" "update"]]
+    (testing (str "dep " cmd " LIB updates only LIB")
+      (spit test-file-path "{}")
+      (test-util/neil "dep add :lib clj-kondo/clj-kondo :version 2022.01.01" :deps-file test-file-path)
+      (test-util/neil "dep add :lib babashka/fs :version 0.0.1" :deps-file test-file-path)
+      (let [clj-kondo-original (get-dep-version 'clj-kondo/clj-kondo)
+            fs-original        (get-dep-version 'babashka/fs)]
+        (test-util/neil (str "dep " cmd " clj-kondo/clj-kondo") :deps-file test-file-path)
+        (is (not= clj-kondo-original (get-dep-version 'clj-kondo/clj-kondo)))
+        (is (= fs-original (get-dep-version 'babashka/fs)))))))
+
 (deftest dep-upgrade-test-using-git-tags
   (testing "deps can be added with --latest-tag"
     (spit test-file-path "{}")
@@ -286,3 +298,24 @@
   (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
+
+(defn- write-private-repo
+  "Writes maven-metadata.xml for com.example/private-lib with versions to a file repo and returns its URL."
+  [versions]
+  (let [repo (test-util/test-file "private-repo")
+        dir (java.io.File. (str repo) "com/example/private-lib")]
+    (.mkdirs dir)
+    (spit (java.io.File. dir "maven-metadata.xml")
+          (str "<metadata><groupId>com.example</groupId><artifactId>private-lib</artifactId>"
+               "<versioning><release>" (last versions) "</release><versions>"
+               (apply str (map #(str "<version>" % "</version>") versions))
+               "</versions></versioning></metadata>"))
+    (str (.toURI (java.io.File. (str repo))))))
+
+(deftest dep-upgrade-test-mvn-repos
+  (testing ":mvn/repos supplies the versions of com.example/private-lib"
+    (let [url (write-private-repo ["1.0.0" "1.1.0"])]
+      (spit test-file-path (pr-str {:mvn/repos {"private" {:url url}}
+                                    :deps {'com.example/private-lib {:mvn/version "1.0.0"}}}))
+      (test-util/neil "dep upgrade com.example/private-lib" :deps-file test-file-path)
+      (is (= {:mvn/version "1.1.0"} (get-dep-version 'com.example/private-lib))))))

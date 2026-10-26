@@ -1,4 +1,4 @@
-{:deps {org.babashka/http-client {:mvn/version "0.4.25"}
+{:deps {org.babashka/http-client {:mvn/version "0.4.26"}
         babashka/fs {:mvn/version "0.5.34"}
         babashka/process {:mvn/version "0.6.25"}
         rewrite-clj/rewrite-clj {:mvn/version "1.3.59"}
@@ -8,7 +8,8 @@
         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
                                          :git/tag "v0.17.0"
                                          :git/sha "657fca6"}
-        version-clj/version-clj {:mvn/version "2.0.3"}}
+        version-clj/version-clj {:mvn/version "2.0.3"}
+        org.clojure/tools.deps {:mvn/version "0.31.1646"}}
  :tools/usage {:ns-default babashka.neil.api}
  :aliases
  {:neil

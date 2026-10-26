@@ -32,3 +32,12 @@
     (binding [*command-line-args* cli-args']
       (let [s (with-out-str (apply neil-main/-main cli-args'))]
         {:out (if (#{:edn} out) (edn/read-string s) (str/trim s))}))))
+
+(defn ensure-repo [git-opts]
+  (process/sh "git init -b main" git-opts)
+  (process/sh "git config user.name 'Neil Tests'" git-opts)
+  (process/sh "git config user.email '<>'" git-opts)
+  (process/sh "git config commit.gpgsign false" git-opts)
+  (process/sh "git config tag.gpgsign false" git-opts)
+  (process/sh "git add ." git-opts)
+  (process/sh "git commit -m 'First commit'" git-opts))
