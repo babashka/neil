@@ -298,3 +298,24 @@
   (is (neil/dep->upgrade {:lib 'com.wsscode/pathom3
                           :current {:mvn/version "2023.01.31-alpha"}
                           :unstable true})))
+
+(defn- write-private-repo
+  "Writes maven-metadata.xml for com.example/private-lib with versions to a file repo and returns its URL."
+  [versions]
+  (let [repo (test-util/test-file "private-repo")
+        dir (java.io.File. (str repo) "com/example/private-lib")]
+    (.mkdirs dir)
+    (spit (java.io.File. dir "maven-metadata.xml")
+          (str "<metadata><groupId>com.example</groupId><artifactId>private-lib</artifactId>"
+               "<versioning><release>" (last versions) "</release><versions>"
+               (apply str (map #(str "<version>" % "</version>") versions))
+               "</versions></versioning></metadata>"))
+    (str (.toURI (java.io.File. (str repo))))))
+
+(deftest dep-upgrade-test-mvn-repos
+  (testing ":mvn/repos supplies the versions of com.example/private-lib"
+    (let [url (write-private-repo ["1.0.0" "1.1.0"])]
+      (spit test-file-path (pr-str {:mvn/repos {"private" {:url url}}
+                                    :deps {'com.example/private-lib {:mvn/version "1.0.0"}}}))
+      (test-util/neil "dep upgrade com.example/private-lib" :deps-file test-file-path)
+      (is (= {:mvn/version "1.1.0"} (get-dep-version 'com.example/private-lib))))))

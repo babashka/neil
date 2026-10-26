@@ -92,7 +92,7 @@ dep
   upgrade: Upgrade libs in the deps.edn file.
     Run `neil dep upgrade --help` to see all options.
 
-  versions: List available versions of a library (Clojars libraries only)
+  versions: List available versions of a library
     Run `neil dep versions -h` to see all options.
 
   update: Alias for `upgrade`.
