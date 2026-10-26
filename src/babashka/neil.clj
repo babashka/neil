@@ -3,8 +3,8 @@
   (:require
    [babashka.cli :as cli]
    [babashka.fs :as fs]
-   [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
+   [babashka.neil.http :as http]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
@@ -46,7 +46,7 @@
 (def bb? (System/getProperty "babashka.version"))
 
 (defn- get-clojars-artifact [qlib]
-  (curl-get-json
+  (http/get-json
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
@@ -77,7 +77,7 @@
 
 (defn- search-mvn [qlib limit]
   (:response
-   (curl-get-json
+   (http/get-json
     (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
             (namespace qlib)
             (name qlib)
@@ -551,7 +551,7 @@ details on the search syntax.")))
         query (if group (str "a:" artifact) search-term)
         url (format
              "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
-             (url-encode query))
+             (http/url-encode query))
         keys-m {:g :group_name
                 :a :jar_name
                 :timestamp :created
@@ -562,7 +562,7 @@ details on the search syntax.")))
                    (assoc
                     m :description
                     (format "%s/%s on Maven" group_name jar_name)))
-        res (->> url curl-get-json :response :docs
+        res (->> url http/get-json :response :docs
                  (filter (fn [{:keys [g]}] (or (nil? group) (= group g))))
                  (map #(some->
                         %
@@ -577,9 +577,9 @@ details on the search syntax.")))
 (defn dep-search-clojars [search-term]
   (let [url (format
              "https://clojars.org/search?format=json&q=%s"
-             (url-encode search-term))
+             (http/url-encode search-term))
         {search-results :results
-         results-count :count} (curl-get-json url)]
+         results-count :count} (http/get-json url)]
     (if (zero? results-count)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Clojars."))
@@ -851,7 +851,7 @@ test
 (defn license-search [{:keys [opts]}]
   (let [search-term (:search-term opts)
         license-vec (->> (str licenses-api-url "?per_page=50")
-                         curl-get-json
+                         http/get-json
                          (map #(select-keys % [:key :name])))
         search-results (if search-term
                          (filter #(str/includes?
@@ -869,9 +869,9 @@ test
 (defn license-to-file [{:keys [opts]}]
   (let [license-key (:license opts)
         output-file (or (:file opts) "LICENSE")
-        {:keys [message name body]} (some->> license-key url-encode
+        {:keys [message name body]} (some->> license-key http/url-encode
                                              (str licenses-api-url "/")
-                                             curl-get-json)]
+                                             http/get-json)]
     (cond
       (not license-key) (throw (ex-info "No license key provided." {}))
       (= "Not Found" message)

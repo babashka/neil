@@ -1,12 +1,12 @@
 (ns babashka.neil.git
   {:no-doc true}
   (:require [babashka.fs :as fs]
-            [babashka.neil.curl :refer [curl-get-json]]
+            [babashka.neil.http :as http]
             [babashka.process :refer [sh]]
             [clojure.string :as str]))
 
 (defn default-branch [lib]
-  (get (curl-get-json (format "https://api.github.com/repos/%s/%s"
+  (get (http/get-json (format "https://api.github.com/repos/%s/%s"
                               (namespace lib) (name lib)))
        :default_branch))
 
@@ -19,13 +19,13 @@
 (defn latest-github-sha [lib]
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
-    (get (curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
+    (get (http/get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
                                 (namespace lib) (name lib) branch))
          :sha)))
 
 (defn list-github-tags [lib]
   (let [lib (clean-github-lib lib)]
-    (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
+    (http/get-json (format "https://api.github.com/repos/%s/%s/tags"
                            (namespace lib) (name lib)))))
 
 (defn latest-github-tag [lib]

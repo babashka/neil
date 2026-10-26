@@ -1,7 +1,7 @@
-(ns babashka.neil.curl
+(ns babashka.neil.http
   {:no-doc true}
   (:require
-   [babashka.http-client :as curl]
+   [babashka.http-client :as http]
    [cheshire.core :as cheshire]
    [clojure.string :as string]))
 
@@ -20,15 +20,15 @@
 
 (def github-basic-auth-enabled? (and github-user github-token))
 
-(def curl-opts
+(def request-opts
   (merge {:throw false}
          (when github-basic-auth-enabled?
            {:basic-auth [github-user github-token]})))
 
-(defn curl-get-json
-  ([url] (curl-get-json url nil))
+(defn get-json
+  ([url] (get-json url nil))
   ([url opts]
-   (let [response    (curl/get url (merge curl-opts opts))
+   (let [response    (http/get url (merge request-opts opts))
          parsed-body (try (-> response :body (cheshire/parse-string true))
                           (catch Exception e
                             (binding [*out* *err*]
