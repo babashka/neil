@@ -3,7 +3,7 @@
         babashka/process {:mvn/version "0.6.25"}
         rewrite-clj/rewrite-clj {:mvn/version "1.3.59"}
         borkdude/rewrite-edn {:mvn/version "0.6.10"}
-        org.babashka/cli {:mvn/version "0.12.91"}
+        org.babashka/cli {:mvn/version "0.12.92"}
         cheshire/cheshire {:mvn/version "6.2.0"}
         io.github.seancorfield/deps-new {:git/url "https://github.com/seancorfield/deps-new"
                                          :git/tag "v0.17.0"

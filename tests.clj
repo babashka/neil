@@ -79,6 +79,14 @@
     (let [{:keys [out]} @(process cmd {:out :string})]
       (is (str/starts-with? out "Usage: neil dep search ")))))
 
+(deftest test-help-deps-file-test
+  (let [deps-file (test-file "deps.edn")]
+    (spit deps-file "{}")
+    (let [{:keys [out]} @(process ["./neil" "test" "--help" "--deps-file" (str deps-file)]
+                                  {:out :string})]
+      (is (str/starts-with? out "Usage: neil test"))
+      (is (not (str/includes? out "Test runner options:"))))))
+
 (defn- completion-options [words]
   (let [{:keys [out]} @(process (str "./neil org.babashka.cli/completions complete --shell zsh -- " words)
                                 {:out :string})]
