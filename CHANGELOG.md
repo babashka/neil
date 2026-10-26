@@ -15,6 +15,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - [#235](https://github.com/babashka/neil/issues/235): `neil dep upgrade` keeps the `:git/url` of a git dep
 - [#249](https://github.com/babashka/neil/issues/249): `neil dep add` removes the keys of the previous coordinate type, such as `:git/sha` when it adds `:mvn/version`
 - [#239](https://github.com/babashka/neil/issues/239): `neil dep add` no longer throws on metadata on the `:deps` map. Bump rewrite-edn to `0.6.11`
+- [#250](https://github.com/babashka/neil/issues/250): `neil version` no longer throws without `deps.edn`. `neil version set`, `major`, `minor` and `patch` create it
 
 ## 0.3.70
 

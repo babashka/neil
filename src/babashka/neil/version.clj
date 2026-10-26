@@ -109,10 +109,14 @@
       fs/canonicalize
       str))
 
+(defn- read-deps-edn [deps-file]
+  (when (fs/exists? deps-file)
+    (edn/read-string (slurp deps-file))))
+
 (defn run-tag-command [{:keys [dir deps-file] :as opts}]
   (let [deps-file' (resolve-deps-file dir deps-file)
         opts' (assoc opts :deps-file deps-file')
-        deps-edn (some-> deps-file slurp edn/read-string)
+        deps-edn (read-deps-edn deps-file')
         project-version-string (deps-edn->project-version-string deps-edn)
         _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)
@@ -126,7 +130,7 @@
 
 (defn run-root-command [{:keys [dir deps-file]}]
   (let [deps-file' (resolve-deps-file dir deps-file)
-        deps-edn (some-> deps-file' slurp edn/read-string)
+        deps-edn (read-deps-edn deps-file')
         project-version-string (deps-edn->project-version-string deps-edn)
         _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)]
@@ -195,7 +199,7 @@
 
 (defn run-bump-command [command {:keys [dir deps-file] :as opts}]
   (let [deps-file' (resolve-deps-file dir deps-file)
-        deps-edn (some-> deps-file' slurp edn/read-string)
+        deps-edn (read-deps-edn deps-file')
         project-version-string (deps-edn->project-version-string deps-edn)
         _ (assert-valid-project-version-string project-version-string deps-file')
         project-version-map (str->version-map project-version-string)

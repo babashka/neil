@@ -1,5 +1,6 @@
 (ns babashka.neil.version-test
   (:require
+   [babashka.fs :as fs]
    [babashka.neil.git :as git]
    [babashka.neil.meta :as meta]
    [babashka.neil.test-util :refer [ensure-repo neil read-deps-edn reset-test-dir
@@ -36,6 +37,10 @@
     (reset-test-dir)
     (testing "Project version is :version-not-set when not set"
       (set-deps-edn! {})
+      (let [{:keys [out]} (neil "version" :out :edn)]
+        (is (= {:neil "1.0.0" :project :version-not-set} out))))
+    (testing "Project version is :version-not-set without deps.edn"
+      (reset-test-dir)
       (let [{:keys [out]} (neil "version" :out :edn)]
         (is (= {:neil "1.0.0" :project :version-not-set} out))))
     (testing "Fatal error when project version is not a string"
@@ -154,6 +159,11 @@
           v "0.1.0"]
       (is (= (str "v" v) out))
       (is (= v (read-version-string)))))
+  (testing "Set initial version without deps.edn"
+    (fs/delete (test-file "deps.edn"))
+    (let [{:keys [out]} (neil "version minor :no-tag" :out :string)]
+      (is (= "v0.1.0" out))
+      (is (= "0.1.0" (read-version-string)))))
   (testing "Bump patch version"
     (let [{:keys [out]} (neil "version patch" :out :string)
           v "0.1.1"]

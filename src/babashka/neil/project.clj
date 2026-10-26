@@ -11,7 +11,7 @@
 
 (defn ensure-neil-project [{:keys [dir deps-file]}]
   (let [deps-file (resolve-deps-file dir deps-file)
-        deps-edn (slurp deps-file)
+        deps-edn (if (fs/exists? deps-file) (slurp deps-file) "{}")
         edn (edn/read-string deps-edn)]
     (when-not (some-> edn :aliases :neil :project)
       (let [existing-aliases (:aliases edn)
