@@ -405,6 +405,13 @@ chmod +x bin/kaocha
   (binding [*out* *err*]
     (apply prn xs)))
 
+(defn git-url->lib [git-url]
+  (when git-url
+    (when (str/starts-with? git-url "https://github.com/")
+      (-> (str/replace git-url "https://github.com/" "")
+          (str/replace #"\.git$" "")
+          symbol))))
+
 (defn dep-add [{:keys [opts]}]
   (ensure-deps-file opts)
   (let [edn-string (edn-string opts)
@@ -413,16 +420,17 @@ chmod +x bin/kaocha
             lib (symbol lib)
             lib (symbol (or (namespace lib) (name lib))
                         (name lib))
+            github-lib (or (git-url->lib (:git/url opts)) lib)
             alias (:alias opts)
             explicit-git-sha? (or (:sha opts) (:latest-sha opts))
             explicit-git-tag? (or (:tag opts) (:latest-tag opts))
             [version coord-type?]
             (cond explicit-git-tag?
                   [(or (and (:tag opts)
-                            (git/find-github-tag lib (:tag opts)))
-                       (git/latest-github-tag lib)) :git/tag]
+                            (git/find-github-tag github-lib (:tag opts)))
+                       (git/latest-github-tag github-lib)) :git/tag]
                   explicit-git-sha?
-                  [(or (:sha opts) (git/latest-github-sha lib)) :git/sha]
+                  [(or (:sha opts) (git/latest-github-sha github-lib)) :git/sha]
                   :else
                   (or
                    (when-let [v (:version opts)]
@@ -570,12 +578,6 @@ chmod +x bin/kaocha
            :version (:version search-result)
            :description (:description search-result)))))
 
-(defn git-url->lib [git-url]
-  (when git-url
-    (when (str/starts-with? git-url "https://github.com/")
-      (-> (str/replace git-url "https://github.com/" "")
-          symbol))))
-
 (defn dep->upgrade
   "Given a lib (hiccup/hiccup) and a version ({:mvn/version \"1.0.4\"}), return an
   upgrade ({:mvn/version \"1.0.5\"}), otherwise return nil.
@@ -701,6 +703,7 @@ chmod +x bin/kaocha
                               version (assoc :version version)
                               tag     (assoc :tag tag)
                               (and (not tag) sha) (assoc :sha sha)
+                              (:git/url current) (assoc :git/url (:git/url current))
                               (not (:git/url current)) (assoc :omit-git-url true))}))))))
 
 (defn dep-upgrade [{:keys [opts]}]
