@@ -476,6 +476,16 @@ chmod +x bin/kaocha
                         ;;     [:aliases alias :deps as] if :deps present
                         ;;     [:aliases alias :extra-deps as] if alias exists
                         (-> edn-nodes (r/assoc-in nl-path nil) str r/parse-string))
+            stale-keys (cond mvn? [:git/url :git/sha :git/tag :sha :tag :deps/root :local/root]
+                             git-sha? [:mvn/version :local/root :git/tag :tag :sha]
+                             git-tag? [:mvn/version :local/root :tag :sha])
+            existing-coord (get-in (edn/read-string edn-string) path)
+            edn-nodes (reduce (fn [nodes k]
+                                (if (contains? existing-coord k)
+                                  (r/update-in nodes path r/dissoc k)
+                                  nodes))
+                              edn-nodes
+                              stale-keys)
             nodes (cond
                     missing? edn-nodes
                     mvn?
@@ -487,8 +497,7 @@ chmod +x bin/kaocha
                                                              git-url)
                       true str
                       true r/parse-string
-                      true (r/assoc-in (conj path :git/sha) version)
-                      true (r/update-in path r/dissoc :sha))
+                      true (r/assoc-in (conj path :git/sha) version))
 
                     git-tag?
                     ;; multiple steps to force newlines
