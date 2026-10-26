@@ -194,13 +194,6 @@
       str/trim
       Integer/parseInt))
 
-(defn ensure-repo [git-opts]
-  (sh "git init -b main" git-opts)
-  (sh "git config user.name 'Neil Tests'" git-opts)
-  (sh "git config user.email '<>'" git-opts)
-  (sh "git add ." git-opts)
-  (sh "git commit -m 'First commit'" git-opts))
-
 (defn list-tags [git-opts]
   (let [{:keys [out]} (sh "git tag" git-opts)]
     (str/split-lines (str/trim out))))
