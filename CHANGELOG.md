@@ -12,6 +12,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 - [#267](https://github.com/babashka/neil/issues/267): `neil dep add`, `dep upgrade` and `dep versions` find versions in the `:mvn/repos` of `deps.edn`. `dep versions` no longer lists snapshots
 - [#254](https://github.com/babashka/neil/issues/254): auto-generated CLI help and shell completions via babashka.cli. `neil dep --help` no longer throws
 - `neil test -e` excludes tests with the given metadata instead of running only those. `neil test --help` also prints the help of the test runner
+- [#235](https://github.com/babashka/neil/issues/235): `neil dep upgrade` keeps the `:git/url` of a git dep
 
 ## 0.3.70
 

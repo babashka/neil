@@ -194,6 +194,26 @@
         ;; should be a different sha
         (is (not (= fs-original fs-upgraded)))))))
 
+(deftest dep-upgrade-test-keeps-git-url
+  (testing "dep upgrade keeps the :git/url of :git/sha dep babashka/pods"
+    (spit test-file-path "{:deps {babashka/pods
+                            {:git/url \"https://github.com/babashka/babashka.pods\"
+                             :git/sha \"47e55fe5e728578ff4dbf7d2a2caf00efea87b1e\"}}}")
+    (test-util/neil "dep upgrade" :deps-file test-file-path)
+    (let [{:keys [git/url git/sha]} (get-dep-version 'babashka/pods)]
+      (is (= "https://github.com/babashka/babashka.pods" url))
+      (is (not= "47e55fe5e728578ff4dbf7d2a2caf00efea87b1e" sha))))
+  (testing "dep upgrade keeps the :git/url of :git/tag dep cognitect/test-runner"
+    (spit test-file-path "{:deps {cognitect/test-runner
+                            {:git/url \"https://github.com/cognitect-labs/test-runner\"
+                             :git/tag \"v0.4.0\"
+                             :git/sha \"334f2e2\"}}}")
+    (test-util/neil "dep upgrade" :deps-file test-file-path)
+    (let [{:keys [git/url git/tag git/sha]} (get-dep-version 'cognitect/test-runner)]
+      (is (= "https://github.com/cognitect-labs/test-runner" url))
+      (is (not= "v0.4.0" tag))
+      (is (not= "334f2e2" sha)))))
+
 (deftest dep-upgrade-test-updates-aliases-independently
   (testing "upgrading an alias's :extra-deps works as expected"
     (spit test-file-path "{}")
