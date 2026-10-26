@@ -2,7 +2,7 @@
   (:require
    [babashka.neil.git :as git]
    [babashka.neil.meta :as meta]
-   [babashka.neil.test-util :refer [neil read-deps-edn reset-test-dir
+   [babashka.neil.test-util :refer [ensure-repo neil read-deps-edn reset-test-dir
                                     set-deps-edn! test-dir test-file]]
    [babashka.neil.version :as version]
    [clojure.string :as str]
@@ -59,7 +59,7 @@
 (deftest tag-test
   (reset-test-dir)
   (set-deps-edn! {})
-  (git/ensure-repo git-opts)
+  (ensure-repo git-opts)
   (is (= 1 (git/commit-count git-opts)))
   (testing "Assert at least one staged file"
     (is (thrown-with-msg? ExceptionInfo #"Requires at least one staged file"
@@ -89,7 +89,7 @@
 (deftest set-test
   (reset-test-dir)
   (set-deps-edn! {:aliases {:neil {:project {:version "1.0.0-alpha2"}}}})
-  (git/ensure-repo git-opts)
+  (ensure-repo git-opts)
   (testing "Update deps.edn file with SemVer version"
     (let [v "2022.8.1"
           {:keys [out]} (neil ["version" "set" v] :out :string)]
@@ -143,7 +143,7 @@
 (deftest bump-test
   (reset-test-dir)
   (set-deps-edn! {})
-  (git/ensure-repo git-opts)
+  (ensure-repo git-opts)
   (testing "Set initial version when no version in deps.edn"
     (let [{:keys [out]} (neil "version minor 4 :no-tag" :out :string)
           v "0.4.0"]
