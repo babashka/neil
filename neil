@@ -38,10 +38,10 @@
 
 ;; End workaround
 
-(ns babashka.neil.curl
+(ns babashka.neil.http
   {:no-doc true}
   (:require
-   [babashka.http-client :as curl]
+   [babashka.http-client :as http]
    [cheshire.core :as cheshire]
    [clojure.string :as string]))
 
@@ -60,15 +60,15 @@
 
 (def github-basic-auth-enabled? (and github-user github-token))
 
-(def curl-opts
+(def request-opts
   (merge {:throw false}
          (when github-basic-auth-enabled?
            {:basic-auth [github-user github-token]})))
 
-(defn curl-get-json
-  ([url] (curl-get-json url nil))
+(defn get-json
+  ([url] (get-json url nil))
   ([url opts]
-   (let [response    (curl/get url (merge curl-opts opts))
+   (let [response    (http/get url (merge request-opts opts))
          parsed-body (try (-> response :body (cheshire/parse-string true))
                           (catch Exception e
                             (binding [*out* *err*]
@@ -111,12 +111,12 @@
 (ns babashka.neil.git
   {:no-doc true}
   (:require [babashka.fs :as fs]
-            [babashka.neil.curl :refer [curl-get-json]]
+            [babashka.neil.http :as http]
             [babashka.process :refer [sh]]
             [clojure.string :as str]))
 
 (defn default-branch [lib]
-  (get (curl-get-json (format "https://api.github.com/repos/%s/%s"
+  (get (http/get-json (format "https://api.github.com/repos/%s/%s"
                               (namespace lib) (name lib)))
        :default_branch))
 
@@ -129,13 +129,13 @@
 (defn latest-github-sha [lib]
   (let [lib (clean-github-lib lib)
         branch (default-branch lib)]
-    (get (curl-get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
+    (get (http/get-json (format "https://api.github.com/repos/%s/%s/commits/%s"
                                 (namespace lib) (name lib) branch))
          :sha)))
 
 (defn list-github-tags [lib]
   (let [lib (clean-github-lib lib)]
-    (curl-get-json (format "https://api.github.com/repos/%s/%s/tags"
+    (http/get-json (format "https://api.github.com/repos/%s/%s/tags"
                            (namespace lib) (name lib)))))
 
 (defn latest-github-tag [lib]
@@ -882,8 +882,8 @@ using the [major|minor|patch] subcommands.
   (:require
    [babashka.cli :as cli]
    [babashka.fs :as fs]
-   [babashka.neil.curl :refer [curl-get-json url-encode]]
    [babashka.neil.git :as git]
+   [babashka.neil.http :as http]
    [babashka.neil.new :as new]
    [babashka.neil.project :as proj]
    [babashka.neil.rewrite :as rw]
@@ -925,7 +925,7 @@ using the [major|minor|patch] subcommands.
 (def bb? (System/getProperty "babashka.version"))
 
 (defn- get-clojars-artifact [qlib]
-  (curl-get-json
+  (http/get-json
    (format "https://clojars.org/api/artifacts/%s"
            qlib)))
 
@@ -956,7 +956,7 @@ using the [major|minor|patch] subcommands.
 
 (defn- search-mvn [qlib limit]
   (:response
-   (curl-get-json
+   (http/get-json
     (format "https://central.sonatype.com/solrsearch/select?q=g:%s+AND+a:%s&rows=%s&core=gav&sort=v+desc&wt=json"
             (namespace qlib)
             (name qlib)
@@ -1430,7 +1430,7 @@ details on the search syntax.")))
         query (if group (str "a:" artifact) search-term)
         url (format
              "https://central.sonatype.com/solrsearch/select?q=%s&rows=20&wt=json"
-             (url-encode query))
+             (http/url-encode query))
         keys-m {:g :group_name
                 :a :jar_name
                 :timestamp :created
@@ -1441,7 +1441,7 @@ details on the search syntax.")))
                    (assoc
                     m :description
                     (format "%s/%s on Maven" group_name jar_name)))
-        res (->> url curl-get-json :response :docs
+        res (->> url http/get-json :response :docs
                  (filter (fn [{:keys [g]}] (or (nil? group) (= group g))))
                  (map #(some->
                         %
@@ -1456,9 +1456,9 @@ details on the search syntax.")))
 (defn dep-search-clojars [search-term]
   (let [url (format
              "https://clojars.org/search?format=json&q=%s"
-             (url-encode search-term))
+             (http/url-encode search-term))
         {search-results :results
-         results-count :count} (curl-get-json url)]
+         results-count :count} (http/get-json url)]
     (if (zero? results-count)
       (binding [*out* *err*]
         (println "Unable to find" search-term "on Clojars."))
@@ -1730,7 +1730,7 @@ test
 (defn license-search [{:keys [opts]}]
   (let [search-term (:search-term opts)
         license-vec (->> (str licenses-api-url "?per_page=50")
-                         curl-get-json
+                         http/get-json
                          (map #(select-keys % [:key :name])))
         search-results (if search-term
                          (filter #(str/includes?
@@ -1748,9 +1748,9 @@ test
 (defn license-to-file [{:keys [opts]}]
   (let [license-key (:license opts)
         output-file (or (:file opts) "LICENSE")
-        {:keys [message name body]} (some->> license-key url-encode
+        {:keys [message name body]} (some->> license-key http/url-encode
                                              (str licenses-api-url "/")
-                                             curl-get-json)]
+                                             http/get-json)]
     (cond
       (not license-key) (throw (ex-info "No license key provided." {}))
       (= "Not Found" message)
