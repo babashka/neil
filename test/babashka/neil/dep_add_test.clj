@@ -26,3 +26,13 @@
     (is (= '{clj-kondo/clj-kondo {:git/url "https://github.com/clj-kondo/clj-kondo"
                                   :git/sha "6ffc3934cb83d2c4fff16d84198c73b40cd8a078"}}
            (:deps (test-util/read-deps-edn))))))
+
+(deftest dep-add-meta-test
+  (testing "dep add keeps the metadata of the :deps map"
+    (spit (test-util/test-file "deps.edn") "{:deps ^{:x 1} {foo/bar {:mvn/version \"1.0.0\"}}}")
+    (test-util/neil "dep add http-kit/http-kit :version 2.8.0")
+    (let [deps (:deps (test-util/read-deps-edn))]
+      (is (= '{foo/bar {:mvn/version "1.0.0"}
+               http-kit/http-kit {:mvn/version "2.8.0"}}
+             deps))
+      (is (= {:x 1} (meta deps))))))
