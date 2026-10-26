@@ -4,7 +4,7 @@
 
 (def ^:private lock (Object.))
 
-(defn- serialized-require
+(defn serialized-require
   [& args]
   (locking lock
     (apply require args)))

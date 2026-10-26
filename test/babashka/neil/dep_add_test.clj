@@ -5,7 +5,8 @@
    [version-clj.core :as version-clj]))
 
 (deftest latest-version-test
-  (is (= "2.0.0" (neil/latest-stable-clojars-version 'hiccup/hiccup)))
-  (is (= "2.0.0" (neil/latest-clojars-version 'hiccup/hiccup)))
-  (is (not (neg? (version-clj/version-compare
-                  (neil/latest-stable-mvn-version 'org.clojure/clojure) "1.12.5")))))
+  (let [config (neil/mvn-config {})]
+    (is (= "2.0.0" (neil/latest-stable-mvn-version 'hiccup/hiccup config)))
+    (is (= "2.0.0" (neil/latest-mvn-version 'hiccup/hiccup config)))
+    (is (not (neg? (version-clj/version-compare
+                    (neil/latest-stable-mvn-version 'org.clojure/clojure config) "1.12.5"))))))
