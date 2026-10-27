@@ -6,6 +6,7 @@ See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-cloj
 
 ## Unreleased
 
+- neil requires babashka 1.13.229 or later
 - [#269](https://github.com/babashka/neil/issues/269): bump deps-new to `v0.17.0`. `neil new` requires babashka 1.13.226 or later
 - [#272](https://github.com/babashka/neil/issues/272): make `babashka.neil/-main` easier to call from code ([@lread](https://github.com/lread))
 - [#268](https://github.com/babashka/neil/issues/268): `neil dep upgrade LIB` upgrades only `LIB` instead of all deps
