@@ -44,8 +44,8 @@ $ nix-shell -I nixpkgs=channel:nixos-unstable -p neil
 Add the following alias to your global or project-local `deps.edn`:
 
 ``` clojure
-:neil {:deps {io.github.babashka/neil {:git/tag "v0.3.70"
-                                       :git/sha "2cdd7c6"}}
+:neil {:deps {io.github.babashka/neil {:git/tag "v0.3.71"
+                                       :git/sha "78e11f7"}}
        :main-opts ["-m" "babashka.neil"]}
 ```
 
@@ -56,6 +56,36 @@ Then invoke `clj -M:neil`.
 - Install [babashka](https://github.com/babashka/babashka#installation) 1.13.229 or later
 - Download the [`neil`](https://raw.githubusercontent.com/babashka/neil/main/neil) script to somewhere on your `PATH`. In Windows, also
   download the [`neil.bat`](https://raw.githubusercontent.com/babashka/neil/main/neil.bat) script and place it in the `PATH`.
+
+### Shell completions
+
+Add the line for your shell to its init file.
+
+Bash:
+
+``` bash
+source <(neil org.babashka.cli/completions snippet --shell bash)
+```
+
+Zsh, after `compinit`:
+
+``` zsh
+source <(neil org.babashka.cli/completions snippet --shell zsh)
+```
+
+Fish:
+
+``` fish
+neil org.babashka.cli/completions snippet --shell fish | source
+```
+
+PowerShell, in `$PROFILE`:
+
+``` powershell
+neil org.babashka.cli/completions snippet --shell powershell | Out-String | Invoke-Expression
+```
+
+See the babashka.cli [completions docs](https://github.com/babashka/cli#completions) for other shells.
 
 ## Status
 

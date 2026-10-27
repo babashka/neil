@@ -4,7 +4,7 @@
 
 See the [New Clojure project quickstart](https://blog.michielborkent.nl/new-clojure-project-quickstart.html) blog post for a gentle introduction into `neil`.
 
-## Unreleased
+## 0.3.71
 
 - neil requires babashka 1.13.229 or later
 - [#269](https://github.com/babashka/neil/issues/269): bump deps-new to `v0.17.0`. `neil new` requires babashka 1.13.226 or later
