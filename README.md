@@ -53,31 +53,9 @@ Then invoke `clj -M:neil`.
 
 ### Manual
 
-- Install [babashka](https://github.com/babashka/babashka#installation)
+- Install [babashka](https://github.com/babashka/babashka#installation) 1.13.229 or later
 - Download the [`neil`](https://raw.githubusercontent.com/babashka/neil/main/neil) script to somewhere on your `PATH`. In Windows, also
   download the [`neil.bat`](https://raw.githubusercontent.com/babashka/neil/main/neil.bat) script and place it in the `PATH`.
-
-## Shell completions
-
-`neil` completes commands and options in bash, zsh, fish, PowerShell and nushell.
-Load the completions from the init file of your shell:
-
-```bash
-# ~/.bashrc
-source <(neil org.babashka.cli/completions snippet --shell bash)
-```
-
-```zsh
-# ~/.zshrc, after compinit
-source <(neil org.babashka.cli/completions snippet --shell zsh)
-```
-
-```fish
-# ~/.config/fish/config.fish
-neil org.babashka.cli/completions snippet --shell fish | source
-```
-
-For PowerShell and nushell, see the [babashka.cli completions docs](https://github.com/babashka/cli#completions).
 
 ## Status
 
@@ -92,13 +70,13 @@ Type `neil` to see the help:
 Usage: neil [options] <command>
 
 Commands:
-  add     Add a dep, test runner, build or nREPL alias.
-  dep     Manage dependencies.
-  license Find and add a license.
-  new     Create a project from a deps-new template.
-  version Show or manage the project version.
-  test    Run tests (assumes `neil add test`).
-  help    Show this help.
+  add      Add a dep, test runner, build or nREPL alias.
+  dep      Manage dependencies.
+  license  Find and add a license.
+  new      Create a project from a deps-new template.
+  version  Show or manage the project version.
+  test     Run tests (assumes `neil add test`).
+  help     Show this help.
 
 Options:
   --version
